@@ -1,0 +1,44 @@
+P1000 Unable to consume input: stuck at token ${token}
+P1001 Unexpected end of file
+P1002 Unexpected token ${found}, expected ${expected}
+P1003 Other code cannot follow a semicolon on the same line
+P1004 Unexpected code on line after statement completed: token ${token}
+P1005 A 'var' declaration must use ':=', not '='
+P1006 A 'def' declaration must use '=', not ':='
+P1007 Generic parameter list not terminated: expected a '>'
+P1008 A generic '<' must not have spaces around it
+P1009 Unexpected operator in type name, expected '<' or '='
+P1010 Indentation must increase inside a type body: indentation was ${previous indent}, but the new indentation is only ${new indent}
+P1011 Indentation must increase inside {}: indentation was ${previous indent}, but the new indentation is only ${new indent}
+P1012 Unexpected operator '${operator}' in parameter list: expected identifier or '*'
+P1013 Unexpected ${token} in parameter list: expected either ',' or ')'
+P1014 String interpolation with '{}' used inside import path; import path must be a literal string
+P1015 String interpolation with '{}' used inside dialect path; dialect path must be a literal string
+P1016 Indentation mismatch: indentation is ${given indentation}, but ${required indentation} required
+P1017 Parenthesised expression does not have closing parenthesis
+P1018 Term expected, but unexpected token ${token} found
+P1019 Interpolated expression in string not terminated with '}'
+P1020 Infix operator '${operator}' must have spaces around it
+P1021 'object' must have body written in {} afterwards
+P1022 Block parameter list contained unexpected symbol ${token}
+P1023 Unexpected ${token} in argument list: expected either ',' or ')'
+P1024 Unexpected ${token} in generic argument list: expected either ',' or '>'
+P1025 Unexpected ${token} after '.': expected identifier
+P1026 Only the arithmetic operators +, -, *, / can be mixed together. To use '${operator}' in combination with others the expression must be disambiguated with parentheses.
+
+L0000 Character ${codepoint} (${name}) may not appear here
+L0001 Tab characters are not permitted in the source code
+L0002 Whitespace character ${codepoint} (${name}) is not permitted in the source code
+L0003 Control character ${codepoint} (${name}) is not permitted in the source code
+L0004 Not a valid digit in base ${base}: '${digit}'
+L0005 No digits in number
+L0006 Unterminated string literal: expected '"'
+L0007 Illegal lone surrogate
+L0008 Unknown escape character ${escape}
+
+R2000 LookupError: Method «${method}» not found in object «${receiver}»
+R2001 ArgumentTypeError: Method «${method}» requires ${required} as argument ${index} of part «${part}»
+R2002 LookupError: No receiver found for ${method}
+R2003 AccessibilityError: Confidential method «${method}» cannot be accessed from outside the object
+R2004 InsufficientArgumentsError: Part «${part}» of method «${method}» requires ${need} arguments, but only ${have} provided
+R2005 LookupError: Could not find module "${path}" to import

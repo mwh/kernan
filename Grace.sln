@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.31101.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GraceConsole", "Grace\GraceConsole.csproj", "{801CEB12-D186-4D61-B2C3-EB8DFAD3A728}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GraceLanguage", "GraceLanguage\GraceLanguage.csproj", "{13E7B1E5-4088-4E64-B1FD-B4858DBB63EC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GraceWindow", "GraceWindow\GraceWindow.csproj", "{67B8F7DD-6F05-48EC-8DCA-743D029857F6}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{801CEB12-D186-4D61-B2C3-EB8DFAD3A728}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{801CEB12-D186-4D61-B2C3-EB8DFAD3A728}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{801CEB12-D186-4D61-B2C3-EB8DFAD3A728}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{801CEB12-D186-4D61-B2C3-EB8DFAD3A728}.Release|Any CPU.Build.0 = Release|Any CPU
+		{13E7B1E5-4088-4E64-B1FD-B4858DBB63EC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{13E7B1E5-4088-4E64-B1FD-B4858DBB63EC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{13E7B1E5-4088-4E64-B1FD-B4858DBB63EC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{13E7B1E5-4088-4E64-B1FD-B4858DBB63EC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{67B8F7DD-6F05-48EC-8DCA-743D029857F6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{67B8F7DD-6F05-48EC-8DCA-743D029857F6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{67B8F7DD-6F05-48EC-8DCA-743D029857F6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{67B8F7DD-6F05-48EC-8DCA-743D029857F6}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

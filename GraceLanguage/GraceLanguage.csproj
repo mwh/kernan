@@ -1,0 +1,86 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{13E7B1E5-4088-4E64-B1FD-B4858DBB63EC}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Grace</RootNamespace>
+    <AssemblyName>GraceLanguage</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Execution\AST.cs" />
+    <Compile Include="Execution\ExecutionTree.cs" />
+    <Compile Include="Execution\Interpreter.cs" />
+    <Compile Include="Parsing\Lexer.cs" />
+    <Compile Include="Parsing\ParseNodes.cs" />
+    <Compile Include="Parsing\ParseNodeVisitor.cs" />
+    <Compile Include="Parsing\Parser.cs" />
+    <Compile Include="Parsing\Tokens.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Runtime\LocalScope.cs" />
+    <Compile Include="Runtime\Iterables.cs" />
+    <Compile Include="Runtime\Exceptions.cs" />
+    <Compile Include="Runtime\GraceType.cs" />
+    <Compile Include="Runtime\MethodRequest.cs" />
+    <Compile Include="Runtime\GraceBlock.cs" />
+    <Compile Include="Runtime\GraceBoolean.cs" />
+    <Compile Include="Runtime\GraceNumber.cs" />
+    <Compile Include="Runtime\GraceObject.cs" />
+    <Compile Include="Runtime\GraceObjectProxy.cs" />
+    <Compile Include="Runtime\GraceString.cs" />
+    <Compile Include="Runtime\Methods.cs" />
+    <Compile Include="ErrorReporting.cs" />
+    <Compile Include="Unicode\UnicodeLookup.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="prelude.grace">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="DefaultErrorMessages.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="UnicodeLookupTable.dat">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
