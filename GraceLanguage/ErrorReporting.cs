@@ -14,8 +14,20 @@ namespace Grace
         static OutputSink sink;
         public static string GetMessage(string code)
         {
+            string localGrace = Path.Combine(System.Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                "grace");
+            var msg = GetMessageFromFile(code, localGrace);
+            if (msg != null)
+                return msg;
             string dir = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+            return GetMessageFromFile(code, dir);
+        }
+
+        public static string GetMessageFromFile(string code, string dir)
+        {
             string fp = Path.Combine(dir, "DefaultErrorMessages.txt");
+            if (!System.IO.File.Exists(fp))
+                return null;
             string codeSpace = code + " ";
             using (StreamReader reader = File.OpenText(fp))
             {
