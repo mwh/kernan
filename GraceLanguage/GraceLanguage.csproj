@@ -76,6 +76,14 @@
     </None>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Target Name="BeforeCompile">
+      <Exec Command="../tools/AddRevisionToAssemblyInfo.sh" Condition=" '$(OS)' == 'Unix' " />
+      <Exec Command="powershell -executionpolicy bypass -File ../tools/AddRevisionToAssemblyInfo.ps1" Condition=" '$(OS)' == 'Windows_NT' " />
+  </Target>
+  <Target Name="AfterCompile">
+      <Exec Command="../tools/RemoveRevisionFromAssemblyInfo.sh" Condition=" '$(OS)' == 'Unix' " />
+      <Exec Command="powershell -executionpolicy bypass -File ../tools/RemoveRevisionFromAssemblyInfo.ps1" Condition=" '$(OS)' == 'Windows_NT' " />
+  </Target>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
