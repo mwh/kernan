@@ -17,6 +17,7 @@ namespace Grace
             ParseNode module;
             string filename = null;
             string mode = "run";
+            bool verbose = false;
             foreach (string arg in args)
             {
                 if (arg == "--parse-tree")
@@ -26,7 +27,10 @@ namespace Grace
                 else if (arg == "--no-run")
                     mode = "no-run";
                 else if (arg == "--verbose")
+                {
                     Interpreter.ActivateDebuggingMessages();
+                    verbose = true;
+                }
                 else
                     filename = arg;
             }
@@ -95,7 +99,22 @@ namespace Grace
                 }
                 catch (StaticErrorException e)
                 {
-                    System.Console.WriteLine(e.StackTrace);
+                    if (verbose)
+                        System.Console.WriteLine(e.StackTrace);
+                    return 1;
+                }
+                catch (Exception e)
+                {
+                    System.Console.Error.WriteLine(
+                            "An internal error occurred. "
+                            + "Debugging information follows.");
+                    System.Console.Error.WriteLine("Runtime version: "
+                            + Interpreter.GetRuntimeVersion());
+                    System.Console.Error.WriteLine(e);
+                    System.Console.Error.WriteLine(e.StackTrace);
+                    System.Console.Error.WriteLine(
+                            "\nAn internal error occurred. "
+                            + "This is a bug in the implementation.");
                     return 1;
                 }
             }
