@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Grace.Runtime;
 using System.IO;
+using System.Reflection;
 using Grace.Parsing;
 
 namespace Grace.Execution
@@ -415,6 +416,19 @@ namespace Grace.Execution
             {
                 System.Console.ResetColor();
             }
+        }
+
+        public static string GetRuntimeVersion()
+        {
+            var ver = Assembly.GetExecutingAssembly().
+                GetCustomAttributes(
+                        typeof(AssemblyInformationalVersionAttribute),
+                        false
+                ).FirstOrDefault();
+            if (ver == null)
+                return "(unknown!)";
+            return ((AssemblyInformationalVersionAttribute)ver)
+                .InformationalVersion;
         }
     }
 
