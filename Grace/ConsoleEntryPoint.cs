@@ -30,6 +30,10 @@ namespace Grace
                 else
                     filename = arg;
             }
+            if (filename == null) {
+                System.Console.Error.WriteLine("Required filename argument missing.");
+                return 1;
+            }
             GraceObject prelude = null;
             string dir = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
             string preludePath = Path.Combine(dir, "prelude.grace");
