@@ -6,11 +6,21 @@ using System.Threading.Tasks;
 
 namespace Grace.Parsing
 {
+    /// <summary>A token of Grace source</summary>
     internal abstract class Token
     {
+        /// <summary>Module this token was found in</summary>
         public string module;
+
+        /// <summary>Line this token was found at</summary>
         public int line;
+
+        /// <summary>Column this token was found at</summary>
         public int column;
+
+        /// <param name="module">Module this token was found in</param>
+        /// <param name="line">Line this token was found at</param>
+        /// <param name="column">Column this token was found at</param>
         public Token(string module, int line, int column)
         {
             this.module = module;
@@ -144,6 +154,8 @@ namespace Grace.Parsing
             name = val;
         }
 
+        /// <summary>Set whether spaces were found before and after
+        /// this operator symbol</summary>
         public void SetSpacing(bool before, bool after)
         {
             spaceBefore = before;

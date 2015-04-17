@@ -8,6 +8,7 @@ using Grace.Unicode;
 
 namespace Grace.Parsing
 {
+    /// <summary>Tokeniser for Grace code</summary>
     class Lexer
     {
         private string code;
@@ -17,6 +18,9 @@ namespace Grace.Parsing
         private int lineStart = -1;
         public string moduleName;
         public Token current;
+
+        /// <param name="module">Module of this code</param>
+        /// <param name="code">Code of this module as a string</param>
         public Lexer(string module, string code)
         {
             this.code = code;
@@ -26,6 +30,7 @@ namespace Grace.Parsing
             NextToken();
         }
 
+        /// <param name="code">Code of this module as a string</param>
         public Lexer(string code)
         {
             this.code = code;
@@ -53,6 +58,9 @@ namespace Grace.Parsing
             return index == code.Length;
         }
 
+        /// <summary>Behave as though the source code at this point
+        /// were immediately after the opening quote of a string
+        /// literal</summary>
         public void TreatAsString()
         {
             column = index - lineStart;
@@ -60,6 +68,8 @@ namespace Grace.Parsing
             return;
         }
 
+        /// <summary>Look at what the next token would be, without
+        /// changing the state of the lexer</summary>
         public Token Peek()
         {
             int startIndex = index;
@@ -138,6 +148,8 @@ namespace Grace.Parsing
             index++;
         }
 
+        /// <summary>Get the next token from the stream and
+        /// advance the lexer</summary>
         public Token NextToken()
         {
             if (index >= code.Length)

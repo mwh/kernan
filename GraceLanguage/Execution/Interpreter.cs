@@ -10,11 +10,14 @@ using Grace.Parsing;
 
 namespace Grace.Execution
 {
+    /// <summary>An interpreter tracking the state of the world in an
+    /// execution of a Grace program.</summary>
     public class Interpreter : EvaluationContext
     {
         private static bool debugMessagesActive = false;
         private Dictionary<string, GraceObject> modules = new Dictionary<string, GraceObject>();
 
+        /// <summary>Linked-list node for a stack of object scopes</summary>
         internal class ScopeLink
         {
             public ScopeLink next;
@@ -23,12 +26,18 @@ namespace Grace.Execution
 
             public ScopeLink() { }
 
+            /// <param name="next">Next element in the list, or null</param>
+            /// <param name="scope">Grace object to be used as a scope</param>
             public ScopeLink(ScopeLink next, GraceObject scope)
             {
                 this.next = next;
                 this.scope = scope;
             }
 
+            /// <param name="next">Next element in the list, or null</param>
+            /// <param name="scope">Grace object to be used as a scope</param>
+            /// <param name="minor">True if this link represents a "minor"
+            /// scope that is used for internal names</param>
             public ScopeLink(ScopeLink next, GraceObject scope,
                     bool minor)
             {
@@ -38,11 +47,15 @@ namespace Grace.Execution
             }
         }
 
+        /// <summary>A rememberable Memo that allows restoring interpreter
+        /// state at a later point</summary>
         public class ScopeMemo
         {
             private ScopeLink link;
             internal ScopeLink Link { get { return link; } }
             internal int dynamicsSize;
+            /// <param name="link">Top of the static scope stack</param>
+            /// <param name="dynamics">Size of the dynamic stack</param>
             internal ScopeMemo(ScopeLink link, int dynamics)
             {
                 this.link = link;
@@ -55,8 +68,9 @@ namespace Grace.Execution
         private Stack<string> callStack = new Stack<string>();
         private ScopeLink scope = new ScopeLink();
         private GraceObject majorScope;
-        OutputSink sink;
+        private OutputSink sink;
 
+        /// <summary>A default interpreter</summary>
         public Interpreter()
         {
             sink = new OutputSinkWrapper(System.Console.Out);
@@ -64,6 +78,7 @@ namespace Grace.Execution
             initialise();
         }
 
+        /// <param name="s">Destination for error messages</param>
         public Interpreter(OutputSink s)
         {
             sink = s;
@@ -71,6 +86,8 @@ namespace Grace.Execution
             initialise();
         }
 
+        /// <summary>Performs set-up behaviour shared by multiple
+        /// constructors</summary>
         private void initialise()
         {
             scope.scope = new GraceObject();
@@ -85,6 +102,8 @@ namespace Grace.Execution
                         new GraceExceptionKind("Exception")));
         }
 
+        /// <summary>Finds the standard prelude file, loads and
+        /// interprets it, and places the created module in scope</summary>
         public void LoadPrelude()
         {
             string dir = System.IO.Path.GetDirectoryName(typeof(Interpreter).Assembly.Location);
@@ -100,6 +119,7 @@ namespace Grace.Execution
             }
         }
 
+        /// <summary>Gives the directory paths searched for imports</summary>
         public static List<string> GetModulePaths()
         {
             string execDir = System.IO.Path.GetDirectoryName(typeof(Interpreter).Assembly.Location);
@@ -109,6 +129,12 @@ namespace Grace.Execution
             return bases;
         }
 
+        /// <inheritdoc />
+        /// <remarks>The import path will be resolved according to
+        /// the directories given by
+        /// <c cref="GetModulePaths">GetModulePaths</c>. If this import
+        /// path has been loaded previously, the existing module object
+        /// is returned.</remarks>
         public GraceObject LoadModule(string path)
         {
             if (modules.ContainsKey(path))
@@ -129,6 +155,7 @@ namespace Grace.Execution
             return null;
         }
 
+        /// <summary>Load a module file if it exists</summary>
         private GraceObject tryLoadModuleFile(string path)
         {
             if (System.IO.File.Exists(path))
@@ -138,6 +165,7 @@ namespace Grace.Execution
             return null;
         }
 
+        /// <summary>Load a module file</summary>
         private GraceObject loadModuleFile(string path)
         {
             Interpreter.Debug("========== LOAD " + path + " ==========");
@@ -152,6 +180,7 @@ namespace Grace.Execution
             }
         }
 
+        /// <inheritdoc />
         public void InsertOuter(GraceObject obj)
         {
             var s = scope;
@@ -165,16 +194,19 @@ namespace Grace.Execution
             s.next = newScope;
         }
 
+        /// <inheritdoc />
         public GraceObject PreludeRequest(MethodRequest req)
         {
             return prelude.Request(this, req);
         }
 
+        /// <inheritdoc />
         public List<string> GetStackTrace()
         {
             return new List<string>(callStack);
         }
 
+        /// <summary>The built-in Grace "print" method</summary>
         public GraceObject Print(EvaluationContext ctx, GraceObject arg)
         {
             Object obj = arg;
@@ -199,6 +231,10 @@ namespace Grace.Execution
             return GraceObject.Done;
         }
 
+        /// <summary>Native version of the built-in Grace "while-do" method
+        /// </summary>
+        /// <remarks>This while-do is more efficient than is possible to
+        /// implement in bare Grace without it.</remarks>
         public GraceObject BaseWhileDo(EvaluationContext ctx, MethodRequest req)
         {
             GraceObject cond = req[0].Arguments[0];
@@ -211,6 +247,9 @@ namespace Grace.Execution
             return GraceObject.Done;
         }
 
+        /// <summary>Native version of the built-in Grace
+        /// "try-*catch-?finally" method
+        /// </summary>
         public GraceObject BaseTryCatchFinally(EvaluationContext ctx,
                 MethodRequest req)
         {
@@ -263,40 +302,47 @@ namespace Grace.Execution
             return GraceObject.Done;
         }
 
+        /// <inheritdoc />
         public int NestRequest(string module, int line, string name)
         {
             callStack.Push("«" + name + "», at line " + line + " of " + module);
             return callStack.Count - 1;
         }
 
+        /// <inheritdoc />
         public void PopCallStackTo(int depth)
         {
             while (callStack.Count > depth)
                 callStack.Pop();
         }
 
+        /// <inheritdoc />
         public void Extend(GraceObject o)
         {
             scope = new ScopeLink(scope, o);
             majorScope = scope.scope;
         }
 
+        /// <inheritdoc />
         public void ExtendMinor(GraceObject o)
         {
             scope = new ScopeLink(scope, o, true);
         }
 
+        /// <inheritdoc />
         public void Unextend(GraceObject o)
         {
             scope = scope.next;
             restoreMajor();
         }
 
+        /// <inheritdoc />
         public ScopeMemo Memorise()
         {
             return new ScopeMemo(scope, dynamics.Count);
         }
 
+        /// <inheritdoc />
         public void RestoreExactly(ScopeMemo sm)
         {
             scope = sm.Link;
@@ -305,6 +351,7 @@ namespace Grace.Execution
             restoreMajor();
         }
 
+        /// <inheritdoc />
         public void Remember(ScopeMemo sm)
         {
             dynamics.Push(scope);
@@ -312,12 +359,15 @@ namespace Grace.Execution
             restoreMajor();
         }
 
+        /// <inheritdoc />
         public void Forget(ScopeMemo sm)
         {
             scope = dynamics.Pop();
             restoreMajor();
         }
 
+        /// <summary>Set the majorScope field to the closest non-minor
+        /// scope</summary>
         private void restoreMajor()
         {
             ScopeLink s = scope;
@@ -328,6 +378,7 @@ namespace Grace.Execution
             majorScope = s.scope;
         }
 
+        /// <inheritdoc />
         public GraceObject FindReceiver(MethodRequest req)
         {
             ScopeLink sl = scope;
@@ -340,6 +391,7 @@ namespace Grace.Execution
             return null;
         }
 
+        /// <inheritdoc />
         public MethodScope FindNearestMethod()
         {
             ScopeLink sl = scope;
@@ -353,22 +405,26 @@ namespace Grace.Execution
             return null;
         }
 
+        /// <inheritdoc />
         public ReaderWriterPair AddVar(string name, GraceObject val)
         {
             var pair = majorScope.AddLocalVar(name, val);
             return pair;
         }
 
+        /// <inheritdoc />
         public MethodNode AddDef(string name, GraceObject val)
         {
             return majorScope.AddLocalDef(name, val);
         }
 
+        /// <inheritdoc />
         public MethodNode AddMinorDef(string name, GraceObject val)
         {
             return scope.scope.AddLocalDef(name, val);
         }
 
+        /// <inheritdoc />
         public string ScopeStringList()
         {
             string ret = null;
@@ -384,11 +440,15 @@ namespace Grace.Execution
             return ret;
         }
 
+        /// <summary>Enable interpreter debugging messages to the
+        /// console</summary>
         public static void ActivateDebuggingMessages()
         {
             debugMessagesActive = true;
         }
 
+        /// <inheritdoc />
+        /// <seealso cref="ActivateDebuggingMessages" />
         public void DebugScopes()
         {
             ScopeLink s = scope;
@@ -403,6 +463,9 @@ namespace Grace.Execution
             }
         }
 
+        /// <summary>Log a debugging message, if enabled</summary>
+        /// <param name="message">Message to log</param>
+        /// <seealso cref="ActivateDebuggingMessages" />
         public static void Debug(string message)
         {
             if (!debugMessagesActive)
@@ -418,6 +481,12 @@ namespace Grace.Execution
             }
         }
 
+        /// <summary>Get the identifying version of the language
+        /// runtime</summary>
+        /// <remarks>This version will generally include the version
+        /// control revision, but may not always be available. When
+        /// the version is unavailable, the method will return
+        /// <c>"(unknown!)"</c>.</remarks>
         public static string GetRuntimeVersion()
         {
             var ver = Assembly.GetExecutingAssembly().
@@ -432,58 +501,131 @@ namespace Grace.Execution
         }
     }
 
+    /// <summary>Encapsulates a pair of methods corresponding to a
+    /// var declaration.</summary>
     public struct ReaderWriterPair
     {
+        /// <summary>Reader method</summary>
         public MethodNode Read;
+        /// <summary>Writer method</summary>
         public MethodNode Write;
     }
 
+    /// <summary>Represents the current status of a program evaluation</summary>
     public interface EvaluationContext
     {
+        /// <summary>Add a new child scope</summary>
+        /// <param name="o">Object to place in scope</param>
         void Extend(GraceObject o);
+        /// <summary>Add a new child scope for internal use</summary>
+        /// <param name="o">Object to place in scope</param>
         void ExtendMinor(GraceObject o);
+        /// <summary>Remove the innermost scope object</summary>
+        /// <param name="o">Currently ignored</param>
         void Unextend(GraceObject o);
+        /// <summary>Add an object scope outside the current "self"</summary>
+        /// <param name="o">Object to place in scope</param>
         void InsertOuter(GraceObject o);
 
+        /// <summary>Add method to stack trace</summary>
+        /// <param name="module">Module location of request</param>
+        /// <param name="line">Line location of request</param>
+        /// <param name="name">Name of method</param>
         int NestRequest(string module, int line, string name);
+        /// <summary>Remove all elements of call stack above given
+        /// depth</summary>
+        /// <param name="depth">Target size of call stack</param>
         void PopCallStackTo(int depth);
 
+        /// <summary>Make a method request on the standard prelude
+        /// object</summary>
+        /// <param name="req">Request to perform</param>
+        /// <returns>The return value of the request</returns>
         GraceObject PreludeRequest(MethodRequest req);
+        /// <summary>Find a surrounding object able to process a given
+        /// request</summary>
+        /// <param name="req">Method request that must be accepted</param>
+        /// <returns>An object that responds to <paramref name="req"/>,
+        /// or null</returns>
         GraceObject FindReceiver(MethodRequest req);
+        /// <summary>Find the closest enclosing scope that is a method
+        /// body</summary>
+        /// <returns>The nearest method scope, or null</returns>
         MethodScope FindNearestMethod();
+        /// <summary>Loads and evaluates a module source file</summary>
+        /// <param name="path">Import path</param>
+        /// <returns>The module object</returns>
         GraceObject LoadModule(string path);
 
 
+        /// <summary>Add a var field to the nearest major scope</summary>
+        /// <param name="name">Variable name to use</param>
+        /// <param name="val">Initial value of the field</param>
+        /// <returns>An object encapsulating the reader and writer
+        /// methods created for the var</returns>
         ReaderWriterPair AddVar(string name, GraceObject val);
+        /// <summary>Add a def field to the nearest major scope</summary>
+        /// <param name="name">Variable name to use</param>
+        /// <param name="val">Value of the field</param>
+        /// <returns>The method added to the object</returns>
         MethodNode AddDef(string name, GraceObject val);
+        /// <summary>Add a def field to the nearest scope</summary>
+        /// <param name="name">Variable name to use</param>
+        /// <param name="val">Value of the field</param>
+        /// <returns>The method added to the object</returns>
         MethodNode AddMinorDef(string name, GraceObject val);
 
+        /// <summary>Create a Memo that can restore interpreter state</summary>
         Interpreter.ScopeMemo Memorise();
+        /// <summary>Restore interpreter state exactly, dropping elements of
+        /// the dynamic stack to fit</summary>
+        /// <param name="sm">A memo created by <c cref="Memorise">Memorise</c>
+        /// </param>
         void RestoreExactly(Interpreter.ScopeMemo sm);
+        /// <summary>Restore interpreter state, adding a new dynamic stack
+        /// entry</summary>
+        /// <param name="sm">A memo created by <c cref="Memorise">Memorise</c>
+        /// </param>
         void Remember(Interpreter.ScopeMemo sm);
+        /// <summary>Discard a dynamic scope</summary>
+        /// <param name="sm">Currently ignored</param>
         void Forget(Interpreter.ScopeMemo sm);
 
+        /// <summary>Get a textual backtrace of the current stack</summary>
         List<string> GetStackTrace();
 
+        /// <summary>List enclosing scopes as strings</summary>
+        /// <returns>The stringifications of all surrounding scopes,
+        /// separated by commas</returns>
         string ScopeStringList();
+        /// <summary>Perform debugging logging of surrounding scopes,
+        /// including all their methods</summary>
         void DebugScopes();
     }
 
+    /// <summary>Represents a target that can have text written to it
+    /// for error output</summary>
     public interface OutputSink
     {
+        /// <summary>Write a line of output</summary>
+        /// <param name="s">Line to output</param>
         void WriteLine(string s);
 
     }
 
+    /// <summary>Wraps a <c cref="System.IO.TextWriter">TextWriter</c>
+    /// instance into an output sink</summary>
     public class OutputSinkWrapper : OutputSink
     {
         System.IO.TextWriter writer;
 
+        /// <param name="w">TextWriter to wrap</param>
         public OutputSinkWrapper(System.IO.TextWriter w)
         {
             writer = w;
         }
 
+        /// <inheritdoc />
         public void WriteLine(string s)
         {
             writer.WriteLine(s);

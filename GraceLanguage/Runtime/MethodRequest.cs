@@ -8,31 +8,45 @@ using Grace.Execution;
 
 namespace Grace.Runtime
 {
+
+    /// <summary>Represents a single word of a request, including its
+    /// arguments.</summary>
     public class RequestPart
     {
         private string name;
         private List<GraceObject> generics;
         private List<GraceObject> arguments;
 
+        /// <summary>Create a new part with empty arguments</summary>
+        /// <param name="name">Name of this part</param>
         internal static RequestPart Nullary(string name)
         {
             return new RequestPart(name, new List<GraceObject>(),
                     new List<GraceObject>());
         }
 
+        /// <summary>Create a new part with a single argument</summary>
+        /// <param name="name">Name of this part</param>
+        /// <param name="arg">Value of the lone argument</param>
         internal static RequestPart Single(string name, GraceObject arg)
         {
             return new RequestPart(name, new List<GraceObject>(),
                     new List<GraceObject>() { arg });
         }
 
-        internal RequestPart(string name, List<GraceObject> generics, List<GraceObject> arguments)
+        /// <param name="name">Name of this part</param>
+        /// <param name="generics">List of generic (type) arguments</param>
+        /// <param name="arguments">List of ordinary arguments</param>
+        internal RequestPart(string name, List<GraceObject> generics,
+                List<GraceObject> arguments)
         {
             this.name = name;
             this.generics = generics;
             this.arguments = arguments;
         }
 
+        /// <summary>The name of this part</summary>
+        /// <value>This property gets the value of the string field name</value>
         public string Name
         {
             get
@@ -41,6 +55,8 @@ namespace Grace.Runtime
             }
         }
 
+        /// <summary>The generic arguments to this part</summary>
+        /// <value>This property gets the value of the field generics</value>
         public List<GraceObject> GenericArguments
         {
             get
@@ -49,6 +65,8 @@ namespace Grace.Runtime
             }
         }
 
+        /// <summary>The ordinary arguments to this part</summary>
+        /// <value>This property gets the value of the field arguments</value>
         public List<GraceObject> Arguments
         {
             get
@@ -58,16 +76,22 @@ namespace Grace.Runtime
         }
     }
 
+    /// <summary>An encapsulated method request</summary>
     public class MethodRequest : IEnumerable<RequestPart>
     {
         private string name = "";
         private List<RequestPart> parts = new List<RequestPart>();
 
+        /// <summary>Creates an empty method request</summary>
         public MethodRequest()
         {
 
         }
 
+        /// <summary>Add a part to this request</summary>
+        /// <param name="part">Request part to add to the request</param>
+        /// <remarks>This method also updates the internal store of the
+        /// overall method name.</remarks>
         public void AddPart(RequestPart part)
         {
             if (name != "")
@@ -77,6 +101,10 @@ namespace Grace.Runtime
             Interpreter.Debug("Added part to name. Name now " + name);
         }
 
+        /// <summary>Get a particular part of the request</summary>
+        /// <param name="i">Zero-indexed part to retrieve</param>
+        /// <value>This indexer accesses the field "parts", which
+        /// is a List</value>
         public RequestPart this[int i]
         {
             get
@@ -85,6 +113,9 @@ namespace Grace.Runtime
             }
         }
 
+        /// <summary>Overall name of this method</summary>
+        /// <remarks>Part names are separated by spaces.</remarks>
+        /// <value>This property gets the value of the string field name</value>
         public string Name
         {
             get
@@ -93,8 +124,12 @@ namespace Grace.Runtime
             }
         }
 
+        /// <summary>Is this method request an interior (receiverless)
+        /// request?</summary>
         public bool IsInterior { get; set; }
 
+        /// <summary>Get an enumerator giving each part of the request
+        /// in turn</summary>
         public IEnumerator<RequestPart> GetEnumerator()
         {
             foreach (RequestPart p in parts)
@@ -103,11 +138,16 @@ namespace Grace.Runtime
             }
         }
 
+        /// <summary>Get an enumerator giving each part of the request
+        /// in turn</summary>
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
         {
             return GetEnumerator();
         }
 
+        /// <summary>Create a method request with a single part and
+        /// no arguments of any kind</summary>
+        /// <param name="name">Name of method</param>
         public static MethodRequest Nullary(string name)
         {
             var ret = new MethodRequest();
@@ -115,6 +155,10 @@ namespace Grace.Runtime
             return ret;
         }
 
+        /// <summary>Create a method request with a single part and
+        /// a lone ordinary argument</summary>
+        /// <param name="name">Name of method</param>
+        /// <param name="arg">Value of lone argument</param>
         public static MethodRequest Single(string name, GraceObject arg)
         {
             var ret = new MethodRequest();

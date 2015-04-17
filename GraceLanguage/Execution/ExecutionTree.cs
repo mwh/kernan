@@ -8,18 +8,25 @@ using Grace.Parsing;
 
 namespace Grace.Execution
 {
+    /// <summary>Translates a tree of ParseNodes into Nodes</summary>
     public class ExecutionTreeTranslator : ParseNodeVisitor<Node>
     {
+        /// <summary>Translate a tree rooted at a parse node for an
+        /// object into the corresponding Node tree</summary>
+        /// <param name="obj">Root of the tree</param>
         public Node Translate(ObjectParseNode obj)
         {
             return obj.Visit(this);
         }
 
+        /// <summary>Default visit, which reports an error</summary>
+        /// <inheritdoc />
         public Node Visit(ParseNode pn)
         {
             throw new Exception("No ParseNodeVisitor override provided for " + pn);
         }
 
+        /// <inheritdoc />
         public Node Visit(ObjectParseNode obj)
         {
             ObjectConstructorNode ret = new ObjectConstructorNode(obj.Token, obj);
@@ -31,16 +38,19 @@ namespace Grace.Execution
             return ret;
         }
 
+        /// <inheritdoc />
         public Node Visit(NumberParseNode n)
         {
             return new NumberNode(n.Token, n);
         }
 
+        /// <inheritdoc />
         public Node Visit(StringLiteralParseNode n)
         {
             return new StringLiteralNode(n.Token, n);
         }
 
+        /// <inheritdoc />
         public Node Visit(InterpolatedStringParseNode n)
         {
             Node ret = null;
@@ -77,6 +87,7 @@ namespace Grace.Execution
             return ret;
         }
 
+        /// <inheritdoc />
         public Node Visit(MethodDeclarationParseNode d)
         {
             MethodNode ret = new MethodNode(d.Token, d);
@@ -148,6 +159,7 @@ namespace Grace.Execution
             return ret;
         }
 
+        /// <inheritdoc />
         public Node Visit(IdentifierParseNode i)
         {
             ImplicitReceiverRequestNode ret = new ImplicitReceiverRequestNode(i.Token, i);
@@ -156,6 +168,7 @@ namespace Grace.Execution
             return ret;
         }
 
+        /// <inheritdoc />
         public Node Visit(ImplicitReceiverRequestParseNode irrpn)
         {
             ImplicitReceiverRequestNode ret = new ImplicitReceiverRequestNode(irrpn.Token, irrpn);
@@ -168,6 +181,8 @@ namespace Grace.Execution
             }
             return ret;
         }
+
+        /// <inheritdoc />
         public Node Visit(ExplicitReceiverRequestParseNode irrpn)
         {
             ExplicitReceiverRequestNode ret = new ExplicitReceiverRequestNode(irrpn.Token, irrpn,
@@ -182,6 +197,7 @@ namespace Grace.Execution
             return ret;
         }
 
+        /// <inheritdoc />
         public Node Visit(PrefixOperatorParseNode popn)
         {
             ExplicitReceiverRequestNode ret = new ExplicitReceiverRequestNode(popn.Token, popn,
@@ -193,6 +209,7 @@ namespace Grace.Execution
             return ret;
         }
 
+        /// <inheritdoc />
         public Node Visit(OperatorParseNode opn)
         {
             ExplicitReceiverRequestNode ret = new ExplicitReceiverRequestNode(opn.Token, opn, opn.left.Visit(this));
@@ -203,6 +220,7 @@ namespace Grace.Execution
             return ret;
         }
 
+        /// <inheritdoc />
         public Node Visit(VarDeclarationParseNode vdpn)
         {
             Node val = null;
@@ -228,6 +246,7 @@ namespace Grace.Execution
             return ret;
         }
 
+        /// <inheritdoc />
         public Node Visit(DefDeclarationParseNode vdpn)
         {
             Node val = null;
@@ -247,6 +266,7 @@ namespace Grace.Execution
             return ret;
         }
 
+        /// <inheritdoc />
         public Node Visit(BindParseNode bpn)
         {
             var ret = bpn.left.Visit(this);
@@ -259,6 +279,7 @@ namespace Grace.Execution
             return ret;
         }
 
+        /// <inheritdoc />
         public Node Visit(BlockParseNode d)
         {
             var parameters = new List<Node>();
@@ -288,6 +309,7 @@ namespace Grace.Execution
             return ret;
         }
 
+        /// <inheritdoc />
         public Node Visit(ClassDeclarationParseNode d)
         {
             var clsObj = new ObjectParseNode(d.Token);
@@ -309,6 +331,7 @@ namespace Grace.Execution
             return dpn.Visit(this);
         }
 
+        /// <inheritdoc />
         public Node Visit(ReturnParseNode rpn)
         {
             if (rpn.returnValue == null)
@@ -318,11 +341,13 @@ namespace Grace.Execution
                     rpn.returnValue.Visit(this));
         }
 
+        /// <inheritdoc />
         public Node Visit(CommentParseNode cpn)
         {
             return new NoopNode(cpn.Token, cpn);
         }
 
+        /// <inheritdoc />
         public Node Visit(TypeStatementParseNode tspn)
         {
             var meth = new MethodDeclarationParseNode(tspn.Token);
@@ -337,6 +362,7 @@ namespace Grace.Execution
             return meth.Visit(this);
         }
 
+        /// <inheritdoc />
         public Node Visit(TypeParseNode tpn)
         {
             var ret = new TypeNode(tpn.Token, tpn);
@@ -347,6 +373,7 @@ namespace Grace.Execution
             return ret;
         }
 
+        /// <inheritdoc />
         public Node Visit(TypeMethodParseNode d)
         {
             var ret = new MethodTypeNode(d.Token, d);
@@ -416,6 +443,7 @@ namespace Grace.Execution
             return ret;
         }
 
+        /// <inheritdoc />
         public Node Visit(ImportParseNode ipn)
         {
             Node type = null;
@@ -424,11 +452,14 @@ namespace Grace.Execution
             return new ImportNode(ipn.Token, ipn, type);
         }
 
+        /// <inheritdoc />
         public Node Visit(DialectParseNode dpn)
         {
             return new DialectNode(dpn.Token, dpn);
         }
 
+        /// <summary>Transforms a list of ParseNodes into a list of the
+        /// corresponding Nodes</summary>
         private List<Node> map(List<ParseNode> l)
         {
             List<Node> ret = new List<Node>();

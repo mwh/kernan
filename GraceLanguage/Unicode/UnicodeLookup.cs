@@ -10,6 +10,13 @@ namespace Grace.Unicode
 {
     class UnicodeLookup
     {
+        /// <summary>Get the UnicodeData.txt elements for a
+        /// particular codepoint</summary>
+        /// <param name="codepointOrig">Codepoint to look up</param>
+        /// <remarks>This method uses a lookup table based on the
+        /// newest version of the Unicode standard. It automatically
+        /// fills in the entries for codepoints within First, Last
+        /// ranges in the table.</remarks>
         public static string[] GetCodepointParts(int codepointOrig)
         {
             string dir = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
@@ -113,12 +120,19 @@ namespace Grace.Unicode
             }
             return parts;
         }
+
+        /// <summary>Get the name of a codepoint</summary>
+        /// <param name="codepoint">Codepoint to look up</param>
         public static string GetCodepointName(int codepoint)
         {
             string[] parts = GetCodepointParts(codepoint);
             return parts[0];
         }
 
+        /// <summary>Get the category of a codepoint</summary>
+        /// <param name="s">String to find codepoint in</param>
+        /// <param name="index">char index of the start of the
+        /// codepoint</param>
         public static UnicodeCategory GetUnicodeCategory(string s, int index)
         {
             UnicodeCategory cat = CharUnicodeInfo.GetUnicodeCategory(s, index);

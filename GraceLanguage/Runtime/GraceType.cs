@@ -8,12 +8,15 @@ using Grace.Execution;
 
 namespace Grace.Runtime
 {
+    /// <summary>A Grace type literal</summary>
     public class GraceType : GraceObject
     {
         private string name;
         private List<MethodTypeNode> methods = new List<MethodTypeNode>();
         private List<MethodRequest> requests;
 
+        /// <param name="name">Name of this type for debugging
+        /// and reporting purposes</param>
         public GraceType(string name)
             : base()
         {
@@ -24,11 +27,17 @@ namespace Grace.Runtime
             AddMethod("&", Matching.AndMethod);
         }
 
+        /// <summary>Add a method type entry to this type</summary>
+        /// <param name="n">Method entry to add</param>
         public void Add(MethodTypeNode n)
         {
             methods.Add(n);
         }
 
+        /// <summary>Native method implementing the .match Grace method
+        /// for types</summary>
+        /// <remarks>At present, this matching uses only the method
+        /// names in both the object and the type.</remarks>
         public GraceObject Match(EvaluationContext ctx, GraceObject target)
         {
             if (requests == null)
@@ -54,11 +63,13 @@ namespace Grace.Runtime
             return Matching.SuccessfulMatch(ctx, target);
         }
 
+        /// <inheritdoc />
         public override string ToString()
         {
             return "GraceType[" + name + "]";
         }
 
+        /// <summary>Unknown (dynamic) type</summary>
         public static GraceType Unknown = new GraceType("Unknown");
     }
 

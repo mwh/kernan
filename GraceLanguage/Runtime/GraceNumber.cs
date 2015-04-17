@@ -10,14 +10,16 @@ using Grace.Execution;
 
 namespace Grace.Runtime
 {
-
+    /// <summary>A Grace number object</summary>
     class GraceNumber : GraceObject
     {
+        /// <summary>Value of this number as a double</summary>
         public double Double
         {
             get;
             set;
         }
+
         private GraceNumber(double val)
         {
             Interpreter.Debug("made new number " + val);
@@ -43,16 +45,20 @@ namespace Grace.Runtime
             AddMethod("&", Matching.AndMethod);
         }
 
+        /// <summary>Get the value of this number as an int</summary>
         public int GetInt()
         {
             return (int)Double;
         }
 
+        /// <inheritdoc/>
         public override string ToString()
         {
             return "Number[" + Double + "]";
         }
 
+        /// <summary>Native method for Grace ==</summary>
+        /// <param name="other">Argument to the method</param>
         new public GraceObject EqualsEquals(GraceObject other)
         {
             var oth = other as GraceNumber;
@@ -61,6 +67,8 @@ namespace Grace.Runtime
             return GraceBoolean.Create(this.Double == oth.Double);
         }
 
+        /// <summary>Native method for Grace !=</summary>
+        /// <param name="other">Argument to the method</param>
         new public GraceObject NotEquals(GraceObject other)
         {
             var oth = other as GraceNumber;
@@ -69,6 +77,9 @@ namespace Grace.Runtime
             return GraceBoolean.Create(this.Double != oth.Double);
         }
 
+        /// <summary>Native method for Grace ..</summary>
+        /// <param name="ctx">Current interpreter</param>
+        /// <param name="other">Argument to the method</param>
         public GraceObject DotDot(EvaluationContext ctx, GraceObject other)
         {
             MethodRequest req = new MethodRequest();
@@ -79,6 +90,8 @@ namespace Grace.Runtime
             return rec.Request(ctx, req);
         }
 
+        /// <summary>Native method for Grace +</summary>
+        /// <param name="other">Argument to the method</param>
         public GraceObject Add(GraceObject other)
         {
             Interpreter.Debug("called +");
@@ -86,6 +99,8 @@ namespace Grace.Runtime
             return GraceNumber.Create(this.Double + oth.Double);
         }
 
+        /// <summary>Native method for Grace *</summary>
+        /// <param name="other">Argument to the method</param>
         public GraceObject Multiply(GraceObject other)
         {
             Interpreter.Debug("called *");
@@ -93,6 +108,8 @@ namespace Grace.Runtime
             return GraceNumber.Create(this.Double * oth.Double);
         }
 
+        /// <summary>Native method for Grace -</summary>
+        /// <param name="other">Argument to the method</param>
         public GraceObject Subtract(GraceObject other)
         {
             Interpreter.Debug("called -");
@@ -100,6 +117,8 @@ namespace Grace.Runtime
             return GraceNumber.Create(this.Double - oth.Double);
         }
 
+        /// <summary>Native method for Grace /</summary>
+        /// <param name="other">Argument to the method</param>
         public GraceObject Divide(GraceObject other)
         {
             Interpreter.Debug("called /");
@@ -107,6 +126,8 @@ namespace Grace.Runtime
             return GraceNumber.Create(this.Double / oth.Double);
         }
 
+        /// <summary>Native method for Grace %</summary>
+        /// <param name="other">Argument to the method</param>
         public GraceObject Modulus(GraceObject other)
         {
             Interpreter.Debug("called %");
@@ -114,6 +135,8 @@ namespace Grace.Runtime
             return GraceNumber.Create(this.Double % oth.Double);
         }
 
+        /// <summary>Native method for Grace ^</summary>
+        /// <param name="other">Argument to the method</param>
         public GraceObject Exponentiate(GraceObject other)
         {
             Interpreter.Debug("called ^");
@@ -121,30 +144,41 @@ namespace Grace.Runtime
             return GraceNumber.Create(Math.Pow(this.Double, oth.Double));
         }
 
+        /// <summary>Native method for Grace &gt;</summary>
+        /// <param name="other">Argument to the method</param>
         public GraceObject GreaterThan(GraceObject other)
         {
             GraceNumber oth = other as GraceNumber;
             return GraceBoolean.Create(this.Double > oth.Double);
         }
 
+        /// <summary>Native method for Grace &gt;=</summary>
+        /// <param name="other">Argument to the method</param>
         public GraceObject GreaterEqual(GraceObject other)
         {
             GraceNumber oth = other as GraceNumber;
             return GraceBoolean.Create(this.Double >= oth.Double);
         }
 
+        /// <summary>Native method for Grace &lt;</summary>
+        /// <param name="other">Argument to the method</param>
         public GraceObject LessThan(GraceObject other)
         {
             GraceNumber oth = other as GraceNumber;
             return GraceBoolean.Create(this.Double < oth.Double);
         }
 
+        /// <summary>Native method for Grace &lt;=</summary>
+        /// <param name="other">Argument to the method</param>
         public GraceObject LessEqual(GraceObject other)
         {
             GraceNumber oth = other as GraceNumber;
             return GraceBoolean.Create(this.Double <= oth.Double);
         }
 
+        /// <summary>Native method for Grace match</summary>
+        /// <param name="ctx">Current interpreter</param>
+        /// <param name="target">Target of the match</param>
         public GraceObject Match(EvaluationContext ctx, GraceObject target)
         {
             if (this.EqualsEquals(target) == GraceBoolean.True)
@@ -154,16 +188,20 @@ namespace Grace.Runtime
             return Matching.FailedMatch(ctx, target);
         }
 
+        /// <summary>Native method for Grace unary negation</summary>
         public GraceObject Negate()
         {
             return GraceNumber.Create(-Double);
         }
 
+        /// <summary>Native method for Grace asString</summary>
         public new GraceObject AsString()
         {
             return GraceString.Create("" + Double);
         }
 
+        /// <summary>Make a Grace number</summary>
+        /// <param name="val">Number to create</param>
         public static GraceObject Create(double val)
         {
             return new GraceNumber(val);

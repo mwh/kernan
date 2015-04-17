@@ -8,10 +8,17 @@ using Grace.Execution;
 
 namespace Grace.Runtime
 {
+    /// <summary>A Grace string object</summary>
     class GraceString : GraceObject
     {
+        /// <summary>This string in normalization form C</summary>
         private string nfc;
+
+        /// <summary>Indices of the start of each grapheme cluster
+        /// in this string</summary>
         private int[] graphemeIndices;
+
+        /// <summary>Value of this string</summary>
         public string Value
         {
             get;
@@ -53,6 +60,8 @@ namespace Grace.Runtime
             return GraceString.Create(this.Value + oth.Value);
         }
 
+        /// <summary>Native method for Grace ==</summary>
+        /// <param name="other">Argument to the method</param>
         new public GraceObject EqualsEquals(GraceObject other)
         {
             var oth = other as GraceString;
@@ -61,6 +70,8 @@ namespace Grace.Runtime
             return GraceBoolean.Create(this.nfc == oth.nfc);
         }
 
+        /// <summary>Native method for Grace !=</summary>
+        /// <param name="other">Argument to the method</param>
         new public GraceObject NotEquals(GraceObject other)
         {
             var oth = other as GraceString;
@@ -69,6 +80,8 @@ namespace Grace.Runtime
             return GraceBoolean.Create(this.nfc != oth.nfc);
         }
 
+        /// <summary>Native method for Grace at</summary>
+        /// <param name="other">Argument to the method</param>
         public GraceObject At(GraceObject other)
         {
             var oth = other as GraceNumber;
@@ -79,11 +92,15 @@ namespace Grace.Runtime
             return GraceString.Create(StringInfo.GetNextTextElement(Value, start));
         }
 
+        /// <summary>Native method for Grace size</summary>
         public GraceObject Size()
         {
             return GraceNumber.Create(graphemeIndices.Length);
         }
 
+        /// <summary>Native method for Grace match</summary>
+        /// <param name="ctx">Current interpreter</param>
+        /// <param name="target">Target of the match</param>
         public GraceObject Match(EvaluationContext ctx, GraceObject target)
         {
             if (this.EqualsEquals(target) == GraceBoolean.True)
@@ -93,16 +110,20 @@ namespace Grace.Runtime
             return Matching.FailedMatch(ctx, target);
         }
 
+        /// <summary>Native method for Grace asString</summary>
         new public GraceObject AsString()
         {
             return this;
         }
 
+        /// <inheritdoc/>
         public override string ToString()
         {
             return "GraceString[\"" + Value + "\"]";
         }
 
+        /// <summary>Create a Grace string</summary>
+        /// <param name="val">Value of string to create</param>
         public static GraceObject Create(string val)
         {
             return new GraceString(val);

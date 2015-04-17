@@ -7,6 +7,7 @@ using Grace.Unicode;
 
 namespace Grace.Parsing
 {
+    /// <summary>Parser for Grace code</summary>
     public class Parser
     {
         private Lexer lexer;
@@ -19,17 +20,23 @@ namespace Grace.Parsing
 
         private bool doNotAcceptDelimitedBlock = false;
 
+        /// <param name="module">Module name for debugging</param>
+        /// <param name="code">Complete source code of this module</param>
         public Parser(string module, string code)
         {
             this.moduleName = module;
             this.code = code;
         }
 
+        /// <param name="code">Complete source code of this module</param>
         public Parser(string code)
         {
             this.code = code;
         }
 
+        /// <summary>Parse the source code of this instance from the
+        /// beginning</summary>
+        /// <returns>Module object created from the code</returns>
         public ParseNode Parse()
         {
             ObjectParseNode module = new ObjectParseNode(
@@ -81,6 +88,12 @@ namespace Grace.Parsing
             ErrorReporting.ReportStaticError(moduleName, lexer.current.line, code, localDescription);
         }
 
+        /// <summary>True until a particular kind of token
+        /// is found, for use in a loop</summary>
+        /// <remarks>If EOF is reached, reports an error.</remarks>
+        /// <param name="start">First token that led to this
+        /// sequence, for use in error reporting</param>
+        /// <typeparam name="T">Token class to search for</typeparam>
         private bool awaiting<T>(Token start) where T : Token
         {
             if (lexer.current is T)
@@ -91,6 +104,9 @@ namespace Grace.Parsing
             return true;
         }
 
+        /// <summary>Report an error if the current token is not
+        /// a particular kind</summary>
+        /// <typeparam name="T">Token class to expect</typeparam>
         private void expect<T>() where T : Token
         {
             if (lexer.current is T)
@@ -104,6 +120,8 @@ namespace Grace.Parsing
                     "Expected something else, got " + lexer.current);
         }
 
+        /// <summary>Obtain the next meaningful token from the lexer,
+        /// accounting for indentation rules and comments</summary>
         private Token nextToken()
         {
             lexer.NextToken();
@@ -139,6 +157,10 @@ namespace Grace.Parsing
                 lexer.NextToken();
         }
 
+        /// <summary>Take a comment, if present, attach it to a node,
+        /// and return that node</summary>
+        /// <param name="to">Node to attach comment to</param>
+        /// <typeparam name="T">Type of node</typeparam>
         private T attachComment<T>(T to)
             where T : ParseNode
         {
@@ -147,6 +169,9 @@ namespace Grace.Parsing
             return to;
         }
 
+        /// <summary>Attach many comments to a node</summary>
+        /// <param name="node">Node to attach comments to</param>
+        /// <param name="comments">Comment nodes to attach</param>
         private void attachComments(ParseNode node, List<ParseNode> comments)
         {
             if (comments.Count == 0)

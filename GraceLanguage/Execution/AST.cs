@@ -9,10 +9,16 @@ using Grace.Runtime;
 namespace Grace.Execution
 {
 
+    /// <summary>An abstract executable representation of a piece of
+    /// source code</summary>
     public abstract class Node
     {
+        /// <summary>The original source code location whence this
+        /// Node originate</summary>
         internal Token Location;
         private ParseNode parseNode;
+        /// <summary>The ParseNode whence this Node originated</summary>
+        /// <value>This property gets the value of the field parseNode</value>
         public ParseNode Origin
         {
             get
@@ -21,21 +27,32 @@ namespace Grace.Execution
             }
         }
 
+        /// <param name="location">Token spawning this node</param>
+        /// <param name="source">ParseNode spawning this node</param>
         internal Node(Token location, ParseNode source)
         {
             this.Location = location;
             this.parseNode = source;
         }
 
+        /// <param name="source">ParseNode spawning this node</param>
         internal Node(ParseNode source)
         {
             this.parseNode = source;
         }
 
+        /// <summary>Execute this node and return the resulting value</summary>
+        /// <param name="ctx">Current interpreter</param>
+        /// <returns>Result of evaluating node in the given context</returns>
         public abstract GraceObject Evaluate(EvaluationContext ctx);
+        /// <summary>Writes a textual debugging representation of this node
+        /// </summary>
+        /// <param name="tw">Destination for debugging string</param>
+        /// <param name="prefix">String to prepend to each line</param>
         public abstract void DebugPrint(System.IO.TextWriter tw, string prefix);
     }
 
+    /// <summary>A dialect statement</summary>
     public class DialectNode : Node
     {
 
@@ -46,6 +63,9 @@ namespace Grace.Execution
             origin = source;
         }
 
+        /// <summary>Module path</summary>
+        /// <value>This property gets the string value of the
+        /// path field of the originating parse node</value>
         public string Path
         {
             get
@@ -54,6 +74,7 @@ namespace Grace.Execution
             }
         }
 
+        /// <inheritdoc/>
         public override GraceObject Evaluate(EvaluationContext ctx)
         {
             var mod = ctx.LoadModule(Path);
@@ -69,6 +90,8 @@ namespace Grace.Execution
                 self.SetFlag(GraceObject.Flags.RunAtModuleEnd);
             return GraceObject.Done;
         }
+
+        /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
             tw.WriteLine(prefix + "Dialect:");
@@ -76,12 +99,15 @@ namespace Grace.Execution
         }
     }
 
+    /// <summary>An import statement</summary>
     public class ImportNode : Node
     {
 
         private Node type;
         private ImportParseNode origin;
 
+        /// <summary>Type annotation of the import statement</summary>
+        /// <value>This property gets the value of the type field</value>
         public Node Type { get { return type; } }
 
         internal ImportNode(Token location, ImportParseNode source,
@@ -92,6 +118,9 @@ namespace Grace.Execution
             this.origin = source;
         }
 
+        /// <summary>Module path</summary>
+        /// <value>This property gets the string value of the
+        /// path field of the originating parse node</value>
         public string Path
         {
             get
@@ -100,6 +129,9 @@ namespace Grace.Execution
             }
         }
 
+        /// <summary>Bound name</summary>
+        /// <value>This property gets the string value of the
+        /// name field of the originating parse node</value>
         public string Name
         {
             get
@@ -108,12 +140,15 @@ namespace Grace.Execution
             }
         }
 
+        /// <inheritdoc/>
         public override GraceObject Evaluate(EvaluationContext ctx)
         {
             var mod = ctx.LoadModule(Path);
-            var meth = ctx.AddDef(Name, mod);
+            ctx.AddDef(Name, mod);
             return GraceObject.Done;
         }
+
+        /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
             tw.WriteLine(prefix + "Import:");
@@ -129,6 +164,7 @@ namespace Grace.Execution
         }
     }
 
+    /// <summary>A method request with a syntactic receiver</summary>
     public class ExplicitReceiverRequestNode : RequestNode
     {
         private Node receiver;
@@ -139,6 +175,7 @@ namespace Grace.Execution
         {
             this.receiver = receiver;
         }
+        /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
             tw.WriteLine(prefix + "ExplicitReceiverRequest: " + Name);
@@ -166,6 +203,7 @@ namespace Grace.Execution
                 i++;
             }
         }
+        /// <inheritdoc/>
         public override GraceObject Evaluate(EvaluationContext ctx)
         {
             GraceObject rec = receiver.Evaluate(ctx);
@@ -208,6 +246,7 @@ namespace Grace.Execution
         }
     }
 
+    /// <summary>A method request with no syntactic receiver</summary>
     public class ImplicitReceiverRequestNode : RequestNode
     {
         internal ImplicitReceiverRequestNode(Token location, ParseNode source)
@@ -216,6 +255,7 @@ namespace Grace.Execution
 
         }
 
+        /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
             tw.WriteLine(prefix + "ImplicitReceiverRequest: " + Name);
@@ -248,6 +288,7 @@ namespace Grace.Execution
             }
         }
 
+        /// <inheritdoc/>
         public override GraceObject Evaluate(EvaluationContext ctx)
         {
             MethodRequest req = new MethodRequest();
@@ -293,10 +334,12 @@ namespace Grace.Execution
         }
     }
 
+    /// <summary>A method request, either explicit or implicit</summary>
     public abstract class RequestNode : Node, IEnumerable<RequestPartNode>
     {
 
         private string name = "";
+        /// <summary>The name parts making up this request</summary>
         protected List<RequestPartNode> parts;
 
         internal RequestNode(Token location,
@@ -306,6 +349,8 @@ namespace Grace.Execution
             this.parts = new List<RequestPartNode>();
         }
 
+        /// <summary>Make this request into a := bind request</summary>
+        /// <param name="val">Value to assign</param>
         public void MakeBind(Node val)
         {
             name += ":=";
@@ -313,6 +358,8 @@ namespace Grace.Execution
             parts[0].Arguments.Add(val);
         }
 
+        /// <summary>Add another part to this request</summary>
+        /// <param name="part">Part to append</param>
         public void AddPart(RequestPartNode part)
         {
             parts.Add(part);
@@ -321,6 +368,8 @@ namespace Grace.Execution
             name += part.Name;
         }
 
+        /// <summary>The name of the method being requested</summary>
+        /// <value>This property gets the value of the field name</value>
         public string Name
         {
             get
@@ -329,6 +378,8 @@ namespace Grace.Execution
             }
         }
 
+        /// <summary>Get an enumerator giving each part of this request
+        /// in turn</summary>
         public IEnumerator<RequestPartNode> GetEnumerator()
         {
             foreach (RequestPartNode p in parts)
@@ -337,6 +388,8 @@ namespace Grace.Execution
             }
         }
 
+        /// <summary>Get an enumerator giving each part of this request
+        /// in turn</summary>
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
         {
             return GetEnumerator();
@@ -344,6 +397,7 @@ namespace Grace.Execution
 
     }
 
+    /// <summary>A part of a method name and its arguments</summary>
     public class RequestPartNode
     {
         private string name;
@@ -357,11 +411,14 @@ namespace Grace.Execution
             this.arguments = arguments;
         }
 
+        /// <summary>Make this part into a := bind request part</summary>
         public void MakeBind()
         {
             name += ":=";
         }
 
+        /// <summary>The name of this part</summary>
+        /// <value>This property gets the string field name</value>
         public string Name
         {
             get
@@ -370,6 +427,8 @@ namespace Grace.Execution
             }
         }
 
+        /// <summary>Generic arguments to this part</summary>
+        /// <value>This property gets the field generics</value>
         public List<Node> GenericArguments
         {
             get
@@ -378,6 +437,8 @@ namespace Grace.Execution
             }
         }
 
+        /// <summary>Ordinary arguments to this part</summary>
+        /// <value>This property gets the field arguments</value>
         public List<Node> Arguments
         {
             get
@@ -388,6 +449,7 @@ namespace Grace.Execution
 
     }
 
+    /// <summary>An object constructor expression</summary>
     public class ObjectConstructorNode : Node
     {
         private List<Node> body = new List<Node>();
@@ -399,6 +461,9 @@ namespace Grace.Execution
 
         }
 
+        /// <summary>Add a new method or statement to the body of this
+        /// object</summary>
+        /// <param name="node">Node to add</param>
         public void Add(Node node)
         {
             MethodNode meth = node as MethodNode;
@@ -410,6 +475,8 @@ namespace Grace.Execution
             }
         }
 
+        /// <summary>The body of this object constructor</summary>
+        /// <value>This property gets the value of the field body</value>
         public List<Node> Body
         {
             get
@@ -417,6 +484,8 @@ namespace Grace.Execution
                 return body;
             }
         }
+
+        /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
             tw.WriteLine(prefix + "ObjectConstructor:");
@@ -432,6 +501,7 @@ namespace Grace.Execution
             }
         }
 
+        /// <inheritdoc/>
         public override GraceObject Evaluate(EvaluationContext ctx)
         {
             GraceObject ret = new GraceObject();
@@ -460,12 +530,15 @@ namespace Grace.Execution
         }
     }
 
+    /// <summary>A method declaration</summary>
     public class MethodNode : Node, IEnumerable<RequestPartNode>
     {
         private List<RequestPartNode> parts = new List<RequestPartNode>();
         private List<Node> body = new List<Node>();
         private string name = "";
         private Node returnType;
+
+        /// <summary>Whether this method is confidential or not</summary>
         public bool Confidential { get; set; }
 
         internal MethodNode(Token token, ParseNode source)
@@ -474,6 +547,8 @@ namespace Grace.Execution
 
         }
 
+        /// <summary>Add a part to this declaration</summary>
+        /// <param name="part">Part to add</param>
         public void AddPart(RequestPartNode part)
         {
             parts.Add(part);
@@ -482,6 +557,8 @@ namespace Grace.Execution
             name += part.Name;
         }
 
+        /// <summary>The name of this method</summary>
+        /// <value>This property gets the value of the field name</value>
         public string Name
         {
             get
@@ -490,6 +567,8 @@ namespace Grace.Execution
             }
         }
 
+        /// <summary>Get an enumerator giving each part of this method
+        /// in turn</summary>
         public IEnumerator<RequestPartNode> GetEnumerator()
         {
             foreach (RequestPartNode p in parts)
@@ -498,16 +577,22 @@ namespace Grace.Execution
             }
         }
 
+        /// <summary>Get an enumerator giving each part of this method
+        /// in turn</summary>
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
         {
             return GetEnumerator();
         }
 
+        /// <summary>Add a node to the body of this method</summary>
+        /// <param name="node">Node to add</param>
         public void Add(Node node)
         {
             body.Add(node);
         }
 
+        /// <summary>The body of this method</summary>
+        /// <value>This property gets the value of the field body</value>
         public List<Node> Body
         {
             get
@@ -516,6 +601,7 @@ namespace Grace.Execution
             }
         }
 
+        /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
             tw.WriteLine(prefix + "Method: " + Name);
@@ -554,11 +640,20 @@ namespace Grace.Execution
             }
         }
 
+        /// <inheritdoc/>
         public override GraceObject Evaluate(EvaluationContext ctx)
         {
             return null;
         }
 
+        /// <summary>Confirm that this method can be accessed through
+        /// the given request in this context</summary>
+        /// <remarks>If this method is confidential and the request is
+        /// not an interior one with privileged access, this method
+        /// will raise a Grace exception reporting an accessibility
+        /// violation.</remarks>
+        /// <param name="ctx">Current interpreter</param>
+        /// <param name="req">Request to check</param>
         protected virtual void checkAccessibility(EvaluationContext ctx,
                 MethodRequest req)
         {
@@ -573,7 +668,15 @@ namespace Grace.Execution
             }
         }
 
-        public virtual GraceObject Respond(EvaluationContext ctx, GraceObject self, MethodRequest req)
+        /// <summary>Respond to a given request with a given binding of the
+        /// receiver</summary>
+        /// <param name="ctx">Current interpreter</param>
+        /// <param name="self">Receiver of the request</param>
+        /// <param name="req">Request that accessed this method</param>
+        /// <returns>The return value of this method within
+        /// this context and with these arguments.</returns>
+        public virtual GraceObject Respond(EvaluationContext ctx,
+                GraceObject self, MethodRequest req)
         {
             checkAccessibility(ctx, req);
             GraceObject ret = null;
@@ -645,6 +748,7 @@ namespace Grace.Execution
         }
     }
 
+    /// <summary>A block expression</summary>
     public class BlockNode : Node
     {
         private List<Node> parameters;
@@ -659,6 +763,8 @@ namespace Grace.Execution
             this.body = body;
         }
 
+        /// <summary>The parameters of this block</summary>
+        /// <value>This property gets the value of the field parameters</value>
         public List<Node> Parameters
         {
             get
@@ -667,6 +773,8 @@ namespace Grace.Execution
             }
         }
 
+        /// <summary>The body of this block</summary>
+        /// <value>This property gets the value of the field body</value>
         public List<Node> Body
         {
             get
@@ -675,6 +783,7 @@ namespace Grace.Execution
             }
         }
 
+        /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
             tw.WriteLine(prefix + "Block:");
@@ -688,35 +797,16 @@ namespace Grace.Execution
             }
         }
 
+        /// <inheritdoc/>
         public override GraceObject Evaluate(EvaluationContext ctx)
         {
             GraceBlock ret = GraceBlock.Create(ctx, parameters, body);
             return ret;
         }
 
-        public virtual GraceObject Respond(EvaluationContext ctx, GraceObject self, MethodRequest req)
-        {
-            GraceObject ret = null;
-            /*LocalScope myScope = new LocalScope(req.Name);
-            foreach (var pp in parts.Zip(req, (dp, rp) => new { mine = dp, req = rp }))
-            {
-                foreach (var arg in pp.mine.Arguments.Zip(pp.req.Arguments, (a, b) => new { name = a, val = b }))
-                {
-                    string name = (arg.name as IdentifierNode).Name;
-                    myScope.AddLocalDef(name, arg.val);
-                }
-            }
-            ctx.Extend(myScope);
-            foreach (Node n in body)
-            {
-                ret = n.Evaluate(ctx);
-            }
-            ctx.Unextend(myScope);*/
-            return ret;
-        }
     }
 
-
+    /// <summary>A numeric literal</summary>
     public class NumberNode : Node
     {
 
@@ -774,6 +864,8 @@ namespace Grace.Execution
             return -1;
         }
 
+        /// <summary>The value of this literal as a double</summary>
+        /// <value>This property gets the value of the field val</value>
         public double Value
         {
             get
@@ -782,6 +874,7 @@ namespace Grace.Execution
             }
         }
 
+        /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
             string desc = "";
@@ -794,6 +887,7 @@ namespace Grace.Execution
             tw.WriteLine(prefix + "Number: " + desc + " (" + Value + ")");
         }
 
+        /// <inheritdoc/>
         public override GraceObject Evaluate(EvaluationContext ctx)
         {
             //return new GraceObjectProxy(Value);
@@ -801,6 +895,7 @@ namespace Grace.Execution
         }
     }
 
+    /// <summary>A string literal</summary>
     public class StringLiteralNode : Node
     {
 
@@ -811,6 +906,9 @@ namespace Grace.Execution
             origin = source;
         }
 
+        /// <summary>The string value of this literal</summary>
+        /// <value>This property gets the value field of the
+        /// originating parse node</value>
         public string Value
         {
             get
@@ -819,17 +917,20 @@ namespace Grace.Execution
             }
         }
 
+        /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
             tw.WriteLine(prefix + "String: " + Value);
         }
 
+        /// <inheritdoc/>
         public override GraceObject Evaluate(EvaluationContext ctx)
         {
             return GraceString.Create(Value);
         }
     }
 
+    /// <summary>A bare identifier</summary>
     public class IdentifierNode : Node
     {
 
@@ -840,6 +941,9 @@ namespace Grace.Execution
             origin = source;
         }
 
+        /// <summary>The name of this identifier</summary>
+        /// <value>This property gets the name field of the originating
+        /// parse node</value>
         public string Name
         {
             get
@@ -848,25 +952,34 @@ namespace Grace.Execution
             }
         }
 
+        /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
             tw.WriteLine(prefix + "Identifier: " + Name);
         }
 
+        /// <inheritdoc/>
         public override GraceObject Evaluate(EvaluationContext ctx)
         {
             return null;
         }
     }
 
+    /// <summary>A var declaration</summary>
     public class VarDeclarationNode : Node
     {
 
         private Node type;
         private VarDeclarationParseNode origin;
 
+        /// <summary>The type given to this var declaration</summary>
+        /// <value>This property gets the value of the field type</value>
         public Node Type { get { return type; } }
+
+        /// <summary>Whether this var is annotated readable</summary>
         public bool Readable { get; set; }
+
+        /// <summary>Whether this var is annotated writable</summary>
         public bool Writable { get; set; }
 
         internal VarDeclarationNode(Token location,
@@ -880,8 +993,12 @@ namespace Grace.Execution
             this.origin = source;
         }
 
+        /// <summary>The initial value given in this var declaration</summary>
         public Node Value { get; set; }
 
+        /// <summary>The name of this var declaration</summary>
+        /// <value>This property accesses the name field of the originating
+        /// parse node</value>
         public string Name
         {
             get
@@ -890,6 +1007,7 @@ namespace Grace.Execution
             }
         }
 
+        /// <inheritdoc/>
         public override GraceObject Evaluate(EvaluationContext ctx)
         {
             ReaderWriterPair pair;
@@ -904,6 +1022,7 @@ namespace Grace.Execution
             return GraceObject.Uninitialised;
         }
 
+        /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
             tw.WriteLine(prefix + "VarDeclaration:");
@@ -922,13 +1041,18 @@ namespace Grace.Execution
         }
     }
 
+    /// <summary>A def declaration</summary>
     public class DefDeclarationNode : Node
     {
 
         private Node type;
         private DefDeclarationParseNode origin;
 
+        /// <summary>The type given to this def declaration</summary>
+        /// <value>This property gets the value of the field type</value>
         public Node Type { get { return type; } }
+
+        /// <summary>Whether this def is annotated public</summary>
         public bool Public { get; set; }
 
         internal DefDeclarationNode(Token location,
@@ -942,8 +1066,12 @@ namespace Grace.Execution
             this.origin = source;
         }
 
+        /// <summary>The initial value given in this def declaration</summary>
         public Node Value { get; set; }
 
+        /// <summary>The name of this def declaration</summary>
+        /// <value>This property accesses the name field of the originating
+        /// parse node</value>
         public string Name
         {
             get
@@ -952,6 +1080,7 @@ namespace Grace.Execution
             }
         }
 
+        /// <inheritdoc/>
         public override GraceObject Evaluate(EvaluationContext ctx)
         {
             var meth = ctx.AddDef(Name, Value.Evaluate(ctx));
@@ -960,6 +1089,7 @@ namespace Grace.Execution
             return GraceObject.Uninitialised;
         }
 
+        /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
             tw.WriteLine(prefix + "DefDeclaration:");
@@ -982,6 +1112,7 @@ namespace Grace.Execution
         }
     }
 
+    /// <summary>A return statement</summary>
     public class ReturnNode : Node
     {
 
@@ -993,8 +1124,10 @@ namespace Grace.Execution
             Value = val;
         }
 
+        /// <summary>The returned expression</summary>
         public Node Value { get; set; }
 
+        /// <inheritdoc/>
         public override GraceObject Evaluate(EvaluationContext ctx)
         {
             MethodScope ms = ctx.FindNearestMethod();
@@ -1002,6 +1135,7 @@ namespace Grace.Execution
             return GraceObject.Done;
         }
 
+        /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
             tw.WriteLine(prefix + "Return:");
@@ -1013,6 +1147,7 @@ namespace Grace.Execution
         }
     }
 
+    /// <summary>A placeholder node with no effect</summary>
     public class NoopNode : Node
     {
 
@@ -1023,21 +1158,25 @@ namespace Grace.Execution
         }
 
 
+        /// <inheritdoc/>
         public override GraceObject Evaluate(EvaluationContext ctx)
         {
             return GraceObject.Done;
         }
 
+        /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
             tw.WriteLine(prefix + "Noop");
         }
     }
 
+    /// <summary>A type literal</summary>
     public class TypeNode : Node
     {
         private List<MethodTypeNode> body = new List<MethodTypeNode>();
 
+        /// <summary>The name of this type literal for debugging</summary>
         public string Name { get; set; }
 
         internal TypeNode(Token token, ParseNode source)
@@ -1046,6 +1185,8 @@ namespace Grace.Execution
             Name = "Anonymous";
         }
 
+        /// <summary>The body of this type literal</summary>
+        /// <value>This property gets the value of the field body</value>
         public List<MethodTypeNode> Body
         {
             get
@@ -1054,6 +1195,7 @@ namespace Grace.Execution
             }
         }
 
+        /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
             tw.WriteLine(prefix + "Type:");
@@ -1064,6 +1206,7 @@ namespace Grace.Execution
             }
         }
 
+        /// <inheritdoc/>
         public override GraceObject Evaluate(EvaluationContext ctx)
         {
             var ret = new GraceType(Name);
@@ -1073,11 +1216,14 @@ namespace Grace.Execution
         }
     }
 
+    /// <summary>A method type given in a type literal</summary>
     public class MethodTypeNode : Node, IEnumerable<RequestPartNode>
     {
         private List<RequestPartNode> parts = new List<RequestPartNode>();
 
+        /// <summary>Declared return type of this method</summary>
         public Node Returns { get; set; }
+
         private string name = "";
 
         internal MethodTypeNode(Token token, ParseNode source)
@@ -1085,6 +1231,7 @@ namespace Grace.Execution
         {
         }
 
+        /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
             tw.WriteLine(prefix + "MethodType: " + name);
@@ -1110,6 +1257,8 @@ namespace Grace.Execution
             }
         }
 
+        /// <summary>Add a part to this method name</summary>
+        /// <param name="part">Part to add</param>
         public void AddPart(RequestPartNode part)
         {
             parts.Add(part);
@@ -1118,6 +1267,8 @@ namespace Grace.Execution
             name += part.Name;
         }
 
+        /// <summary>Name of this method</summary>
+        /// <value>This property gets the value of the field name</value>
         public string Name
         {
             get
@@ -1126,6 +1277,8 @@ namespace Grace.Execution
             }
         }
 
+        /// <summary>Get an enumerator giving each part of this method
+        /// in turn</summary>
         public IEnumerator<RequestPartNode> GetEnumerator()
         {
             foreach (RequestPartNode p in parts)
@@ -1134,21 +1287,28 @@ namespace Grace.Execution
             }
         }
 
+        /// <summary>Get an enumerator giving each part of this method
+        /// in turn</summary>
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
         {
             return GetEnumerator();
         }
 
+        /// <inheritdoc/>
         public override GraceObject Evaluate(EvaluationContext ctx)
         {
             return GraceObject.Done;
         }
     }
 
+    /// <summary>A parameter a : b</summary>
     public class ParameterNode : IdentifierNode
     {
 
+        /// <summary>The declared type on this parameter</summary>
         public Node Type { get; set; }
+
+        /// <summary>Whether this parameter is variadic *x or not</summary>
         public bool Variadic { get; private set; }
 
         internal ParameterNode(Token location, IdentifierParseNode source)
@@ -1179,6 +1339,7 @@ namespace Grace.Execution
             Variadic = variadic;
         }
 
+        /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
             tw.WriteLine(prefix + "Parameter: " + Name);
@@ -1190,6 +1351,7 @@ namespace Grace.Execution
             }
         }
 
+        /// <inheritdoc/>
         public override GraceObject Evaluate(EvaluationContext ctx)
         {
             return null;

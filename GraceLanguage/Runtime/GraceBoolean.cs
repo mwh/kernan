@@ -8,11 +8,16 @@ using Grace.Execution;
 
 namespace Grace.Runtime
 {
-    class GraceBoolean : GraceObject
+    /// <summary>A Grace boolean object</summary>
+    public class GraceBoolean : GraceObject
     {
+        /// <summary>The true singleton</summary>
         public static GraceBoolean True = new GraceBoolean(true);
+
+        /// <summary>The false singleton</summary>
         public static GraceBoolean False = new GraceBoolean(false);
 
+        /// <summary>The truth value of this boolean</summary>
         public bool Boolean
         {
             get;
@@ -52,6 +57,7 @@ namespace Grace.Runtime
             AddMethod("!=", new DelegateMethodNode1(new NativeMethod1(this.NotEquals)));
         }
 
+        /// <summary>Native method for Grace !</summary>
         public GraceObject Negate()
         {
             if (Boolean)
@@ -59,6 +65,9 @@ namespace Grace.Runtime
             return GraceBoolean.True;
         }
 
+        /// <summary>Native method for Grace match</summary>
+        /// <param name="ctx">Current interpreter</param>
+        /// <param name="target">Target of the match</param>
         public GraceObject Match(EvaluationContext ctx, GraceObject target)
         {
             if (this.EqualsEquals(target) == GraceBoolean.True)
@@ -68,6 +77,7 @@ namespace Grace.Runtime
             return Matching.FailedMatch(ctx, target);
         }
 
+        /// <summary>Native method for Grace asString</summary>
         public new GraceObject AsString()
         {
             if (Boolean)
@@ -75,6 +85,8 @@ namespace Grace.Runtime
             return GraceString.Create("false");
         }
 
+        /// <summary>Native method for Grace &amp;&amp;</summary>
+        /// <param name="other">Argument to the method</param>
         public GraceObject AndAnd(GraceObject other)
         {
             GraceBoolean oth = other as GraceBoolean;
@@ -86,6 +98,8 @@ namespace Grace.Runtime
             return GraceBoolean.False;
         }
 
+        /// <summary>Native method for Grace ||</summary>
+        /// <param name="other">Argument to the method</param>
         public GraceObject OrOr(GraceObject other)
         {
             GraceBoolean oth = other as GraceBoolean;
@@ -97,6 +111,9 @@ namespace Grace.Runtime
             return GraceBoolean.False;
         }
 
+        /// <summary>Native method for Grace ifTrue</summary>
+        /// <param name="ctx">Current interpreter</param>
+        /// <param name="other">Block to apply if true</param>
         public GraceObject IfTrue(EvaluationContext ctx, GraceObject other)
         {
             var oth = other as GraceBlock;
@@ -118,6 +135,9 @@ namespace Grace.Runtime
             return GraceObject.Done;
         }
 
+        /// <summary>Native method for Grace ifFalse</summary>
+        /// <param name="ctx">Current interpreter</param>
+        /// <param name="other">Block to apply if false</param>
         public GraceObject IfFalse(EvaluationContext ctx, GraceObject other)
         {
             var oth = other as GraceBlock;
@@ -139,6 +159,10 @@ namespace Grace.Runtime
             return GraceObject.Done;
         }
 
+        /// <summary>Native method for Grace ifTrue ifFalse</summary>
+        /// <param name="ctx">Current interpreter</param>
+        /// <param name="req">Method request that gave rise to this method
+        /// execution</param>
         public GraceObject IfTrueIfFalse(EvaluationContext ctx,
                 MethodRequest req)
         {
@@ -172,6 +196,9 @@ namespace Grace.Runtime
             return falseBlock.Request(ctx, apply);
         }
 
+        /// <summary>Native method for Grace andAlso</summary>
+        /// <param name="ctx">Current interpreter</param>
+        /// <param name="other">Block to apply if true</param>
         public GraceObject AndAlso(EvaluationContext ctx, GraceObject other)
         {
             var oth = other as GraceBlock;
@@ -193,6 +220,9 @@ namespace Grace.Runtime
             return False;
         }
 
+        /// <summary>Native method for Grace orElse</summary>
+        /// <param name="ctx">Current interpreter</param>
+        /// <param name="other">Block to apply if false</param>
         public GraceObject OrElse(EvaluationContext ctx, GraceObject other)
         {
             var oth = other as GraceBlock;
@@ -214,6 +244,8 @@ namespace Grace.Runtime
             return True;
         }
 
+        /// <summary>Create a Grace boolean</summary>
+        /// <param name="val">Which of true or false to get</param>
         public static GraceObject Create(bool val)
         {
             if (val)

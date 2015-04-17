@@ -6,14 +6,21 @@ using System.Threading.Tasks;
 
 namespace Grace.Parsing
 {
+    /// <summary>A concrete syntax node</summary>
     public abstract class ParseNode
     {
+        /// <summary>Line number this node began on</summary>
         public int line;
+
+        /// <summary>Column number this node began at</summary>
         public int column;
+
+        /// <summary>Comment on this node, if any</summary>
         public ParseNode comment;
 
         internal Token Token { get; set; }
 
+        /// <param name="tok">Token that gave rise to this node</param>
         internal ParseNode(Token tok)
         {
             this.line = tok.line;
@@ -21,6 +28,7 @@ namespace Grace.Parsing
             Token = tok;
         }
 
+        /// <param name="basis">ParseNode that gave rise to this node</param>
         internal ParseNode(ParseNode basis)
         {
             Token = basis.Token;
@@ -28,8 +36,15 @@ namespace Grace.Parsing
             this.column = basis.column;
         }
 
+        /// <summary>Write a human-readable description of this node
+        /// and its children to a given sink</summary>
+        /// <param name="tw">Sink to write output into</param>
+        /// <param name="prefix">Prefix string to print before each line</param>
         public abstract void DebugPrint(System.IO.TextWriter tw, string prefix);
 
+        /// <summary>Write out this node's comment to a stream, if any</summary>
+        /// <param name="tw">Sink to write output into</param>
+        /// <param name="prefix">Prefix string to print before each line</param>
         public void writeComment(System.IO.TextWriter tw, string prefix)
         {
             if (this.comment != null)
@@ -39,14 +54,19 @@ namespace Grace.Parsing
             }
         }
 
+        /// <summary>Double-dispatch visitor for parse nodes</summary>
+        /// <param name="visitor">Visitor to double-dispatch to</param>
+        /// <typeparam name="T">Return type of visitor</typeparam>
         public virtual T Visit<T>(ParseNodeVisitor<T> visitor)
         {
             return visitor.Visit(this);
         }
     }
 
+    /// <summary>Parse node for an Object</summary>
     public class ObjectParseNode : ParseNode
     {
+        /// <summary>Body of the object</summary>
         public List<ParseNode> body;
 
         internal ObjectParseNode(Token tok)
@@ -55,6 +75,7 @@ namespace Grace.Parsing
             body = new List<ParseNode>();
         }
 
+        /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
             tw.WriteLine(prefix + "Object:");
@@ -64,6 +85,7 @@ namespace Grace.Parsing
             }
             writeComment(tw, prefix);
         }
+        /// <inheritdoc/>
         public override T Visit<T>(ParseNodeVisitor<T> visitor)
         {
             return visitor.Visit(this);
@@ -71,10 +93,17 @@ namespace Grace.Parsing
 
     }
 
+    /// <summary>Combined ordinary and generic parameters of
+    /// a method name part</summary>
     public struct PartParameters
     {
+        /// <summary>Generic parameters</summary>
         public List<ParseNode> Generics;
+        /// <summary>Ordinary parameters</summary>
         public List<ParseNode> Ordinary;
+
+        /// <param name="g">Generic parameters</param>
+        /// <param name="o">Ordinary parameters</param>
         public PartParameters(List<ParseNode> g, List<ParseNode> o)
         {
             Generics = g;
@@ -82,20 +111,40 @@ namespace Grace.Parsing
         }
     }
 
+    /// <summary>Shared interface of classes with the behaviour of
+    /// method headers</summary>
     public interface MethodHeader
     {
+        /// <summary>Add a part to this method header</summary>
+        /// <param name="id">Identifier naming the part to add</param>
         PartParameters AddPart(ParseNode id);
+
+        /// <summary>Return type of this method</summary>
         ParseNode returnType { get; set; }
+
+        /// <summary>Annotations of this method</summary>
         AnnotationsParseNode annotations { get; set; }
     }
 
+    /// <summary>Parse node for a method declaration</summary>
     public class MethodDeclarationParseNode : ParseNode, MethodHeader
     {
+        /// <summary>Parts of this method</summary>
         public List<ParseNode> nameParts;
+
+        /// <summary>Parameter lists of each part</summary>
         public List<List<ParseNode>> parameters;
+
+        /// <summary>Generic parameter lists of each part</summary>
         public List<List<ParseNode>> generics;
+
+        /// <summary>Body of this method</summary>
         public List<ParseNode> body;
+
+        /// <inheritdoc/>
         public ParseNode returnType { get; set; }
+
+        /// <inheritdoc/>
         public AnnotationsParseNode annotations { get; set; }
 
         internal MethodDeclarationParseNode(Token tok)
@@ -107,6 +156,7 @@ namespace Grace.Parsing
             body = new List<ParseNode>();
         }
 
+        /// <inheritdoc/>
         public PartParameters AddPart(ParseNode id)
         {
             nameParts.Add(id);
@@ -117,6 +167,7 @@ namespace Grace.Parsing
             return new PartParameters(gens, ordinaries);
         }
 
+        /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
             string name = "";
@@ -154,6 +205,7 @@ namespace Grace.Parsing
             }
             writeComment(tw, prefix);
         }
+        /// <inheritdoc/>
         public override T Visit<T>(ParseNodeVisitor<T> visitor)
         {
             return visitor.Visit(this);
@@ -161,14 +213,28 @@ namespace Grace.Parsing
 
     }
 
+    /// <summary>Parse node for a class declaration</summary>
     public class ClassDeclarationParseNode : ParseNode, MethodHeader
     {
+        /// <summary>Name of this class</summary>
         public ParseNode baseName;
+
+        /// <summary>Parts of the constructor of this class</summary>
         public List<ParseNode> nameParts;
+
+        /// <summary>Parameter lists of each part</summary>
         public List<List<ParseNode>> parameters;
+
+        /// <summary>Generic parameter lists of each part</summary>
         public List<List<ParseNode>> generics;
+
+        /// <summary>Body of this class</summary>
         public List<ParseNode> body;
+
+        /// <inheritdoc/>
         public ParseNode returnType { get; set; }
+
+        /// <inheritdoc/>
         public AnnotationsParseNode annotations { get; set; }
 
         internal ClassDeclarationParseNode(Token tok, ParseNode baseName)
@@ -181,6 +247,7 @@ namespace Grace.Parsing
             body = new List<ParseNode>();
         }
 
+        /// <inheritdoc/>
         public PartParameters AddPart(ParseNode id)
         {
             nameParts.Add(id);
@@ -191,6 +258,7 @@ namespace Grace.Parsing
             return new PartParameters(gens, ordinaries);
         }
 
+        /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
             IdentifierParseNode b = baseName as IdentifierParseNode;
@@ -229,6 +297,7 @@ namespace Grace.Parsing
             }
             writeComment(tw, prefix);
         }
+        /// <inheritdoc/>
         public override T Visit<T>(ParseNodeVisitor<T> visitor)
         {
             return visitor.Visit(this);
@@ -236,10 +305,16 @@ namespace Grace.Parsing
 
     }
 
+    /// <summary>Parse node for a type statement</summary>
     public class TypeStatementParseNode : ParseNode
     {
+        /// <summary>Name of this type</summary>
         public ParseNode baseName;
+
+        /// <summary>Value of this type declaration</summary>
         public ParseNode body;
+
+        /// <summary>Generic parameters of this type</summary>
         public List<ParseNode> genericParameters;
 
         internal TypeStatementParseNode(Token tok, ParseNode baseName,
@@ -251,6 +326,7 @@ namespace Grace.Parsing
             this.genericParameters = generics;
         }
 
+        /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
             tw.WriteLine(prefix + "TypeStatement:");
@@ -266,6 +342,8 @@ namespace Grace.Parsing
             body.DebugPrint(tw, prefix + "    ");
             writeComment(tw, prefix);
         }
+
+        /// <inheritdoc/>
         public override T Visit<T>(ParseNodeVisitor<T> visitor)
         {
             return visitor.Visit(this);
@@ -273,10 +351,13 @@ namespace Grace.Parsing
 
     }
 
+    /// <summary>Parse node for a type</summary>
     public class TypeParseNode : ParseNode
     {
+        /// <summary>Body of this type</summary>
         public List<ParseNode> body;
 
+        /// <summary>Name of this type for debugging</summary>
         public string Name { get; set; }
 
         internal TypeParseNode(Token tok, List<ParseNode> body)
@@ -285,6 +366,7 @@ namespace Grace.Parsing
             this.body = body;
         }
 
+        /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
             tw.WriteLine(prefix + "Type:");
@@ -295,18 +377,29 @@ namespace Grace.Parsing
             writeComment(tw, prefix);
         }
 
+        /// <inheritdoc/>
         public override T Visit<T>(ParseNodeVisitor<T> visitor)
         {
             return visitor.Visit(this);
         }
     }
 
+    /// <summary>Parse node for a type method</summary>
     public class TypeMethodParseNode : ParseNode, MethodHeader
     {
+        /// <summary>Parts of the method</summary>
         public List<ParseNode> nameParts;
+
+        /// <summary>Parameter lists of each part</summary>
         public List<List<ParseNode>> parameters;
+
+        /// <summary>Generic parameter lists of each part</summary>
         public List<List<ParseNode>> generics;
+
+        /// <inheritdoc/>
         public ParseNode returnType { get; set; }
+
+        /// <inheritdoc/>
         public AnnotationsParseNode annotations { get; set; }
 
         internal TypeMethodParseNode(Token tok)
@@ -317,6 +410,7 @@ namespace Grace.Parsing
             generics = new List<List<ParseNode>>();
         }
 
+        /// <inheritdoc/>
         public PartParameters AddPart(ParseNode id)
         {
             nameParts.Add(id);
@@ -327,6 +421,7 @@ namespace Grace.Parsing
             return new PartParameters(gens, ordinaries);
         }
 
+        /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
             string name = "";
@@ -354,6 +449,7 @@ namespace Grace.Parsing
             }
             writeComment(tw, prefix);
         }
+        /// <inheritdoc/>
         public override T Visit<T>(ParseNodeVisitor<T> visitor)
         {
             return visitor.Visit(this);
@@ -361,9 +457,13 @@ namespace Grace.Parsing
 
     }
 
+    /// <summary>Parse node for a block</summary>
     public class BlockParseNode : ParseNode
     {
+        /// <summary>Parameters of the block</summary>
         public List<ParseNode> parameters;
+
+        /// <summary>Body of the block</summary>
         public List<ParseNode> body;
 
         internal BlockParseNode(Token tok)
@@ -373,6 +473,7 @@ namespace Grace.Parsing
             parameters = new List<ParseNode>();
         }
 
+        /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
             tw.WriteLine(prefix + "Block:");
@@ -389,6 +490,7 @@ namespace Grace.Parsing
             writeComment(tw, prefix);
         }
 
+        /// <inheritdoc/>
         public override T Visit<T>(ParseNodeVisitor<T> visitor)
         {
             return visitor.Visit(this);
@@ -396,8 +498,10 @@ namespace Grace.Parsing
 
     }
 
+    /// <summary>Parse node for a varargs parameter</summary>
     public class VarArgsParameterParseNode : ParseNode
     {
+        /// <summary>Name of the parameter</summary>
         public ParseNode name;
 
         internal VarArgsParameterParseNode(ParseNode name)
@@ -406,6 +510,7 @@ namespace Grace.Parsing
             this.name = name;
         }
 
+        /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
             tw.WriteLine(prefix + "VarArgsParameter:");
@@ -414,6 +519,7 @@ namespace Grace.Parsing
             writeComment(tw, prefix);
         }
 
+        /// <inheritdoc/>
         public override T Visit<T>(ParseNodeVisitor<T> visitor)
         {
             return visitor.Visit(this);
@@ -421,9 +527,13 @@ namespace Grace.Parsing
 
     }
 
+    /// <summary>Parse node for a typed parameter</summary>
     public class TypedParameterParseNode : ParseNode
     {
+        /// <summary>Name of the parameter</summary>
         public ParseNode name;
+
+        /// <summary>Type of the parameter</summary>
         public ParseNode type;
 
         internal TypedParameterParseNode(ParseNode name, ParseNode type)
@@ -433,6 +543,7 @@ namespace Grace.Parsing
             this.type = type;
         }
 
+        /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
             tw.WriteLine(prefix + "TypedParameter:");
@@ -443,6 +554,7 @@ namespace Grace.Parsing
             writeComment(tw, prefix);
         }
 
+        /// <inheritdoc/>
         public override T Visit<T>(ParseNodeVisitor<T> visitor)
         {
             return visitor.Visit(this);
@@ -450,11 +562,20 @@ namespace Grace.Parsing
 
     }
 
+    /// <summary>Parse node for a var declaration</summary>
     public class VarDeclarationParseNode : ParseNode
     {
+        /// <summary>Name of the var</summary>
         public ParseNode name;
+
+        /// <summary>Initial value of the var</summary>
         public ParseNode val;
+
+        /// <summary>Type of the var, if any</summary>
         public ParseNode type;
+
+        /// <summary>Annotations of the var, if any</summary>
+
         public AnnotationsParseNode annotations;
 
         internal VarDeclarationParseNode(Token tok, ParseNode name, ParseNode val,
@@ -467,6 +588,7 @@ namespace Grace.Parsing
             this.annotations = annotations;
         }
 
+        /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
             tw.WriteLine(prefix + "VarDeclaration:");
@@ -490,6 +612,7 @@ namespace Grace.Parsing
             writeComment(tw, prefix);
         }
 
+        /// <inheritdoc/>
         public override T Visit<T>(ParseNodeVisitor<T> visitor)
         {
             return visitor.Visit(this);
@@ -497,11 +620,19 @@ namespace Grace.Parsing
 
     }
 
+    /// <summary>Parse node for a def declaration</summary>
     public class DefDeclarationParseNode : ParseNode
     {
+        /// <summary>Name of the def</summary>
         public ParseNode name;
+
+        /// <summary>Value of the def</summary>
         public ParseNode val;
+
+        /// <summary>Type of the def, if any</summary>
         public ParseNode type;
+
+        /// <summary>Annotations of the def, if any</summary>
         public AnnotationsParseNode annotations;
 
         internal DefDeclarationParseNode(Token tok, ParseNode name, ParseNode val,
@@ -514,6 +645,7 @@ namespace Grace.Parsing
             this.annotations = annotations;
         }
 
+        /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
             tw.WriteLine(prefix + "DefDeclaration:");
@@ -534,6 +666,7 @@ namespace Grace.Parsing
             writeComment(tw, prefix);
         }
 
+        /// <inheritdoc/>
         public override T Visit<T>(ParseNodeVisitor<T> visitor)
         {
             return visitor.Visit(this);
@@ -541,19 +674,25 @@ namespace Grace.Parsing
 
     }
 
+    /// <summary>Parse node for a list of annotations</summary>
     public class AnnotationsParseNode : ParseNode
     {
+        /// <summary>The annotations in this collection</summary>
         List<ParseNode> annotations = new List<ParseNode>();
         internal AnnotationsParseNode(Token tok)
             : base(tok)
         {
         }
 
+        /// <summary>Add an annotation to this collection</summary>
+        /// <param name="ann">Annotation to add</param>
         public void AddAnnotation(ParseNode ann)
         {
             annotations.Add(ann);
         }
 
+        /// <summary>Check for a named annotation</summary>
+        /// <param name="name">Annotation to search for</param>
         public bool HasAnnotation(string name)
         {
             foreach (ParseNode p in annotations)
@@ -568,6 +707,7 @@ namespace Grace.Parsing
             return false;
         }
 
+        /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
             tw.WriteLine(prefix + "Annotations:");
@@ -576,6 +716,7 @@ namespace Grace.Parsing
             writeComment(tw, prefix);
         }
 
+        /// <inheritdoc/>
         public override T Visit<T>(ParseNodeVisitor<T> visitor)
         {
             return visitor.Visit(this);
@@ -583,10 +724,16 @@ namespace Grace.Parsing
 
     }
 
+    /// <summary>Parse node for an operator</summary>
     public class OperatorParseNode : ParseNode
     {
+        /// <summary>LHS of the operator</summary>
         public ParseNode left;
+
+        /// <summary>RHS of the operator</summary>
         public ParseNode right;
+
+        /// <summary>The name (symbol) of the operator</summary>
         public string name;
 
         internal OperatorParseNode(Token tok, string name, ParseNode l,
@@ -598,6 +745,7 @@ namespace Grace.Parsing
             right = r;
         }
 
+        /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
             tw.WriteLine(prefix + "Operator: " + name);
@@ -606,6 +754,7 @@ namespace Grace.Parsing
             writeComment(tw, prefix);
         }
 
+        /// <inheritdoc/>
         public override T Visit<T>(ParseNodeVisitor<T> visitor)
         {
             return visitor.Visit(this);
@@ -614,9 +763,13 @@ namespace Grace.Parsing
     }
 
 
+    /// <summary>Parse node for a prefix operator</summary>
     public class PrefixOperatorParseNode : ParseNode
     {
+        /// <summary>Name (symbol) of the operator</summary>
         public string name;
+
+        /// <summary>Receiver of the operator request</summary>
         public ParseNode receiver;
 
         internal PrefixOperatorParseNode(OperatorToken tok, ParseNode expr)
@@ -626,6 +779,7 @@ namespace Grace.Parsing
             this.receiver = expr;
         }
 
+        /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
             tw.WriteLine(prefix + "PrefixOperator: " + name);
@@ -633,6 +787,7 @@ namespace Grace.Parsing
             writeComment(tw, prefix);
         }
 
+        /// <inheritdoc/>
         public override T Visit<T>(ParseNodeVisitor<T> visitor)
         {
             return visitor.Visit(this);
@@ -640,9 +795,13 @@ namespace Grace.Parsing
 
     }
 
+    /// <summary>Parse node for a bind :=</summary>
     public class BindParseNode : ParseNode
     {
+        /// <summary>LHS of :=</summary>
         public ParseNode left;
+
+        /// <summary>RHS of :=</summary>
         public ParseNode right;
 
         internal BindParseNode(Token tok, ParseNode l, ParseNode r)
@@ -652,6 +811,7 @@ namespace Grace.Parsing
             right = r;
         }
 
+        /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
             tw.WriteLine(prefix + "Bind:");
@@ -660,6 +820,7 @@ namespace Grace.Parsing
             writeComment(tw, prefix);
         }
 
+        /// <inheritdoc/>
         public override T Visit<T>(ParseNodeVisitor<T> visitor)
         {
             return visitor.Visit(this);
@@ -667,10 +828,15 @@ namespace Grace.Parsing
 
     }
 
+    /// <summary>Parse node for a number</summary>
     public class NumberParseNode : ParseNode
     {
+        /// <summary>Base of the number</summary>
         public int _base;
+
+        /// <summary>Digits of the number in its base</summary>
         public string digits;
+
         internal NumberParseNode(Token tok)
             : base(tok)
         {
@@ -679,6 +845,7 @@ namespace Grace.Parsing
             digits = it.digits;
         }
 
+        /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
             string desc = "";
@@ -692,6 +859,7 @@ namespace Grace.Parsing
             writeComment(tw, prefix);
         }
 
+        /// <inheritdoc/>
         public override T Visit<T>(ParseNodeVisitor<T> visitor)
         {
             return visitor.Visit(this);
@@ -699,9 +867,12 @@ namespace Grace.Parsing
 
     }
 
+    /// <summary>Parse node for an identifier</summary>
     public class IdentifierParseNode : ParseNode
     {
+        /// <summary>Name of this identifier</summary>
         public string name;
+
         internal IdentifierParseNode(Token tok)
             : base(tok)
         {
@@ -716,12 +887,14 @@ namespace Grace.Parsing
         }
 
 
+        /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
             tw.WriteLine(prefix + "Identifier: " + name);
             writeComment(tw, prefix);
         }
 
+        /// <inheritdoc/>
         public override T Visit<T>(ParseNodeVisitor<T> visitor)
         {
             return visitor.Visit(this);
@@ -729,10 +902,16 @@ namespace Grace.Parsing
 
     }
 
+    /// <summary>Parse node for a string literal</summary>
     public class StringLiteralParseNode : ParseNode
     {
+        /// <summary>String value after escape processing</summary>
         public string value;
+
+        /// <summary>Literal string as written, without
+        /// escape processing</summary>
         public string raw;
+
         internal StringLiteralParseNode(Token tok)
             : base(tok)
         {
@@ -741,12 +920,14 @@ namespace Grace.Parsing
             raw = comm.raw;
         }
 
+        /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
             tw.WriteLine(prefix + "StringLiteral: " + raw);
             writeComment(tw, prefix);
         }
 
+        /// <inheritdoc/>
         public override T Visit<T>(ParseNodeVisitor<T> visitor)
         {
             return visitor.Visit(this);
@@ -754,8 +935,10 @@ namespace Grace.Parsing
 
     }
 
+    /// <summary>Parse node for a interpolated string</summary>
     public class InterpolatedStringParseNode : ParseNode
     {
+        /// <summary>List of component strings and stringifiables</summary>
         public List<ParseNode> parts;
 
         internal InterpolatedStringParseNode(Token tok)
@@ -764,6 +947,7 @@ namespace Grace.Parsing
             parts = new List<ParseNode>();
         }
 
+        /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
             tw.WriteLine(prefix + "InterpolatedString:");
@@ -772,6 +956,7 @@ namespace Grace.Parsing
             writeComment(tw, prefix);
         }
 
+        /// <inheritdoc/>
         public override T Visit<T>(ParseNodeVisitor<T> visitor)
         {
             return visitor.Visit(this);
@@ -779,10 +964,16 @@ namespace Grace.Parsing
 
     }
 
+    /// <summary>Parse node for a implicit-receiver request</summary>
     public class ImplicitReceiverRequestParseNode : ParseNode
     {
+        /// <summary>Parts of this method</summary>
         public List<ParseNode> nameParts;
+
+        /// <summary>Argument lists of each part</summary>
         public List<List<ParseNode>> arguments;
+
+        /// <summary>Generic argument lists of each part</summary>
         public List<List<ParseNode>> genericArguments;
 
         internal ImplicitReceiverRequestParseNode(ParseNode id)
@@ -794,6 +985,7 @@ namespace Grace.Parsing
             AddPart(id);
         }
 
+        /// <summary>Add a part to the method requested here</summary>
         public void AddPart(ParseNode id)
         {
             nameParts.Add(id);
@@ -801,6 +993,7 @@ namespace Grace.Parsing
             genericArguments.Add(new List<ParseNode>());
         }
 
+        /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
             string name = "";
@@ -827,6 +1020,7 @@ namespace Grace.Parsing
             writeComment(tw, prefix);
         }
 
+        /// <inheritdoc/>
         public override T Visit<T>(ParseNodeVisitor<T> visitor)
         {
             return visitor.Visit(this);
@@ -834,12 +1028,21 @@ namespace Grace.Parsing
 
     }
 
+    /// <summary>Parse node for a explicit-receiver request</summary>
     public class ExplicitReceiverRequestParseNode : ParseNode
     {
+        /// <summary>Receiver of this request</summary>
         public ParseNode receiver;
+
+        /// <summary>Parts of this method</summary>
         public List<ParseNode> nameParts;
+
+        /// <summary>Argument lists of each part</summary>
         public List<List<ParseNode>> arguments;
+
+        /// <summary>Generic argument lists of each part</summary>
         public List<List<ParseNode>> genericArguments;
+
 
         internal ExplicitReceiverRequestParseNode(ParseNode receiver)
             : base(receiver)
@@ -850,6 +1053,7 @@ namespace Grace.Parsing
             genericArguments = new List<List<ParseNode>>();
         }
 
+        /// <summary>Add a part to the method requested here</summary>
         public void AddPart(ParseNode id)
         {
             nameParts.Add(id);
@@ -857,6 +1061,7 @@ namespace Grace.Parsing
             genericArguments.Add(new List<ParseNode>());
         }
 
+        /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
             string name = "";
@@ -885,6 +1090,7 @@ namespace Grace.Parsing
             writeComment(tw, prefix);
         }
 
+        /// <inheritdoc/>
         public override T Visit<T>(ParseNodeVisitor<T> visitor)
         {
             return visitor.Visit(this);
@@ -892,8 +1098,10 @@ namespace Grace.Parsing
 
     }
 
+    /// <summary>Parse node for an inherits clause</summary>
     public class InheritsParseNode : ParseNode
     {
+        /// <summary>RHS of the inherits clause</summary>
         public ParseNode from;
         internal InheritsParseNode(Token tok, ParseNode expr)
             : base(tok)
@@ -901,6 +1109,7 @@ namespace Grace.Parsing
             from = expr;
         }
 
+        /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
             tw.WriteLine(prefix + "Inherits:");
@@ -908,6 +1117,7 @@ namespace Grace.Parsing
             writeComment(tw, prefix);
         }
 
+        /// <inheritdoc/>
         public override T Visit<T>(ParseNodeVisitor<T> visitor)
         {
             return visitor.Visit(this);
@@ -915,10 +1125,16 @@ namespace Grace.Parsing
 
     }
 
+    /// <summary>Parse node for an import</summary>
     public class ImportParseNode : ParseNode
     {
+        /// <summary>Given import path in the syntax</summary>
         public ParseNode path;
+
+        /// <summary>Given "as name" in the syntax</summary>
         public ParseNode name;
+
+        /// <summary>Given ": type", if provided</summary>
         public ParseNode type;
 
         internal ImportParseNode(Token tok, ParseNode path, ParseNode name,
@@ -930,6 +1146,7 @@ namespace Grace.Parsing
             this.type = type;
         }
 
+        /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
             tw.WriteLine(prefix + "Import:");
@@ -945,6 +1162,7 @@ namespace Grace.Parsing
             writeComment(tw, prefix);
         }
 
+        /// <inheritdoc/>
         public override T Visit<T>(ParseNodeVisitor<T> visitor)
         {
             return visitor.Visit(this);
@@ -952,16 +1170,19 @@ namespace Grace.Parsing
 
     }
 
+    /// <summary>Parse node for a dialect declaration</summary>
     public class DialectParseNode : ParseNode
     {
+        /// <summary>Given import path in the syntax</summary>
         public ParseNode path;
-        public ParseNode name;
+
         internal DialectParseNode(Token tok, ParseNode path)
             : base(tok)
         {
             this.path = path;
         }
 
+        /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
             tw.WriteLine(prefix + "Dialect:");
@@ -969,6 +1190,7 @@ namespace Grace.Parsing
             writeComment(tw, prefix);
         }
 
+        /// <inheritdoc/>
         public override T Visit<T>(ParseNodeVisitor<T> visitor)
         {
             return visitor.Visit(this);
@@ -976,15 +1198,19 @@ namespace Grace.Parsing
 
     }
 
+    /// <summary>Parse node for a return statement</summary>
     public class ReturnParseNode : ParseNode
     {
+        /// <summary>Expression returned, if any</summary>
         public ParseNode returnValue;
+
         internal ReturnParseNode(Token tok, ParseNode val)
             : base(tok)
         {
             returnValue = val;
         }
 
+        /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
             tw.WriteLine(prefix + "Return:");
@@ -995,6 +1221,7 @@ namespace Grace.Parsing
             writeComment(tw, prefix);
         }
 
+        /// <inheritdoc/>
         public override T Visit<T>(ParseNodeVisitor<T> visitor)
         {
             return visitor.Visit(this);
@@ -1002,9 +1229,12 @@ namespace Grace.Parsing
 
     }
 
+    /// <summary>Parse node for a comment</summary>
     public class CommentParseNode : ParseNode
     {
+        /// <summary>String body of comment</summary>
         public string value;
+
         internal CommentParseNode(Token tok)
             : base(tok)
         {
@@ -1012,6 +1242,7 @@ namespace Grace.Parsing
             value = comm.value;
         }
 
+        /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
             tw.WriteLine(prefix + "Comment: " + value);
@@ -1019,6 +1250,7 @@ namespace Grace.Parsing
                 this.comment.DebugPrint(tw, prefix);
         }
 
+        /// <inheritdoc/>
         public override T Visit<T>(ParseNodeVisitor<T> visitor)
         {
             return visitor.Visit(this);
