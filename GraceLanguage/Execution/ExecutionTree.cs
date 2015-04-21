@@ -30,7 +30,7 @@ namespace Grace.Execution
         public Node Visit(ObjectParseNode obj)
         {
             ObjectConstructorNode ret = new ObjectConstructorNode(obj.Token, obj);
-            foreach (ParseNode p in obj.body)
+            foreach (ParseNode p in obj.Body)
             {
                 if (!(p is CommentParseNode))
                     ret.Add(p.Visit<Node>(this));
@@ -54,7 +54,7 @@ namespace Grace.Execution
         public Node Visit(InterpolatedStringParseNode n)
         {
             Node ret = null;
-            foreach (ParseNode part in n.parts)
+            foreach (ParseNode part in n.Parts)
             {
                 if (ret == null)
                 {
@@ -92,13 +92,13 @@ namespace Grace.Execution
         {
             MethodNode ret = new MethodNode(d.Token, d);
             string name = "";
-            for (int i = 0; i < d.nameParts.Count; i++)
+            for (int i = 0; i < d.NameParts.Count; i++)
             {
                 if (name != "")
                     name += " ";
-                string partName = (d.nameParts[i] as IdentifierParseNode).name;
+                string partName = (d.NameParts[i] as IdentifierParseNode).Name;
                 name += partName;
-                List<ParseNode> partParams = d.parameters[i];
+                List<ParseNode> partParams = d.Parameters[i];
                 List<Node> parameters = new List<Node>();
                 foreach (ParseNode p in partParams)
                 {
@@ -109,14 +109,14 @@ namespace Grace.Execution
                         parameters.Add(new ParameterNode(id.Token, id));
                     else if (tppn != null)
                     {
-                        parameters.Add(new ParameterNode(tppn.Token, tppn.name as IdentifierParseNode, tppn.type.Visit(this)));
+                        parameters.Add(new ParameterNode(tppn.Token, tppn.Name as IdentifierParseNode, tppn.Type.Visit(this)));
                     }
                     else if (vappn != null)
                     {
                         // Inside could be either an identifier or a
                         // TypedParameterParseNode - check for both.
-                        var inIPN = vappn.name as IdentifierParseNode;
-                        var inTPPN = vappn.name as TypedParameterParseNode;
+                        var inIPN = vappn.Name as IdentifierParseNode;
+                        var inTPPN = vappn.Name as TypedParameterParseNode;
                         if (inIPN != null)
                             parameters.Add(new ParameterNode(inIPN.Token,
                                         inIPN,
@@ -124,9 +124,9 @@ namespace Grace.Execution
                                         ));
                         else if (inTPPN != null)
                             parameters.Add(new ParameterNode(inTPPN.Token,
-                                        inTPPN.name as IdentifierParseNode,
+                                        inTPPN.Name as IdentifierParseNode,
                                         true, // Variadic
-                                        inTPPN.type.Visit(this)
+                                        inTPPN.Type.Visit(this)
                                         ));
                     }
                     else
@@ -135,7 +135,7 @@ namespace Grace.Execution
                     }
                 }
                 List<Node> generics = new List<Node>();
-                foreach (ParseNode p in d.generics[i])
+                foreach (ParseNode p in d.Generics[i])
                 {
                     IdentifierParseNode id = p as IdentifierParseNode;
                     if (id != null)
@@ -150,10 +150,10 @@ namespace Grace.Execution
                 RequestPartNode rpn = new RequestPartNode(partName, generics, parameters);
                 ret.AddPart(rpn);
             }
-            if (d.annotations != null
-                    && d.annotations.HasAnnotation("confidential"))
+            if (d.Annotations != null
+                    && d.Annotations.HasAnnotation("confidential"))
                 ret.Confidential = true;
-            foreach (ParseNode p in d.body)
+            foreach (ParseNode p in d.Body)
                 if (!(p is CommentParseNode))
                     ret.Add(p.Visit(this));
             return ret;
@@ -163,7 +163,7 @@ namespace Grace.Execution
         public Node Visit(IdentifierParseNode i)
         {
             ImplicitReceiverRequestNode ret = new ImplicitReceiverRequestNode(i.Token, i);
-            RequestPartNode rpn = new RequestPartNode(i.name, new List<Node>(), new List<Node>());
+            RequestPartNode rpn = new RequestPartNode(i.Name, new List<Node>(), new List<Node>());
             ret.AddPart(rpn);
             return ret;
         }
@@ -172,11 +172,11 @@ namespace Grace.Execution
         public Node Visit(ImplicitReceiverRequestParseNode irrpn)
         {
             ImplicitReceiverRequestNode ret = new ImplicitReceiverRequestNode(irrpn.Token, irrpn);
-            for (int i = 0; i < irrpn.arguments.Count; i++)
+            for (int i = 0; i < irrpn.Arguments.Count; i++)
             {
-                RequestPartNode rpn = new RequestPartNode((irrpn.nameParts[i] as IdentifierParseNode).name,
-                    map(irrpn.genericArguments[i]),
-                    map(irrpn.arguments[i]));
+                RequestPartNode rpn = new RequestPartNode((irrpn.NameParts[i] as IdentifierParseNode).Name,
+                    map(irrpn.GenericArguments[i]),
+                    map(irrpn.Arguments[i]));
                 ret.AddPart(rpn);
             }
             return ret;
@@ -186,12 +186,12 @@ namespace Grace.Execution
         public Node Visit(ExplicitReceiverRequestParseNode irrpn)
         {
             ExplicitReceiverRequestNode ret = new ExplicitReceiverRequestNode(irrpn.Token, irrpn,
-                irrpn.receiver.Visit(this));
-            for (int i = 0; i < irrpn.arguments.Count; i++)
+                irrpn.Receiver.Visit(this));
+            for (int i = 0; i < irrpn.Arguments.Count; i++)
             {
-                RequestPartNode rpn = new RequestPartNode((irrpn.nameParts[i] as IdentifierParseNode).name,
-                    map(irrpn.genericArguments[i]),
-                    map(irrpn.arguments[i]));
+                RequestPartNode rpn = new RequestPartNode((irrpn.NameParts[i] as IdentifierParseNode).Name,
+                    map(irrpn.GenericArguments[i]),
+                    map(irrpn.Arguments[i]));
                 ret.AddPart(rpn);
             }
             return ret;
@@ -201,8 +201,8 @@ namespace Grace.Execution
         public Node Visit(PrefixOperatorParseNode popn)
         {
             ExplicitReceiverRequestNode ret = new ExplicitReceiverRequestNode(popn.Token, popn,
-                popn.receiver.Visit(this));
-            RequestPartNode rpn = new RequestPartNode("prefix" + popn.name,
+                popn.Receiver.Visit(this));
+            RequestPartNode rpn = new RequestPartNode("prefix" + popn.Name,
                     new List<Node>(),
                     new List<Node>());
             ret.AddPart(rpn);
@@ -212,9 +212,9 @@ namespace Grace.Execution
         /// <inheritdoc />
         public Node Visit(OperatorParseNode opn)
         {
-            ExplicitReceiverRequestNode ret = new ExplicitReceiverRequestNode(opn.Token, opn, opn.left.Visit(this));
+            ExplicitReceiverRequestNode ret = new ExplicitReceiverRequestNode(opn.Token, opn, opn.Left.Visit(this));
             List<Node> args = new List<Node>();
-            args.Add(opn.right.Visit(this));
+            args.Add(opn.Right.Visit(this));
             RequestPartNode rpn = new RequestPartNode(opn.name, new List<Node>(), args);
             ret.AddPart(rpn);
             return ret;
@@ -225,23 +225,23 @@ namespace Grace.Execution
         {
             Node val = null;
             Node type = null;
-            if (vdpn.val != null)
-                val = vdpn.val.Visit(this);
-            if (vdpn.type != null)
-                type = vdpn.type.Visit(this);
+            if (vdpn.Value != null)
+                val = vdpn.Value.Visit(this);
+            if (vdpn.Type != null)
+                type = vdpn.Type.Visit(this);
             var ret = new VarDeclarationNode(vdpn.Token, vdpn,
                     val, type);
-            if (vdpn.annotations != null
-                    && vdpn.annotations.HasAnnotation("public"))
+            if (vdpn.Annotations != null
+                    && vdpn.Annotations.HasAnnotation("public"))
             {
                 ret.Readable = true;
                 ret.Writable = true;
             }
-            if (vdpn.annotations != null
-                    && vdpn.annotations.HasAnnotation("readable"))
+            if (vdpn.Annotations != null
+                    && vdpn.Annotations.HasAnnotation("readable"))
                 ret.Readable = true;
-            if (vdpn.annotations != null
-                    && vdpn.annotations.HasAnnotation("writable"))
+            if (vdpn.Annotations != null
+                    && vdpn.Annotations.HasAnnotation("writable"))
                 ret.Writable = true;
             return ret;
         }
@@ -251,17 +251,17 @@ namespace Grace.Execution
         {
             Node val = null;
             Node type = null;
-            if (vdpn.val != null)
-                val = vdpn.val.Visit(this);
-            if (vdpn.type != null)
-                type = vdpn.type.Visit(this);
+            if (vdpn.Value != null)
+                val = vdpn.Value.Visit(this);
+            if (vdpn.Type != null)
+                type = vdpn.Type.Visit(this);
             var ret = new DefDeclarationNode(vdpn.Token, vdpn,
                     val, type);
-            if (vdpn.annotations != null
-                    && vdpn.annotations.HasAnnotation("public"))
+            if (vdpn.Annotations != null
+                    && vdpn.Annotations.HasAnnotation("public"))
                 ret.Public = true;
-            if (vdpn.annotations != null
-                    && vdpn.annotations.HasAnnotation("readable"))
+            if (vdpn.Annotations != null
+                    && vdpn.Annotations.HasAnnotation("readable"))
                 ret.Public = true;
             return ret;
         }
@@ -269,8 +269,8 @@ namespace Grace.Execution
         /// <inheritdoc />
         public Node Visit(BindParseNode bpn)
         {
-            var ret = bpn.left.Visit(this);
-            var right = bpn.right.Visit(this);
+            var ret = bpn.Left.Visit(this);
+            var right = bpn.Right.Visit(this);
             var lrrn = ret as RequestNode;
             if (lrrn != null)
             {
@@ -283,7 +283,7 @@ namespace Grace.Execution
         public Node Visit(BlockParseNode d)
         {
             var parameters = new List<Node>();
-            foreach (ParseNode p in d.parameters)
+            foreach (ParseNode p in d.Parameters)
             {
                 IdentifierParseNode id = p as IdentifierParseNode;
                 TypedParameterParseNode tppn = p as TypedParameterParseNode;
@@ -291,7 +291,7 @@ namespace Grace.Execution
                     parameters.Add(new ParameterNode(id.Token, id));
                 else if (tppn != null)
                 {
-                    parameters.Add(new ParameterNode(tppn.Token, tppn.name as IdentifierParseNode, tppn.type.Visit(this)));
+                    parameters.Add(new ParameterNode(tppn.Token, tppn.Name as IdentifierParseNode, tppn.Type.Visit(this)));
                 }
                 else if (p is NumberParseNode || p is StringLiteralParseNode
                         || p is OperatorParseNode)
@@ -305,7 +305,7 @@ namespace Grace.Execution
             }
             var ret = new BlockNode(d.Token, d,
                     parameters,
-                    map(d.body));
+                    map(d.Body));
             return ret;
         }
 
@@ -314,17 +314,17 @@ namespace Grace.Execution
         {
             var clsObj = new ObjectParseNode(d.Token);
             var constructor = new MethodDeclarationParseNode(d.Token);
-            constructor.nameParts = d.nameParts;
-            constructor.parameters = d.parameters;
-            constructor.generics = d.generics;
-            constructor.returnType = d.returnType;
-            constructor.annotations = d.annotations;
+            constructor.NameParts = d.NameParts;
+            constructor.Parameters = d.Parameters;
+            constructor.Generics = d.Generics;
+            constructor.ReturnType = d.ReturnType;
+            constructor.Annotations = d.Annotations;
             var instanceObj = new ObjectParseNode(d.Token);
-            instanceObj.body = d.body;
-            constructor.body.Add(instanceObj);
-            clsObj.body.Add(constructor);
+            instanceObj.Body = d.Body;
+            constructor.Body.Add(instanceObj);
+            clsObj.Body.Add(constructor);
             var dpn = new DefDeclarationParseNode(d.Token,
-                    d.baseName,
+                    d.BaseName,
                     clsObj,
                     null, // Type
                     null);
@@ -334,11 +334,11 @@ namespace Grace.Execution
         /// <inheritdoc />
         public Node Visit(ReturnParseNode rpn)
         {
-            if (rpn.returnValue == null)
+            if (rpn.ReturnValue == null)
                 return new ReturnNode(rpn.Token, rpn,
                         null);
             return new ReturnNode(rpn.Token, rpn,
-                    rpn.returnValue.Visit(this));
+                    rpn.ReturnValue.Visit(this));
         }
 
         /// <inheritdoc />
@@ -351,14 +351,14 @@ namespace Grace.Execution
         public Node Visit(TypeStatementParseNode tspn)
         {
             var meth = new MethodDeclarationParseNode(tspn.Token);
-            PartParameters pp = meth.AddPart(tspn.baseName);
+            PartParameters pp = meth.AddPart(tspn.BaseName);
             pp.Generics.AddRange(tspn.genericParameters);
-            var tpn = tspn.body as TypeParseNode;
+            var tpn = tspn.Body as TypeParseNode;
             if (tpn != null)
             {
-                tpn.Name = (tspn.baseName as IdentifierParseNode).name;
+                tpn.Name = (tspn.BaseName as IdentifierParseNode).Name;
             }
-            meth.body.Add(tspn.body);
+            meth.Body.Add(tspn.Body);
             return meth.Visit(this);
         }
 
@@ -368,7 +368,7 @@ namespace Grace.Execution
             var ret = new TypeNode(tpn.Token, tpn);
             if (tpn.Name != null)
                 ret.Name = tpn.Name;
-            foreach (var p in tpn.body)
+            foreach (var p in tpn.Body)
                 ret.Body.Add((MethodTypeNode)p.Visit(this));
             return ret;
         }
@@ -377,18 +377,18 @@ namespace Grace.Execution
         public Node Visit(TypeMethodParseNode d)
         {
             var ret = new MethodTypeNode(d.Token, d);
-            if (d.returnType != null)
+            if (d.ReturnType != null)
             {
-                ret.Returns = d.returnType.Visit(this);
+                ret.Returns = d.ReturnType.Visit(this);
             }
             string name = "";
-            for (int i = 0; i < d.nameParts.Count; i++)
+            for (int i = 0; i < d.NameParts.Count; i++)
             {
                 if (name != "")
                     name += " ";
-                string partName = (d.nameParts[i] as IdentifierParseNode).name;
+                string partName = (d.NameParts[i] as IdentifierParseNode).Name;
                 name += partName;
-                List<ParseNode> partParams = d.parameters[i];
+                List<ParseNode> partParams = d.Parameters[i];
                 List<Node> parameters = new List<Node>();
                 foreach (ParseNode p in partParams)
                 {
@@ -399,14 +399,14 @@ namespace Grace.Execution
                         parameters.Add(new IdentifierNode(id.Token, id));
                     else if (tppn != null)
                     {
-                        parameters.Add(new ParameterNode(tppn.Token, tppn.name as IdentifierParseNode, tppn.type.Visit(this)));
+                        parameters.Add(new ParameterNode(tppn.Token, tppn.Name as IdentifierParseNode, tppn.Type.Visit(this)));
                     }
                     else if (vappn != null)
                     {
                         // Inside could be either an identifier or a
                         // TypedParameterParseNode - check for both.
-                        var inIPN = vappn.name as IdentifierParseNode;
-                        var inTPPN = vappn.name as TypedParameterParseNode;
+                        var inIPN = vappn.Name as IdentifierParseNode;
+                        var inTPPN = vappn.Name as TypedParameterParseNode;
                         if (inIPN != null)
                             parameters.Add(new ParameterNode(inIPN.Token,
                                         inIPN,
@@ -414,9 +414,9 @@ namespace Grace.Execution
                                         ));
                         else if (inTPPN != null)
                             parameters.Add(new ParameterNode(inTPPN.Token,
-                                        inTPPN.name as IdentifierParseNode,
+                                        inTPPN.Name as IdentifierParseNode,
                                         true, // Variadic
-                                        inTPPN.type.Visit(this)
+                                        inTPPN.Type.Visit(this)
                                         ));
                     }
                     else
@@ -425,7 +425,7 @@ namespace Grace.Execution
                     }
                 }
                 List<Node> generics = new List<Node>();
-                foreach (ParseNode p in d.generics[i])
+                foreach (ParseNode p in d.Generics[i])
                 {
                     IdentifierParseNode id = p as IdentifierParseNode;
                     if (id != null)
@@ -447,8 +447,8 @@ namespace Grace.Execution
         public Node Visit(ImportParseNode ipn)
         {
             Node type = null;
-            if (ipn.type != null)
-                type = ipn.type.Visit(this);
+            if (ipn.Type != null)
+                type = ipn.Type.Visit(this);
             return new ImportNode(ipn.Token, ipn, type);
         }
 

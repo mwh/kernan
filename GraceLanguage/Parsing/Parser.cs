@@ -43,7 +43,7 @@ namespace Grace.Parsing
                     new UnknownToken(moduleName, 0, 0));
             if (code.Length == 0)
                 return module;
-            List<ParseNode> body = module.body;
+            List<ParseNode> body = module.Body;
             lexer = new Lexer(moduleName, this.code);
             Token was = lexer.current;
             while (!lexer.Done())
@@ -179,21 +179,21 @@ namespace Grace.Parsing
                 return;
             }
             int startAt = 0;
-            if (node.comment == null)
+            if (node.Comment == null)
             {
                 ParseNode dest = comments.First();
-                node.comment = dest;
+                node.Comment = dest;
                 startAt = 1;
             }
-            ParseNode append = node.comment;
-            while (append.comment != null)
-                append = append.comment;
+            ParseNode append = node.Comment;
+            while (append.Comment != null)
+                append = append.Comment;
             for (int i = startAt; i < comments.Count; i++)
             {
                 ParseNode cur = comments[i];
-                append.comment = cur;
-                while (append.comment != null)
-                    append = append.comment;
+                append.Comment = cur;
+                while (append.Comment != null)
+                    append = append.Comment;
             }
         }
 
@@ -371,14 +371,14 @@ namespace Grace.Parsing
                     partName = parseIdentifier();
                     if (lexer.current is BindToken)
                     {
-                        partName.name += ":=";
+                        partName.Name += ":=";
                         nextToken();
                     }
-                    else if ("prefix" == partName.name && first
+                    else if ("prefix" == partName.Name && first
                           && lexer.current is OperatorToken)
                     {
                         op = lexer.current as OperatorToken;
-                        partName.name += op.Name;
+                        partName.Name += op.Name;
                         nextToken();
                     }
                     first = false;
@@ -407,10 +407,10 @@ namespace Grace.Parsing
             {
                 nextToken();
                 doNotAcceptDelimitedBlock = true;
-                ret.returnType = parseExpression();
+                ret.ReturnType = parseExpression();
                 doNotAcceptDelimitedBlock = false;
             }
-            ret.annotations = parseAnnotations();
+            ret.Annotations = parseAnnotations();
         }
 
 
@@ -422,7 +422,7 @@ namespace Grace.Parsing
             parseMethodHeader(start, ret);
             expect<LBraceToken>();
             List<ParseNode> origComments = prepareComments();
-            parseBraceDelimitedBlock(ret.body);
+            parseBraceDelimitedBlock(ret.Body);
             attachComments(ret, comments);
             restoreComments(origComments);
             return ret;
@@ -440,7 +440,7 @@ namespace Grace.Parsing
             parseMethodHeader(start, ret);
             expect<LBraceToken>();
             List<ParseNode> origComments = prepareComments();
-            parseBraceDelimitedBlock(ret.body);
+            parseBraceDelimitedBlock(ret.Body);
             attachComments(ret, comments);
             restoreComments(origComments);
             return ret;
@@ -849,10 +849,10 @@ namespace Grace.Parsing
                 lexer.NextToken();
                 while (lastTok.BeginsInterpolation)
                 {
-                    ret.parts.Add(new StringLiteralParseNode(lastTok));
+                    ret.Parts.Add(new StringLiteralParseNode(lastTok));
                     lexer.NextToken();
                     ParseNode expr = parseExpression();
-                    ret.parts.Add(expr);
+                    ret.Parts.Add(expr);
                     if (lexer.current is RBraceToken)
                     {
                         lexer.TreatAsString();
@@ -866,7 +866,7 @@ namespace Grace.Parsing
                     }
                     lexer.NextToken();
                 }
-                ret.parts.Add(new StringLiteralParseNode(lastTok));
+                ret.Parts.Add(new StringLiteralParseNode(lastTok));
                 return ret;
             }
             else
@@ -926,7 +926,7 @@ namespace Grace.Parsing
                 }
                 rhs = parseExpressionNoOp();
                 ret = new OperatorParseNode(tok, tok.Name, ret, rhs);
-                ret.comment = comment;
+                ret.Comment = comment;
                 tok = lexer.current as OperatorToken;
             }
             return ret;
@@ -1079,7 +1079,7 @@ namespace Grace.Parsing
                 reportError("P1021", "object must have '{' after.");
             }
             List<ParseNode> origComments = prepareComments();
-            parseBraceDelimitedBlock(ret.body);
+            parseBraceDelimitedBlock(ret.Body);
             attachComments(ret, comments);
             restoreComments(origComments);
             return ret;
@@ -1107,7 +1107,7 @@ namespace Grace.Parsing
                     // Definitely not a parameter
                     nextToken();
                     ParseNode val = parseExpression();
-                    ret.body.Add(new BindParseNode(start, expr, val));
+                    ret.Body.Add(new BindParseNode(start, expr, val));
                     if (lexer.current is CommaToken
                         || lexer.current is ArrowToken)
                         reportError("P1022", lexer.current, "Block parameter list contained invalid symbol.");
@@ -1121,32 +1121,32 @@ namespace Grace.Parsing
                                 || lexer.current is EndToken
                                 || lexer.current is RBraceToken))
                         reportError("P1003", "Other code cannot follow a semicolon on the same line.");
-                    ret.body.Add(expr);
+                    ret.Body.Add(expr);
                 }
                 else if (lexer.current is ColonToken)
                 {
                     // Definitely a parameter of some sort, has a type.
                     ParseNode type = parseTypeAnnotation();
-                    ret.parameters.Add(new TypedParameterParseNode(expr, type));
+                    ret.Parameters.Add(new TypedParameterParseNode(expr, type));
                 }
                 else if (lexer.current is CommaToken)
                 {
                     // Can only be a parameter.
-                    ret.parameters.Add(expr);
+                    ret.Parameters.Add(expr);
                 }
                 else if (lexer.current is ArrowToken)
                 {
                     // End of parameter list
-                    ret.parameters.Add(expr);
+                    ret.Parameters.Add(expr);
                 }
                 else
                 {
-                    ret.body.Add(expr);
+                    ret.Body.Add(expr);
                 }
                 if (lexer.current is CommaToken)
                 {
                     nextToken();
-                    parseParameterList<ArrowToken>(start, ret.parameters);
+                    parseParameterList<ArrowToken>(start, ret.Parameters);
                 }
             }
             if (lexer.current is ArrowToken)
@@ -1163,7 +1163,7 @@ namespace Grace.Parsing
             indentColumn = firstBodyToken.column;
             while (!(lexer.current is RBraceToken))
             {
-                ret.body.Add(parseStatement());
+                ret.Body.Add(parseStatement());
                 if (lexer.current == lastToken)
                 {
                     reportError("P1000", lexer.current,
@@ -1238,13 +1238,13 @@ namespace Grace.Parsing
         private ParseNode parseImplicitReceiverRequest(ParseNode lhs)
         {
             ImplicitReceiverRequestParseNode ret = new ImplicitReceiverRequestParseNode(lhs);
-            parseGenericArgumentList(ret.genericArguments[0]);
-            parseArgumentList(ret.arguments[0]);
+            parseGenericArgumentList(ret.GenericArguments[0]);
+            parseArgumentList(ret.Arguments[0]);
             while (lexer.current is IdentifierToken)
             {
                 // This is a multi-part method name
                 ret.AddPart(parseIdentifier());
-                parseArgumentList(ret.arguments.Last());
+                parseArgumentList(ret.Arguments.Last());
             }
             return ret;
         }
@@ -1258,8 +1258,8 @@ namespace Grace.Parsing
             {
                 // Add this part of the method name
                 ret.AddPart(parseIdentifier());
-                parseGenericArgumentList(ret.genericArguments.Last());
-                parseArgumentList(ret.arguments.Last());
+                parseGenericArgumentList(ret.GenericArguments.Last());
+                parseArgumentList(ret.Arguments.Last());
                 named = true;
             }
             if (!named)
@@ -1283,7 +1283,7 @@ namespace Grace.Parsing
             ParseNode last = first;
             for (int i = 1; i < comments.Count; i++)
             {
-                last.comment = comments[i];
+                last.Comment = comments[i];
                 last = comments[i];
             }
             return first;

@@ -9,22 +9,40 @@ namespace Grace.Parsing
     /// <summary>A concrete syntax node</summary>
     public abstract class ParseNode
     {
+        private int _line;
+
         /// <summary>Line number this node began on</summary>
-        public int line;
+        public int Line
+        {
+            get { return _line; }
+            set { _line = value; }
+        }
+
+        private int _column;
 
         /// <summary>Column number this node began at</summary>
-        public int column;
+        public int Column
+        {
+            get { return _column; }
+            set { _column = value; }
+        }
+
+        private ParseNode _comment;
 
         /// <summary>Comment on this node, if any</summary>
-        public ParseNode comment;
+        public ParseNode Comment
+        {
+            get { return _comment; }
+            set { _comment = value; }
+        }
 
         internal Token Token { get; set; }
 
         /// <param name="tok">Token that gave rise to this node</param>
         internal ParseNode(Token tok)
         {
-            this.line = tok.line;
-            this.column = tok.column;
+            this._line = tok.line;
+            this._column = tok.column;
             Token = tok;
         }
 
@@ -32,8 +50,8 @@ namespace Grace.Parsing
         internal ParseNode(ParseNode basis)
         {
             Token = basis.Token;
-            this.line = basis.line;
-            this.column = basis.column;
+            this._line = basis._line;
+            this._column = basis._column;
         }
 
         /// <summary>Write a human-readable description of this node
@@ -47,10 +65,10 @@ namespace Grace.Parsing
         /// <param name="prefix">Prefix string to print before each line</param>
         public void writeComment(System.IO.TextWriter tw, string prefix)
         {
-            if (this.comment != null)
+            if (this._comment != null)
             {
                 tw.WriteLine(prefix + "  Comment:");
-                this.comment.DebugPrint(tw, prefix + "    ");
+                this._comment.DebugPrint(tw, prefix + "    ");
             }
         }
 
@@ -66,20 +84,26 @@ namespace Grace.Parsing
     /// <summary>Parse node for an Object</summary>
     public class ObjectParseNode : ParseNode
     {
+        private List<ParseNode> _body;
+
         /// <summary>Body of the object</summary>
-        public List<ParseNode> body;
+        public List<ParseNode> Body
+        {
+            get { return _body; }
+            set { _body = value; }
+        }
 
         internal ObjectParseNode(Token tok)
             : base(tok)
         {
-            body = new List<ParseNode>();
+            _body = new List<ParseNode>();
         }
 
         /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
             tw.WriteLine(prefix + "Object:");
-            foreach (ParseNode n in body)
+            foreach (ParseNode n in _body)
             {
                 n.DebugPrint(tw, prefix + "    ");
             }
@@ -97,17 +121,30 @@ namespace Grace.Parsing
     /// a method name part</summary>
     public struct PartParameters
     {
+        private List<ParseNode> _generics;
+
         /// <summary>Generic parameters</summary>
-        public List<ParseNode> Generics;
+        public List<ParseNode> Generics
+        {
+            get { return _generics; }
+            set { _generics = value; }
+        }
+
+        private List<ParseNode> _ordinary;
+
         /// <summary>Ordinary parameters</summary>
-        public List<ParseNode> Ordinary;
+        public List<ParseNode> Ordinary
+        {
+            get { return _ordinary; }
+            set { _ordinary = value; }
+        }
 
         /// <param name="g">Generic parameters</param>
         /// <param name="o">Ordinary parameters</param>
         public PartParameters(List<ParseNode> g, List<ParseNode> o)
         {
-            Generics = g;
-            Ordinary = o;
+            _generics = g;
+            _ordinary = o;
         }
     }
 
@@ -120,50 +157,74 @@ namespace Grace.Parsing
         PartParameters AddPart(ParseNode id);
 
         /// <summary>Return type of this method</summary>
-        ParseNode returnType { get; set; }
+        ParseNode ReturnType { get; set; }
 
         /// <summary>Annotations of this method</summary>
-        AnnotationsParseNode annotations { get; set; }
+        AnnotationsParseNode Annotations { get; set; }
     }
 
     /// <summary>Parse node for a method declaration</summary>
     public class MethodDeclarationParseNode : ParseNode, MethodHeader
     {
+        private List<ParseNode> _nameParts;
+
         /// <summary>Parts of this method</summary>
-        public List<ParseNode> nameParts;
+        public List<ParseNode> NameParts
+        {
+            get { return _nameParts; }
+            set { _nameParts = value; }
+        }
+
+        private List<List<ParseNode>> _parameters;
 
         /// <summary>Parameter lists of each part</summary>
-        public List<List<ParseNode>> parameters;
+        public List<List<ParseNode>> Parameters
+        {
+            get { return _parameters; }
+            set { _parameters = value; }
+        }
+
+        private List<List<ParseNode>> _generics;
 
         /// <summary>Generic parameter lists of each part</summary>
-        public List<List<ParseNode>> generics;
+        public List<List<ParseNode>> Generics
+        {
+            get { return _generics; }
+            set { _generics = value; }
+        }
+
+        private List<ParseNode> _body;
 
         /// <summary>Body of this method</summary>
-        public List<ParseNode> body;
+        public List<ParseNode> Body
+        {
+            get { return _body; }
+            set { _body = value; }
+        }
 
         /// <inheritdoc/>
-        public ParseNode returnType { get; set; }
+        public ParseNode ReturnType { get; set; }
 
         /// <inheritdoc/>
-        public AnnotationsParseNode annotations { get; set; }
+        public AnnotationsParseNode Annotations { get; set; }
 
         internal MethodDeclarationParseNode(Token tok)
             : base(tok)
         {
-            nameParts = new List<ParseNode>();
-            parameters = new List<List<ParseNode>>();
-            generics = new List<List<ParseNode>>();
-            body = new List<ParseNode>();
+            _nameParts = new List<ParseNode>();
+            _parameters = new List<List<ParseNode>>();
+            _generics = new List<List<ParseNode>>();
+            _body = new List<ParseNode>();
         }
 
         /// <inheritdoc/>
         public PartParameters AddPart(ParseNode id)
         {
-            nameParts.Add(id);
+            _nameParts.Add(id);
             List<ParseNode> ordinaries = new List<ParseNode>();
             List<ParseNode> gens = new List<ParseNode>();
-            parameters.Add(ordinaries);
-            generics.Add(gens);
+            _parameters.Add(ordinaries);
+            _generics.Add(gens);
             return new PartParameters(gens, ordinaries);
         }
 
@@ -171,26 +232,26 @@ namespace Grace.Parsing
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
             string name = "";
-            foreach (ParseNode n in nameParts)
+            foreach (ParseNode n in _nameParts)
             {
-                name += (n as IdentifierParseNode).name + " ";
+                name += (n as IdentifierParseNode).Name + " ";
             }
             tw.WriteLine(prefix + "MethodDeclaration: " + name);
-            if (returnType != null)
+            if (ReturnType != null)
             {
                 tw.WriteLine(prefix + "  Returns:");
-                returnType.DebugPrint(tw, prefix + "    ");
+                ReturnType.DebugPrint(tw, prefix + "    ");
             }
-            if (annotations != null)
+            if (Annotations != null)
             {
                 tw.WriteLine(prefix + "  Annotations:");
-                annotations.DebugPrint(tw, prefix + "    ");
+                Annotations.DebugPrint(tw, prefix + "    ");
             }
             tw.WriteLine(prefix + "  Parts:");
-            for (int i = 0; i < nameParts.Count; i++)
+            for (int i = 0; i < _nameParts.Count; i++)
             {
-                ParseNode partName = nameParts[i];
-                List<ParseNode> ps = parameters[i];
+                ParseNode partName = _nameParts[i];
+                List<ParseNode> ps = _parameters[i];
                 tw.WriteLine(prefix + "    Part " + (i + 1) + ": ");
                 tw.WriteLine(prefix + "      Name:");
                 partName.DebugPrint(tw, prefix + "        ");
@@ -199,7 +260,7 @@ namespace Grace.Parsing
                     arg.DebugPrint(tw, prefix + "        ");
             }
             tw.WriteLine(prefix + "  Body:");
-            foreach (ParseNode n in body)
+            foreach (ParseNode n in _body)
             {
                 n.DebugPrint(tw, prefix + "    ");
             }
@@ -216,73 +277,103 @@ namespace Grace.Parsing
     /// <summary>Parse node for a class declaration</summary>
     public class ClassDeclarationParseNode : ParseNode, MethodHeader
     {
+        private ParseNode _baseName;
+
         /// <summary>Name of this class</summary>
-        public ParseNode baseName;
+        public ParseNode BaseName
+        {
+            get { return _baseName; }
+            set { _baseName = value; }
+        }
+
+        private List<ParseNode> _nameParts;
 
         /// <summary>Parts of the constructor of this class</summary>
-        public List<ParseNode> nameParts;
+        public List<ParseNode> NameParts
+        {
+            get { return _nameParts; }
+            set { _nameParts = value; }
+        }
+
+        private List<List<ParseNode>> _parameters;
 
         /// <summary>Parameter lists of each part</summary>
-        public List<List<ParseNode>> parameters;
+        public List<List<ParseNode>> Parameters
+        {
+            get { return _parameters; }
+            set { _parameters = value; }
+        }
+
+        private List<List<ParseNode>> _generics;
 
         /// <summary>Generic parameter lists of each part</summary>
-        public List<List<ParseNode>> generics;
+        public List<List<ParseNode>> Generics
+        {
+            get { return _generics; }
+            set { _generics = value; }
+        }
+
+        private List<ParseNode> _body;
 
         /// <summary>Body of this class</summary>
-        public List<ParseNode> body;
+        public List<ParseNode> Body
+        {
+            get { return _body; }
+            set { _body = value; }
+        }
 
         /// <inheritdoc/>
-        public ParseNode returnType { get; set; }
+        public ParseNode ReturnType { get; set; }
 
         /// <inheritdoc/>
-        public AnnotationsParseNode annotations { get; set; }
+        public AnnotationsParseNode Annotations { get; set; }
 
         internal ClassDeclarationParseNode(Token tok, ParseNode baseName)
             : base(tok)
         {
-            this.baseName = baseName;
-            nameParts = new List<ParseNode>();
-            parameters = new List<List<ParseNode>>();
-            generics = new List<List<ParseNode>>();
-            body = new List<ParseNode>();
+            this._baseName = baseName;
+            _nameParts = new List<ParseNode>();
+            _parameters = new List<List<ParseNode>>();
+            _generics = new List<List<ParseNode>>();
+            _body = new List<ParseNode>();
         }
 
         /// <inheritdoc/>
         public PartParameters AddPart(ParseNode id)
         {
-            nameParts.Add(id);
+            _nameParts.Add(id);
             List<ParseNode> ordinaries = new List<ParseNode>();
             List<ParseNode> gens = new List<ParseNode>();
-            parameters.Add(ordinaries);
-            generics.Add(gens);
+            _parameters.Add(ordinaries);
+            _generics.Add(gens);
             return new PartParameters(gens, ordinaries);
         }
 
         /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
-            IdentifierParseNode b = baseName as IdentifierParseNode;
-            string name = b.name + ".";
-            foreach (ParseNode n in nameParts)
+            IdentifierParseNode b = _baseName as IdentifierParseNode;
+            string name = b.Name + ".";
+            foreach (ParseNode n in _nameParts)
             {
-                name += (n as IdentifierParseNode).name + " ";
+                name += (n as IdentifierParseNode).Name + " ";
             }
             tw.WriteLine(prefix + "ClassDeclaration: " + name);
-            if (returnType != null)
+            if (ReturnType != null)
             {
                 tw.WriteLine(prefix + "  Returns:");
-                returnType.DebugPrint(tw, prefix + "    ");
+                ReturnType.DebugPrint(tw, prefix + "    ");
             }
-            if (annotations != null)
+            if (Annotations != null)
             {
                 tw.WriteLine(prefix + "  Anontations:");
-                annotations.DebugPrint(tw, prefix + "    ");
+                Annotations.DebugPrint(tw, prefix + "    ");
             }
             tw.WriteLine(prefix + "  Parts:");
-            for (int i = 0; i < nameParts.Count; i++)
+            for (int i = 0; i < _nameParts.Count; i++)
             {
-                ParseNode partName = nameParts[i];
-                List<ParseNode> ps = parameters[i];
+                ParseNode partName = _nameParts[i];
+                List<ParseNode> ps = _parameters[i];
                 tw.WriteLine(prefix + "    Part " + (i + 1) + ": ");
                 tw.WriteLine(prefix + "      Name:");
                 partName.DebugPrint(tw, prefix + "        ");
@@ -291,7 +382,7 @@ namespace Grace.Parsing
                     arg.DebugPrint(tw, prefix + "        ");
             }
             tw.WriteLine(prefix + "  Body:");
-            foreach (ParseNode n in body)
+            foreach (ParseNode n in _body)
             {
                 n.DebugPrint(tw, prefix + "    ");
             }
@@ -308,11 +399,23 @@ namespace Grace.Parsing
     /// <summary>Parse node for a type statement</summary>
     public class TypeStatementParseNode : ParseNode
     {
+        private ParseNode _baseName;
+
         /// <summary>Name of this type</summary>
-        public ParseNode baseName;
+        public ParseNode BaseName
+        {
+            get { return _baseName; }
+            set { _baseName = value; }
+        }
+
+        private ParseNode _body;
 
         /// <summary>Value of this type declaration</summary>
-        public ParseNode body;
+        public ParseNode Body
+        {
+            get { return _body; }
+            set { _body = value; }
+        }
 
         /// <summary>Generic parameters of this type</summary>
         public List<ParseNode> genericParameters;
@@ -321,8 +424,8 @@ namespace Grace.Parsing
                 ParseNode body, List<ParseNode> generics)
             : base(tok)
         {
-            this.baseName = baseName;
-            this.body = body;
+            this._baseName = baseName;
+            this._body = body;
             this.genericParameters = generics;
         }
 
@@ -331,7 +434,7 @@ namespace Grace.Parsing
         {
             tw.WriteLine(prefix + "TypeStatement:");
             tw.WriteLine(prefix + "  Name:");
-            baseName.DebugPrint(tw, prefix + "    ");
+            _baseName.DebugPrint(tw, prefix + "    ");
             if (genericParameters.Count > 0)
             {
                 tw.WriteLine(prefix + "  Generic parameters:");
@@ -339,7 +442,7 @@ namespace Grace.Parsing
                     n.DebugPrint(tw, prefix + "    ");
             }
             tw.WriteLine(prefix + "  Body:");
-            body.DebugPrint(tw, prefix + "    ");
+            _body.DebugPrint(tw, prefix + "    ");
             writeComment(tw, prefix);
         }
 
@@ -354,8 +457,14 @@ namespace Grace.Parsing
     /// <summary>Parse node for a type</summary>
     public class TypeParseNode : ParseNode
     {
+        private List<ParseNode> _body;
+
         /// <summary>Body of this type</summary>
-        public List<ParseNode> body;
+        public List<ParseNode> Body
+        {
+            get { return _body; }
+            set { _body = value; }
+        }
 
         /// <summary>Name of this type for debugging</summary>
         public string Name { get; set; }
@@ -363,14 +472,14 @@ namespace Grace.Parsing
         internal TypeParseNode(Token tok, List<ParseNode> body)
             : base(tok)
         {
-            this.body = body;
+            this._body = body;
         }
 
         /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
             tw.WriteLine(prefix + "Type:");
-            foreach (ParseNode n in body)
+            foreach (ParseNode n in _body)
             {
                 n.DebugPrint(tw, prefix + "    ");
             }
@@ -387,37 +496,55 @@ namespace Grace.Parsing
     /// <summary>Parse node for a type method</summary>
     public class TypeMethodParseNode : ParseNode, MethodHeader
     {
+        private List<ParseNode> _nameParts;
+
         /// <summary>Parts of the method</summary>
-        public List<ParseNode> nameParts;
+        public List<ParseNode> NameParts
+        {
+            get { return _nameParts; }
+            set { _nameParts = value; }
+        }
+
+        private List<List<ParseNode>> _parameters;
 
         /// <summary>Parameter lists of each part</summary>
-        public List<List<ParseNode>> parameters;
+        public List<List<ParseNode>> Parameters
+        {
+            get { return _parameters; }
+            set { _parameters = value; }
+        }
+
+        private List<List<ParseNode>> _generics;
 
         /// <summary>Generic parameter lists of each part</summary>
-        public List<List<ParseNode>> generics;
+        public List<List<ParseNode>> Generics
+        {
+            get { return _generics; }
+            set { _generics = value; }
+        }
 
         /// <inheritdoc/>
-        public ParseNode returnType { get; set; }
+        public ParseNode ReturnType { get; set; }
 
         /// <inheritdoc/>
-        public AnnotationsParseNode annotations { get; set; }
+        public AnnotationsParseNode Annotations { get; set; }
 
         internal TypeMethodParseNode(Token tok)
             : base(tok)
         {
-            nameParts = new List<ParseNode>();
-            parameters = new List<List<ParseNode>>();
-            generics = new List<List<ParseNode>>();
+            _nameParts = new List<ParseNode>();
+            _parameters = new List<List<ParseNode>>();
+            _generics = new List<List<ParseNode>>();
         }
 
         /// <inheritdoc/>
         public PartParameters AddPart(ParseNode id)
         {
-            nameParts.Add(id);
+            _nameParts.Add(id);
             List<ParseNode> ordinaries = new List<ParseNode>();
             List<ParseNode> gens = new List<ParseNode>();
-            parameters.Add(ordinaries);
-            generics.Add(gens);
+            _parameters.Add(ordinaries);
+            _generics.Add(gens);
             return new PartParameters(gens, ordinaries);
         }
 
@@ -425,21 +552,21 @@ namespace Grace.Parsing
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
             string name = "";
-            foreach (ParseNode n in nameParts)
+            foreach (ParseNode n in _nameParts)
             {
-                name += (n as IdentifierParseNode).name + " ";
+                name += (n as IdentifierParseNode).Name + " ";
             }
             tw.WriteLine(prefix + "TypeMethod: " + name);
-            if (returnType != null)
+            if (ReturnType != null)
             {
                 tw.WriteLine(prefix + "  Returns:");
-                returnType.DebugPrint(tw, prefix + "    ");
+                ReturnType.DebugPrint(tw, prefix + "    ");
             }
             tw.WriteLine(prefix + "  Parts:");
-            for (int i = 0; i < nameParts.Count; i++)
+            for (int i = 0; i < _nameParts.Count; i++)
             {
-                ParseNode partName = nameParts[i];
-                List<ParseNode> ps = parameters[i];
+                ParseNode partName = _nameParts[i];
+                List<ParseNode> ps = _parameters[i];
                 tw.WriteLine(prefix + "    Part " + (i + 1) + ": ");
                 tw.WriteLine(prefix + "      Name:");
                 partName.DebugPrint(tw, prefix + "        ");
@@ -460,17 +587,29 @@ namespace Grace.Parsing
     /// <summary>Parse node for a block</summary>
     public class BlockParseNode : ParseNode
     {
+        private List<ParseNode> _parameters;
+
         /// <summary>Parameters of the block</summary>
-        public List<ParseNode> parameters;
+        public List<ParseNode> Parameters
+        {
+            get { return _parameters; }
+            set { _parameters = value; }
+        }
+
+        private List<ParseNode> _body;
 
         /// <summary>Body of the block</summary>
-        public List<ParseNode> body;
+        public List<ParseNode> Body
+        {
+            get { return _body; }
+            set { _body = value; }
+        }
 
         internal BlockParseNode(Token tok)
             : base(tok)
         {
-            body = new List<ParseNode>();
-            parameters = new List<ParseNode>();
+            _body = new List<ParseNode>();
+            _parameters = new List<ParseNode>();
         }
 
         /// <inheritdoc/>
@@ -478,12 +617,12 @@ namespace Grace.Parsing
         {
             tw.WriteLine(prefix + "Block:");
             tw.WriteLine(prefix + "  Parameters:");
-            foreach (ParseNode n in parameters)
+            foreach (ParseNode n in _parameters)
             {
                 n.DebugPrint(tw, prefix + "    ");
             }
             tw.WriteLine(prefix + "  Body:");
-            foreach (ParseNode n in body)
+            foreach (ParseNode n in _body)
             {
                 n.DebugPrint(tw, prefix + "    ");
             }
@@ -501,13 +640,19 @@ namespace Grace.Parsing
     /// <summary>Parse node for a varargs parameter</summary>
     public class VarArgsParameterParseNode : ParseNode
     {
+        private ParseNode _name;
+
         /// <summary>Name of the parameter</summary>
-        public ParseNode name;
+        public ParseNode Name
+        {
+            get { return _name; }
+            set { _name = value; }
+        }
 
         internal VarArgsParameterParseNode(ParseNode name)
             : base(name)
         {
-            this.name = name;
+            this._name = name;
         }
 
         /// <inheritdoc/>
@@ -515,7 +660,7 @@ namespace Grace.Parsing
         {
             tw.WriteLine(prefix + "VarArgsParameter:");
             tw.WriteLine(prefix + "  Name:");
-            name.DebugPrint(tw, prefix + "    ");
+            _name.DebugPrint(tw, prefix + "    ");
             writeComment(tw, prefix);
         }
 
@@ -530,17 +675,29 @@ namespace Grace.Parsing
     /// <summary>Parse node for a typed parameter</summary>
     public class TypedParameterParseNode : ParseNode
     {
+        private ParseNode _name;
+
         /// <summary>Name of the parameter</summary>
-        public ParseNode name;
+        public ParseNode Name
+        {
+            get { return _name; }
+            set { _name = value; }
+        }
+
+        private ParseNode _type;
 
         /// <summary>Type of the parameter</summary>
-        public ParseNode type;
+        public ParseNode Type
+        {
+            get { return _type; }
+            set { _type = value; }
+        }
 
         internal TypedParameterParseNode(ParseNode name, ParseNode type)
             : base(name)
         {
-            this.name = name;
-            this.type = type;
+            this._name = name;
+            this._type = type;
         }
 
         /// <inheritdoc/>
@@ -548,9 +705,9 @@ namespace Grace.Parsing
         {
             tw.WriteLine(prefix + "TypedParameter:");
             tw.WriteLine(prefix + "  Name:");
-            name.DebugPrint(tw, prefix + "    ");
+            _name.DebugPrint(tw, prefix + "    ");
             tw.WriteLine(prefix + "  Type:");
-            type.DebugPrint(tw, prefix + "    ");
+            _type.DebugPrint(tw, prefix + "    ");
             writeComment(tw, prefix);
         }
 
@@ -565,27 +722,50 @@ namespace Grace.Parsing
     /// <summary>Parse node for a var declaration</summary>
     public class VarDeclarationParseNode : ParseNode
     {
+        private ParseNode _name;
+
         /// <summary>Name of the var</summary>
-        public ParseNode name;
+        public ParseNode Name
+        {
+            get { return _name; }
+            set { _name = value; }
+        }
+
+        private ParseNode _val;
 
         /// <summary>Initial value of the var</summary>
-        public ParseNode val;
+        public ParseNode Value
+        {
+            get { return _val; }
+            set { _val = value; }
+        }
+
+        private ParseNode _type;
 
         /// <summary>Type of the var, if any</summary>
-        public ParseNode type;
+        public ParseNode Type
+        {
+            get { return _type; }
+            set { _type = value; }
+        }
+
+        private AnnotationsParseNode _annotations;
 
         /// <summary>Annotations of the var, if any</summary>
-
-        public AnnotationsParseNode annotations;
+        public AnnotationsParseNode Annotations
+        {
+            get { return _annotations; }
+            set { _annotations = value; }
+        }
 
         internal VarDeclarationParseNode(Token tok, ParseNode name, ParseNode val,
                 ParseNode type, AnnotationsParseNode annotations)
             : base(tok)
         {
-            this.name = name;
-            this.val = val;
-            this.type = type;
-            this.annotations = annotations;
+            this._name = name;
+            this._val = val;
+            this._type = type;
+            this._annotations = annotations;
         }
 
         /// <inheritdoc/>
@@ -593,21 +773,21 @@ namespace Grace.Parsing
         {
             tw.WriteLine(prefix + "VarDeclaration:");
             tw.WriteLine(prefix + "  Name:");
-            name.DebugPrint(tw, prefix + "    ");
-            if (type != null)
+            _name.DebugPrint(tw, prefix + "    ");
+            if (_type != null)
             {
                 tw.WriteLine(prefix + "  Type:");
-                type.DebugPrint(tw, prefix + "    ");
+                _type.DebugPrint(tw, prefix + "    ");
             }
-            if (annotations != null)
+            if (_annotations != null)
             {
                 tw.WriteLine(prefix + "  Annotations:");
-                annotations.DebugPrint(tw, prefix + "    ");
+                _annotations.DebugPrint(tw, prefix + "    ");
             }
-            if (val != null)
+            if (_val != null)
             {
                 tw.WriteLine(prefix + "  Value:");
-                val.DebugPrint(tw, prefix + "    ");
+                _val.DebugPrint(tw, prefix + "    ");
             }
             writeComment(tw, prefix);
         }
@@ -623,26 +803,50 @@ namespace Grace.Parsing
     /// <summary>Parse node for a def declaration</summary>
     public class DefDeclarationParseNode : ParseNode
     {
+        private ParseNode _name;
+
         /// <summary>Name of the def</summary>
-        public ParseNode name;
+        public ParseNode Name
+        {
+            get { return _name; }
+            set { _name = value; }
+        }
+
+        private ParseNode _val;
 
         /// <summary>Value of the def</summary>
-        public ParseNode val;
+        public ParseNode Value
+        {
+            get { return _val; }
+            set { _val = value; }
+        }
+
+        private ParseNode _type;
 
         /// <summary>Type of the def, if any</summary>
-        public ParseNode type;
+        public ParseNode Type
+        {
+            get { return _type; }
+            set { _type = value; }
+        }
+
+        private AnnotationsParseNode _annotations;
 
         /// <summary>Annotations of the def, if any</summary>
-        public AnnotationsParseNode annotations;
+        public AnnotationsParseNode Annotations
+        {
+            get { return _annotations; }
+            set { _annotations = value; }
+        }
 
         internal DefDeclarationParseNode(Token tok, ParseNode name, ParseNode val,
                 ParseNode type, AnnotationsParseNode annotations)
             : base(tok)
         {
-            this.name = name;
-            this.val = val;
-            this.type = type;
-            this.annotations = annotations;
+            this._name = name;
+            this._val = val;
+            this._type = type;
+            this._annotations = annotations;
         }
 
         /// <inheritdoc/>
@@ -650,19 +854,19 @@ namespace Grace.Parsing
         {
             tw.WriteLine(prefix + "DefDeclaration:");
             tw.WriteLine(prefix + "  Name:");
-            name.DebugPrint(tw, prefix + "    ");
-            if (type != null)
+            _name.DebugPrint(tw, prefix + "    ");
+            if (_type != null)
             {
                 tw.WriteLine(prefix + "  Type:");
-                type.DebugPrint(tw, prefix + "    ");
+                _type.DebugPrint(tw, prefix + "    ");
             }
-            if (annotations != null)
+            if (_annotations != null)
             {
                 tw.WriteLine(prefix + "  Anontations:");
-                annotations.DebugPrint(tw, prefix + "    ");
+                _annotations.DebugPrint(tw, prefix + "    ");
             }
             tw.WriteLine(prefix + "  Value:");
-            val.DebugPrint(tw, prefix + "    ");
+            _val.DebugPrint(tw, prefix + "    ");
             writeComment(tw, prefix);
         }
 
@@ -677,8 +881,15 @@ namespace Grace.Parsing
     /// <summary>Parse node for a list of annotations</summary>
     public class AnnotationsParseNode : ParseNode
     {
+        List<ParseNode> _annotations = new List<ParseNode>();
+
         /// <summary>The annotations in this collection</summary>
-        List<ParseNode> annotations = new List<ParseNode>();
+        public List<ParseNode> Annotations
+        {
+            get { return _annotations; }
+            set { _annotations = value; }
+        }
+
         internal AnnotationsParseNode(Token tok)
             : base(tok)
         {
@@ -688,19 +899,19 @@ namespace Grace.Parsing
         /// <param name="ann">Annotation to add</param>
         public void AddAnnotation(ParseNode ann)
         {
-            annotations.Add(ann);
+            _annotations.Add(ann);
         }
 
         /// <summary>Check for a named annotation</summary>
         /// <param name="name">Annotation to search for</param>
         public bool HasAnnotation(string name)
         {
-            foreach (ParseNode p in annotations)
+            foreach (ParseNode p in _annotations)
             {
                 IdentifierParseNode aid = p as IdentifierParseNode;
                 if (aid != null)
                 {
-                    if (aid.name == name)
+                    if (aid.Name == name)
                         return true;
                 }
             }
@@ -711,7 +922,7 @@ namespace Grace.Parsing
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
             tw.WriteLine(prefix + "Annotations:");
-            foreach (ParseNode ann in annotations)
+            foreach (ParseNode ann in _annotations)
                 ann.DebugPrint(tw, prefix + "    ");
             writeComment(tw, prefix);
         }
@@ -727,11 +938,23 @@ namespace Grace.Parsing
     /// <summary>Parse node for an operator</summary>
     public class OperatorParseNode : ParseNode
     {
+        private ParseNode _left;
+
         /// <summary>LHS of the operator</summary>
-        public ParseNode left;
+        public ParseNode Left
+        {
+            get { return _left; }
+            set { _left = value; }
+        }
+
+        private ParseNode _right;
 
         /// <summary>RHS of the operator</summary>
-        public ParseNode right;
+        public ParseNode Right
+        {
+            get { return _right; }
+            set { _right = value; }
+        }
 
         /// <summary>The name (symbol) of the operator</summary>
         public string name;
@@ -741,16 +964,16 @@ namespace Grace.Parsing
             : base(tok)
         {
             this.name = name;
-            left = l;
-            right = r;
+            _left = l;
+            _right = r;
         }
 
         /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
             tw.WriteLine(prefix + "Operator: " + name);
-            left.DebugPrint(tw, prefix + "    ");
-            right.DebugPrint(tw, prefix + "    ");
+            _left.DebugPrint(tw, prefix + "    ");
+            _right.DebugPrint(tw, prefix + "    ");
             writeComment(tw, prefix);
         }
 
@@ -766,24 +989,36 @@ namespace Grace.Parsing
     /// <summary>Parse node for a prefix operator</summary>
     public class PrefixOperatorParseNode : ParseNode
     {
+        private string _name;
+
         /// <summary>Name (symbol) of the operator</summary>
-        public string name;
+        public string Name
+        {
+            get { return _name; }
+            set { _name = value; }
+        }
+
+        private ParseNode _receiver;
 
         /// <summary>Receiver of the operator request</summary>
-        public ParseNode receiver;
+        public ParseNode Receiver
+        {
+            get { return _receiver; }
+            set { _receiver = value; }
+        }
 
         internal PrefixOperatorParseNode(OperatorToken tok, ParseNode expr)
             : base(tok)
         {
-            this.name = tok.Name;
-            this.receiver = expr;
+            this._name = tok.Name;
+            this._receiver = expr;
         }
 
         /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
-            tw.WriteLine(prefix + "PrefixOperator: " + name);
-            receiver.DebugPrint(tw, prefix + "    ");
+            tw.WriteLine(prefix + "PrefixOperator: " + _name);
+            _receiver.DebugPrint(tw, prefix + "    ");
             writeComment(tw, prefix);
         }
 
@@ -798,25 +1033,37 @@ namespace Grace.Parsing
     /// <summary>Parse node for a bind :=</summary>
     public class BindParseNode : ParseNode
     {
+        private ParseNode _left;
+
         /// <summary>LHS of :=</summary>
-        public ParseNode left;
+        public ParseNode Left
+        {
+            get { return _left; }
+            set { _left = value; }
+        }
+
+        private ParseNode _right;
 
         /// <summary>RHS of :=</summary>
-        public ParseNode right;
+        public ParseNode Right
+        {
+            get { return _right; }
+            set { _right = value; }
+        }
 
         internal BindParseNode(Token tok, ParseNode l, ParseNode r)
             : base(tok)
         {
-            left = l;
-            right = r;
+            _left = l;
+            _right = r;
         }
 
         /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
             tw.WriteLine(prefix + "Bind:");
-            left.DebugPrint(tw, prefix + "    ");
-            right.DebugPrint(tw, prefix + "    ");
+            _left.DebugPrint(tw, prefix + "    ");
+            _right.DebugPrint(tw, prefix + "    ");
             writeComment(tw, prefix);
         }
 
@@ -831,18 +1078,30 @@ namespace Grace.Parsing
     /// <summary>Parse node for a number</summary>
     public class NumberParseNode : ParseNode
     {
+        private int _base;
+
         /// <summary>Base of the number</summary>
-        public int _base;
+        public int NumericBase
+        {
+            get { return _base; }
+            set { _base = value; }
+        }
+
+        private string _digits;
 
         /// <summary>Digits of the number in its base</summary>
-        public string digits;
+        public string Digits
+        {
+            get { return _digits; }
+            set { _digits = value; }
+        }
 
         internal NumberParseNode(Token tok)
             : base(tok)
         {
             NumberToken it = tok as NumberToken;
             _base = it.NumericBase;
-            digits = it.Digits;
+            _digits = it.Digits;
         }
 
         /// <inheritdoc/>
@@ -850,11 +1109,11 @@ namespace Grace.Parsing
         {
             string desc = "";
             if (_base == 10)
-                desc += digits;
+                desc += _digits;
             else if (_base == 16)
-                desc += "0x" + digits;
+                desc += "0x" + _digits;
             else
-                desc += _base + "x" + digits;
+                desc += _base + "x" + _digits;
             tw.WriteLine(prefix + "Number: " + desc);
             writeComment(tw, prefix);
         }
@@ -870,27 +1129,33 @@ namespace Grace.Parsing
     /// <summary>Parse node for an identifier</summary>
     public class IdentifierParseNode : ParseNode
     {
+        private string _name;
+
         /// <summary>Name of this identifier</summary>
-        public string name;
+        public string Name
+        {
+            get { return _name; }
+            set { _name = value; }
+        }
 
         internal IdentifierParseNode(Token tok)
             : base(tok)
         {
             IdentifierToken it = tok as IdentifierToken;
-            name = it.Name;
+            _name = it.Name;
         }
 
         internal IdentifierParseNode(OperatorToken tok)
             : base(tok)
         {
-            name = tok.Name;
+            _name = tok.Name;
         }
 
 
         /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
-            tw.WriteLine(prefix + "Identifier: " + name);
+            tw.WriteLine(prefix + "Identifier: " + _name);
             writeComment(tw, prefix);
         }
 
@@ -905,8 +1170,14 @@ namespace Grace.Parsing
     /// <summary>Parse node for a string literal</summary>
     public class StringLiteralParseNode : ParseNode
     {
+        private string _value;
+
         /// <summary>String value after escape processing</summary>
-        public string value;
+        public string Value
+        {
+            get { return _value; }
+            set { _value = value; }
+        }
 
         /// <summary>Literal string as written, without
         /// escape processing</summary>
@@ -916,7 +1187,7 @@ namespace Grace.Parsing
             : base(tok)
         {
             StringToken comm = tok as StringToken;
-            value = comm.Value;
+            _value = comm.Value;
             raw = comm.Raw;
         }
 
@@ -938,20 +1209,26 @@ namespace Grace.Parsing
     /// <summary>Parse node for a interpolated string</summary>
     public class InterpolatedStringParseNode : ParseNode
     {
+        private List<ParseNode> _parts;
+
         /// <summary>List of component strings and stringifiables</summary>
-        public List<ParseNode> parts;
+        public List<ParseNode> Parts
+        {
+            get { return _parts; }
+            set { _parts = value; }
+        }
 
         internal InterpolatedStringParseNode(Token tok)
             : base(tok)
         {
-            parts = new List<ParseNode>();
+            _parts = new List<ParseNode>();
         }
 
         /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
             tw.WriteLine(prefix + "InterpolatedString:");
-            foreach (ParseNode n in parts)
+            foreach (ParseNode n in _parts)
                 n.DebugPrint(tw, prefix + "    ");
             writeComment(tw, prefix);
         }
@@ -967,51 +1244,69 @@ namespace Grace.Parsing
     /// <summary>Parse node for a implicit-receiver request</summary>
     public class ImplicitReceiverRequestParseNode : ParseNode
     {
+        private List<ParseNode> _nameParts;
+
         /// <summary>Parts of this method</summary>
-        public List<ParseNode> nameParts;
+        public List<ParseNode> NameParts
+        {
+            get { return _nameParts; }
+            set { _nameParts = value; }
+        }
+
+        private List<List<ParseNode>> _arguments;
 
         /// <summary>Argument lists of each part</summary>
-        public List<List<ParseNode>> arguments;
+        public List<List<ParseNode>> Arguments
+        {
+            get { return _arguments; }
+            set { _arguments = value; }
+        }
+
+        private List<List<ParseNode>> _genericArguments;
 
         /// <summary>Generic argument lists of each part</summary>
-        public List<List<ParseNode>> genericArguments;
+        public List<List<ParseNode>> GenericArguments
+        {
+            get { return _genericArguments; }
+            set { _genericArguments = value; }
+        }
 
         internal ImplicitReceiverRequestParseNode(ParseNode id)
             : base(id)
         {
-            nameParts = new List<ParseNode>();
-            arguments = new List<List<ParseNode>>();
-            genericArguments = new List<List<ParseNode>>();
+            _nameParts = new List<ParseNode>();
+            _arguments = new List<List<ParseNode>>();
+            _genericArguments = new List<List<ParseNode>>();
             AddPart(id);
         }
 
         /// <summary>Add a part to the method requested here</summary>
         public void AddPart(ParseNode id)
         {
-            nameParts.Add(id);
-            arguments.Add(new List<ParseNode>());
-            genericArguments.Add(new List<ParseNode>());
+            _nameParts.Add(id);
+            _arguments.Add(new List<ParseNode>());
+            _genericArguments.Add(new List<ParseNode>());
         }
 
         /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
             string name = "";
-            foreach (ParseNode n in nameParts)
+            foreach (ParseNode n in _nameParts)
             {
-                name += (n as IdentifierParseNode).name + " ";
+                name += (n as IdentifierParseNode).Name + " ";
             }
             tw.WriteLine(prefix + "ImplicitReceiverRequest: " + name);
             tw.WriteLine(prefix + "  Parts:");
-            for (int i = 0; i < nameParts.Count; i++)
+            for (int i = 0; i < _nameParts.Count; i++)
             {
-                ParseNode partName = nameParts[i];
-                List<ParseNode> args = arguments[i];
+                ParseNode partName = _nameParts[i];
+                List<ParseNode> args = _arguments[i];
                 tw.WriteLine(prefix + "    Part " + (i + 1) + ": ");
                 tw.WriteLine(prefix + "      Name:");
                 partName.DebugPrint(tw, prefix + "        ");
                 tw.WriteLine(prefix + "      Generic arguments:");
-                foreach (ParseNode arg in genericArguments[i])
+                foreach (ParseNode arg in _genericArguments[i])
                     arg.DebugPrint(tw, prefix + "        ");
                 tw.WriteLine(prefix + "      Arguments:");
                 foreach (ParseNode arg in args)
@@ -1031,57 +1326,81 @@ namespace Grace.Parsing
     /// <summary>Parse node for a explicit-receiver request</summary>
     public class ExplicitReceiverRequestParseNode : ParseNode
     {
+        private ParseNode _receiver;
+
         /// <summary>Receiver of this request</summary>
-        public ParseNode receiver;
+        public ParseNode Receiver
+        {
+            get { return _receiver; }
+            set { _receiver = value; }
+        }
+
+        private List<ParseNode> _nameParts;
 
         /// <summary>Parts of this method</summary>
-        public List<ParseNode> nameParts;
+        public List<ParseNode> NameParts
+        {
+            get { return _nameParts; }
+            set { _nameParts = value; }
+        }
+
+        private List<List<ParseNode>> _arguments;
 
         /// <summary>Argument lists of each part</summary>
-        public List<List<ParseNode>> arguments;
+        public List<List<ParseNode>> Arguments
+        {
+            get { return _arguments; }
+            set { _arguments = value; }
+        }
+
+        private List<List<ParseNode>> _genericArguments;
 
         /// <summary>Generic argument lists of each part</summary>
-        public List<List<ParseNode>> genericArguments;
+        public List<List<ParseNode>> GenericArguments
+        {
+            get { return _genericArguments; }
+            set { _genericArguments = value; }
+        }
 
 
         internal ExplicitReceiverRequestParseNode(ParseNode receiver)
             : base(receiver)
         {
-            this.receiver = receiver;
-            nameParts = new List<ParseNode>();
-            arguments = new List<List<ParseNode>>();
-            genericArguments = new List<List<ParseNode>>();
+            this._receiver = receiver;
+            _nameParts = new List<ParseNode>();
+            _arguments = new List<List<ParseNode>>();
+            _genericArguments = new List<List<ParseNode>>();
         }
 
         /// <summary>Add a part to the method requested here</summary>
         public void AddPart(ParseNode id)
         {
-            nameParts.Add(id);
-            arguments.Add(new List<ParseNode>());
-            genericArguments.Add(new List<ParseNode>());
+            _nameParts.Add(id);
+            _arguments.Add(new List<ParseNode>());
+            _genericArguments.Add(new List<ParseNode>());
         }
 
         /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
             string name = "";
-            foreach (ParseNode n in nameParts)
+            foreach (ParseNode n in _nameParts)
             {
-                name += (n as IdentifierParseNode).name + " ";
+                name += (n as IdentifierParseNode).Name + " ";
             }
             tw.WriteLine(prefix + "ExplicitReceiverRequest: " + name);
             tw.WriteLine(prefix + "  Receiver:");
-            receiver.DebugPrint(tw, prefix + "    ");
+            _receiver.DebugPrint(tw, prefix + "    ");
             tw.WriteLine(prefix + "  Parts:");
-            for (int i = 0; i < nameParts.Count; i++)
+            for (int i = 0; i < _nameParts.Count; i++)
             {
-                ParseNode partName = nameParts[i];
-                List<ParseNode> args = arguments[i];
+                ParseNode partName = _nameParts[i];
+                List<ParseNode> args = _arguments[i];
                 tw.WriteLine(prefix + "    Part " + (i + 1) + ": ");
                 tw.WriteLine(prefix + "      Name:");
                 partName.DebugPrint(tw, prefix + "        ");
                 tw.WriteLine(prefix + "      Generic arguments:");
-                foreach (ParseNode arg in genericArguments[i])
+                foreach (ParseNode arg in _genericArguments[i])
                     arg.DebugPrint(tw, prefix + "        ");
                 tw.WriteLine(prefix + "      Arguments:");
                 foreach (ParseNode arg in args)
@@ -1101,19 +1420,26 @@ namespace Grace.Parsing
     /// <summary>Parse node for an inherits clause</summary>
     public class InheritsParseNode : ParseNode
     {
+        private ParseNode _from;
+
         /// <summary>RHS of the inherits clause</summary>
-        public ParseNode from;
+        public ParseNode From
+        {
+            get { return _from; }
+            set { _from = value; }
+        }
+
         internal InheritsParseNode(Token tok, ParseNode expr)
             : base(tok)
         {
-            from = expr;
+            _from = expr;
         }
 
         /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
             tw.WriteLine(prefix + "Inherits:");
-            from.DebugPrint(tw, prefix + "    ");
+            _from.DebugPrint(tw, prefix + "    ");
             writeComment(tw, prefix);
         }
 
@@ -1128,22 +1454,40 @@ namespace Grace.Parsing
     /// <summary>Parse node for an import</summary>
     public class ImportParseNode : ParseNode
     {
+        private ParseNode _path;
+
         /// <summary>Given import path in the syntax</summary>
-        public ParseNode path;
+        public ParseNode Path
+        {
+            get { return _path; }
+            set { _path = value; }
+        }
+
+        private ParseNode _name;
 
         /// <summary>Given "as name" in the syntax</summary>
-        public ParseNode name;
+        public ParseNode Name
+        {
+            get { return _name; }
+            set { _name = value; }
+        }
+
+        private ParseNode _type;
 
         /// <summary>Given ": type", if provided</summary>
-        public ParseNode type;
+        public ParseNode Type
+        {
+            get { return _type; }
+            set { _type = value; }
+        }
 
         internal ImportParseNode(Token tok, ParseNode path, ParseNode name,
                 ParseNode type)
             : base(tok)
         {
-            this.path = path;
-            this.name = name;
-            this.type = type;
+            this._path = path;
+            this._name = name;
+            this._type = type;
         }
 
         /// <inheritdoc/>
@@ -1151,13 +1495,13 @@ namespace Grace.Parsing
         {
             tw.WriteLine(prefix + "Import:");
             tw.WriteLine(prefix + "  Path:");
-            path.DebugPrint(tw, prefix + "    ");
+            _path.DebugPrint(tw, prefix + "    ");
             tw.WriteLine(prefix + "  As:");
-            name.DebugPrint(tw, prefix + "    ");
-            if (type != null)
+            _name.DebugPrint(tw, prefix + "    ");
+            if (_type != null)
             {
                 tw.WriteLine(prefix + "  Type:");
-                type.DebugPrint(tw, prefix + "    ");
+                _type.DebugPrint(tw, prefix + "    ");
             }
             writeComment(tw, prefix);
         }
@@ -1173,20 +1517,26 @@ namespace Grace.Parsing
     /// <summary>Parse node for a dialect declaration</summary>
     public class DialectParseNode : ParseNode
     {
+        private ParseNode _path;
+
         /// <summary>Given import path in the syntax</summary>
-        public ParseNode path;
+        public ParseNode Path
+        {
+            get { return _path; }
+            set { _path = value; }
+        }
 
         internal DialectParseNode(Token tok, ParseNode path)
             : base(tok)
         {
-            this.path = path;
+            this._path = path;
         }
 
         /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
             tw.WriteLine(prefix + "Dialect:");
-            path.DebugPrint(tw, prefix + "    ");
+            _path.DebugPrint(tw, prefix + "    ");
             writeComment(tw, prefix);
         }
 
@@ -1201,23 +1551,29 @@ namespace Grace.Parsing
     /// <summary>Parse node for a return statement</summary>
     public class ReturnParseNode : ParseNode
     {
+        private ParseNode _returnValue;
+
         /// <summary>Expression returned, if any</summary>
-        public ParseNode returnValue;
+        public ParseNode ReturnValue
+        {
+            get { return _returnValue; }
+            set { _returnValue = value; }
+        }
 
         internal ReturnParseNode(Token tok, ParseNode val)
             : base(tok)
         {
-            returnValue = val;
+            _returnValue = val;
         }
 
         /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
             tw.WriteLine(prefix + "Return:");
-            if (returnValue == null)
+            if (_returnValue == null)
                 tw.WriteLine(prefix + "    (nothing)");
             else
-                returnValue.DebugPrint(tw, prefix + "    ");
+                _returnValue.DebugPrint(tw, prefix + "    ");
             writeComment(tw, prefix);
         }
 
@@ -1232,22 +1588,28 @@ namespace Grace.Parsing
     /// <summary>Parse node for a comment</summary>
     public class CommentParseNode : ParseNode
     {
+        private string _value;
+
         /// <summary>String body of comment</summary>
-        public string value;
+        public string Value
+        {
+            get { return _value; }
+            set { _value = value; }
+        }
 
         internal CommentParseNode(Token tok)
             : base(tok)
         {
             CommentToken comm = tok as CommentToken;
-            value = comm.Value;
+            _value = comm.Value;
         }
 
         /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
-            tw.WriteLine(prefix + "Comment: " + value);
-            if (this.comment != null)
-                this.comment.DebugPrint(tw, prefix);
+            tw.WriteLine(prefix + "Comment: " + _value);
+            if (this.Comment != null)
+                this.Comment.DebugPrint(tw, prefix);
         }
 
         /// <inheritdoc/>

@@ -70,7 +70,7 @@ namespace Grace.Execution
         {
             get
             {
-                return (origin.path as StringLiteralParseNode).value;
+                return (origin.Path as StringLiteralParseNode).Value;
             }
         }
 
@@ -125,7 +125,7 @@ namespace Grace.Execution
         {
             get
             {
-                return (origin.path as StringLiteralParseNode).value;
+                return (origin.Path as StringLiteralParseNode).Value;
             }
         }
 
@@ -136,7 +136,7 @@ namespace Grace.Execution
         {
             get
             {
-                return (origin.name as IdentifierParseNode).name;
+                return (origin.Name as IdentifierParseNode).Name;
             }
         }
 
@@ -818,16 +818,16 @@ namespace Grace.Execution
             : base(location, source)
         {
             origin = source;
-            numbase = origin._base;
+            numbase = origin.NumericBase;
             if (numbase == 10)
-                val = double.Parse(origin.digits);
+                val = double.Parse(origin.Digits);
             else
             {
                 int integral = 0;
                 double fractional = 0;
                 double size = 1.0;
                 bool frac = false;
-                foreach (char c in origin.digits)
+                foreach (char c in origin.Digits)
                 {
                     if (c == '.')
                         frac = true;
@@ -878,12 +878,12 @@ namespace Grace.Execution
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
             string desc = "";
-            if (origin._base == 10)
-                desc += origin.digits;
-            else if (origin._base == 16)
-                desc += "0x" + origin.digits;
+            if (origin.NumericBase == 10)
+                desc += origin.Digits;
+            else if (origin.NumericBase == 16)
+                desc += "0x" + origin.Digits;
             else
-                desc += origin._base + "x" + origin.digits;
+                desc += origin.NumericBase + "x" + origin.Digits;
             tw.WriteLine(prefix + "Number: " + desc + " (" + Value + ")");
         }
 
@@ -913,7 +913,7 @@ namespace Grace.Execution
         {
             get
             {
-                return origin.value;
+                return origin.Value;
             }
         }
 
@@ -948,7 +948,7 @@ namespace Grace.Execution
         {
             get
             {
-                return origin.name;
+                return origin.Name;
             }
         }
 
@@ -1003,7 +1003,7 @@ namespace Grace.Execution
         {
             get
             {
-                return (origin.name as IdentifierParseNode).name;
+                return (origin.Name as IdentifierParseNode).Name;
             }
         }
 
@@ -1076,7 +1076,7 @@ namespace Grace.Execution
         {
             get
             {
-                return (origin.name as IdentifierParseNode).name;
+                return (origin.Name as IdentifierParseNode).Name;
             }
         }
 
