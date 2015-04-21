@@ -32,12 +32,13 @@ namespace GraceWindow
             this.codeText = new System.Windows.Forms.TextBox();
             this.outputText = new System.Windows.Forms.TextBox();
             this.panel1 = new System.Windows.Forms.Panel();
+            this.aboutButton = new System.Windows.Forms.Button();
+            this.modulePathButton = new System.Windows.Forms.Button();
             this.saveButton = new System.Windows.Forms.Button();
             this.loadButton = new System.Windows.Forms.Button();
             this.runButton = new System.Windows.Forms.Button();
             this.openFile = new System.Windows.Forms.OpenFileDialog();
             this.saveFile = new System.Windows.Forms.SaveFileDialog();
-            this.modulePathButton = new System.Windows.Forms.Button();
             this.tableLayoutPanel1.SuspendLayout();
             this.panel1.SuspendLayout();
             this.SuspendLayout();
@@ -94,6 +95,7 @@ namespace GraceWindow
             this.panel1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.panel1.Controls.Add(this.aboutButton);
             this.panel1.Controls.Add(this.modulePathButton);
             this.panel1.Controls.Add(this.saveButton);
             this.panel1.Controls.Add(this.loadButton);
@@ -102,6 +104,30 @@ namespace GraceWindow
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(121, 508);
             this.panel1.TabIndex = 4;
+            // 
+            // aboutButton
+            // 
+            this.aboutButton.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.aboutButton.Location = new System.Drawing.Point(0, 451);
+            this.aboutButton.Name = "aboutButton";
+            this.aboutButton.Size = new System.Drawing.Size(121, 54);
+            this.aboutButton.TabIndex = 7;
+            this.aboutButton.Text = "About";
+            this.aboutButton.UseVisualStyleBackColor = true;
+            this.aboutButton.Click += new System.EventHandler(this.aboutButton_Click);
+            // 
+            // modulePathButton
+            // 
+            this.modulePathButton.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.modulePathButton.Location = new System.Drawing.Point(0, 183);
+            this.modulePathButton.Name = "modulePathButton";
+            this.modulePathButton.Size = new System.Drawing.Size(121, 54);
+            this.modulePathButton.TabIndex = 6;
+            this.modulePathButton.Text = "Module path";
+            this.modulePathButton.UseVisualStyleBackColor = true;
+            this.modulePathButton.Click += new System.EventHandler(this.modulePathButton_Click);
             // 
             // saveButton
             // 
@@ -147,18 +173,6 @@ namespace GraceWindow
             // 
             this.saveFile.FileOk += new System.ComponentModel.CancelEventHandler(this.saveFile_FileOk);
             // 
-            // modulePathButton
-            // 
-            this.modulePathButton.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.modulePathButton.Location = new System.Drawing.Point(0, 183);
-            this.modulePathButton.Name = "modulePathButton";
-            this.modulePathButton.Size = new System.Drawing.Size(121, 54);
-            this.modulePathButton.TabIndex = 6;
-            this.modulePathButton.Text = "Module path";
-            this.modulePathButton.UseVisualStyleBackColor = true;
-            this.modulePathButton.Click += new System.EventHandler(this.modulePathButton_Click);
-            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
@@ -186,6 +200,7 @@ namespace GraceWindow
         private System.Windows.Forms.SaveFileDialog saveFile;
         private System.Windows.Forms.Button saveButton;
         private System.Windows.Forms.Button modulePathButton;
+        private System.Windows.Forms.Button aboutButton;
     }
 }
 

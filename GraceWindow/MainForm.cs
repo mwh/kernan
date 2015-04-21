@@ -106,6 +106,11 @@ namespace GraceWindow
                         "grace"),
                     "modules"));
         }
+
+        private void aboutButton_Click(object sender, EventArgs e)
+        {
+            MessageBox.Show("Runtime revision: " + Interpreter.GetRuntimeVersion());
+        }
     }
 
     class TextboxSink : OutputSink
