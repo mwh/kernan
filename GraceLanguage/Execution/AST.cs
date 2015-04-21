@@ -203,11 +203,12 @@ namespace Grace.Execution
                 i++;
             }
         }
+
         /// <inheritdoc/>
-        public override GraceObject Evaluate(EvaluationContext ctx)
+        protected override GraceObject GetReceiver(EvaluationContext ctx,
+                MethodRequest req)
         {
             GraceObject rec = receiver.Evaluate(ctx);
-            MethodRequest req = new MethodRequest();
             var rirq = receiver as ImplicitReceiverRequestNode;
             if (rirq != null)
             {
@@ -216,34 +217,9 @@ namespace Grace.Execution
                     req.IsInterior = true;
                 }
             }
-            foreach (RequestPartNode rpn in this)
-            {
-                List<GraceObject> generics = new List<GraceObject>();
-                List<GraceObject> arguments = new List<GraceObject>();
-                foreach (Node n in rpn.GenericArguments)
-                    generics.Add(n.Evaluate(ctx));
-                foreach (Node n in rpn.Arguments)
-                    arguments.Add(n.Evaluate(ctx));
-                RequestPart rp = new RequestPart(rpn.Name, generics, arguments);
-                req.AddPart(rp);
-            }
-            string m = "";
-            int l = 0;
-            if (Location != null)
-            {
-                m = Location.Module;
-                l = Location.line;
-            }
-            int start = ctx.NestRequest(m, l, req.Name);
-            try
-            {
-                return rec.Request(ctx, req);
-            }
-            finally
-            {
-                ctx.PopCallStackTo(start);
-            }
+            return rec;
         }
+
     }
 
     /// <summary>A method request with no syntactic receiver</summary>
@@ -288,6 +264,14 @@ namespace Grace.Execution
             }
         }
 
+        /// <inheritdoc/>
+        protected override GraceObject GetReceiver(EvaluationContext ctx,
+                MethodRequest req)
+        {
+            GraceObject rec = ctx.FindReceiver(req);
+            req.IsInterior = true;
+            return rec;
+        }
         /// <inheritdoc/>
         public override GraceObject Evaluate(EvaluationContext ctx)
         {
@@ -395,6 +379,57 @@ namespace Grace.Execution
             return GetEnumerator();
         }
 
+        /// <summary>Get the dynamic receiver for this request</summary>
+        /// <param name="ctx">Current interpreter</param>
+        /// <param name="req">Dynamic request under construction</param>
+        protected abstract GraceObject GetReceiver(EvaluationContext ctx,
+                MethodRequest req);
+
+        private MethodRequest createRequest(EvaluationContext ctx)
+        {
+            MethodRequest req = new MethodRequest();
+            foreach (RequestPartNode rpn in this)
+            {
+                List<GraceObject> generics = new List<GraceObject>();
+                List<GraceObject> arguments = new List<GraceObject>();
+                foreach (Node n in rpn.GenericArguments)
+                    generics.Add(n.Evaluate(ctx));
+                foreach (Node n in rpn.Arguments)
+                    arguments.Add(n.Evaluate(ctx));
+                RequestPart rp = new RequestPart(rpn.Name, generics, arguments);
+                req.AddPart(rp);
+            }
+            return req;
+        }
+
+        /// <inheritdoc/>
+        public override GraceObject Evaluate(EvaluationContext ctx)
+        {
+            var req = createRequest(ctx);
+            GraceObject rec = GetReceiver(ctx, req);
+            return performRequest(ctx, rec, req);
+        }
+
+        private GraceObject performRequest(EvaluationContext ctx,
+                GraceObject rec, MethodRequest req)
+        {
+            string m = "";
+            int l = 0;
+            if (Location != null)
+            {
+                m = Location.Module;
+                l = Location.line;
+            }
+            int start = ctx.NestRequest(m, l, req.Name);
+            try
+            {
+                return rec.Request(ctx, req);
+            }
+            finally
+            {
+                ctx.PopCallStackTo(start);
+            }
+        }
     }
 
     /// <summary>A part of a method name and its arguments</summary>
