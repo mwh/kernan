@@ -31,5 +31,5 @@ if (! $GIT) {
     $GIT = "$GIT\cmd\git.exe"
 }
 
-$x = & "$GIT" rev-parse HEAD
+$x = & "$GIT" describe --long --dirty="++"
 Add-Content Properties\AssemblyInfo.cs "[assembly: AssemblyInformationalVersion(`"$x`")]"
