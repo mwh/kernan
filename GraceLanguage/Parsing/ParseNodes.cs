@@ -775,7 +775,7 @@ namespace Grace.Parsing
         internal PrefixOperatorParseNode(OperatorToken tok, ParseNode expr)
             : base(tok)
         {
-            this.name = tok.name;
+            this.name = tok.Name;
             this.receiver = expr;
         }
 
@@ -841,8 +841,8 @@ namespace Grace.Parsing
             : base(tok)
         {
             NumberToken it = tok as NumberToken;
-            _base = it._base;
-            digits = it.digits;
+            _base = it.NumericBase;
+            digits = it.Digits;
         }
 
         /// <inheritdoc/>
@@ -877,13 +877,13 @@ namespace Grace.Parsing
             : base(tok)
         {
             IdentifierToken it = tok as IdentifierToken;
-            name = it.name;
+            name = it.Name;
         }
 
         internal IdentifierParseNode(OperatorToken tok)
             : base(tok)
         {
-            name = tok.name;
+            name = tok.Name;
         }
 
 
@@ -916,8 +916,8 @@ namespace Grace.Parsing
             : base(tok)
         {
             StringToken comm = tok as StringToken;
-            value = comm.value;
-            raw = comm.raw;
+            value = comm.Value;
+            raw = comm.Raw;
         }
 
         /// <inheritdoc/>
@@ -1239,7 +1239,7 @@ namespace Grace.Parsing
             : base(tok)
         {
             CommentToken comm = tok as CommentToken;
-            value = comm.value;
+            value = comm.Value;
         }
 
         /// <inheritdoc/>

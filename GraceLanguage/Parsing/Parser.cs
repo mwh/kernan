@@ -378,7 +378,7 @@ namespace Grace.Parsing
                           && lexer.current is OperatorToken)
                     {
                         op = lexer.current as OperatorToken;
-                        partName.name += op.name;
+                        partName.name += op.Name;
                         nextToken();
                     }
                     first = false;
@@ -472,7 +472,7 @@ namespace Grace.Parsing
             else if (lexer.current is OperatorToken)
             {
                 OperatorToken op = lexer.current as OperatorToken;
-                if (op.name == "<")
+                if (op.Name == "<")
                     reportError("P1008", "Generic '<' must not have spaces around it.");
                 else
                     reportError("P1009", "Unexpected operator in type name, expected '<'.");
@@ -591,8 +591,8 @@ namespace Grace.Parsing
                 {
                     // This must be varargs
                     OperatorToken op = lexer.current as OperatorToken;
-                    if ("*" != op.name)
-                        reportError("P1012", new Dictionary<string, string>() { { "operator", op.name } },
+                    if ("*" != op.Name)
+                        reportError("P1012", new Dictionary<string, string>() { { "operator", op.Name } },
                                 "Unexpected operator in parameter list.");
                     nextToken();
                     expect<IdentifierToken>();
@@ -641,7 +641,7 @@ namespace Grace.Parsing
             Token start = lexer.current;
             nextToken();
             expect<StringToken>();
-            if ((lexer.current as StringToken).beginsInterpolation)
+            if ((lexer.current as StringToken).BeginsInterpolation)
                 reportError("P1014", "Import path uses string interpolation.");
             ParseNode path = parseString();
             expect<AsToken>();
@@ -661,7 +661,7 @@ namespace Grace.Parsing
             Token start = lexer.current;
             nextToken();
             expect<StringToken>();
-            if ((lexer.current as StringToken).beginsInterpolation)
+            if ((lexer.current as StringToken).BeginsInterpolation)
                 reportError("P1015", "Dialect path uses string interpolation.");
             ParseNode path = parseString();
             return new DialectParseNode(start, path);
@@ -842,12 +842,12 @@ namespace Grace.Parsing
         private ParseNode parseString()
         {
             StringToken tok = lexer.current as StringToken;
-            if (tok.beginsInterpolation)
+            if (tok.BeginsInterpolation)
             {
                 InterpolatedStringParseNode ret = new InterpolatedStringParseNode(tok);
                 StringToken lastTok = tok;
                 lexer.NextToken();
-                while (lastTok.beginsInterpolation)
+                while (lastTok.BeginsInterpolation)
                 {
                     ret.parts.Add(new StringLiteralParseNode(lastTok));
                     lexer.NextToken();
@@ -898,24 +898,24 @@ namespace Grace.Parsing
         private ParseNode oldParseOperator(ParseNode lhs)
         {
             OperatorToken tok = lexer.current as OperatorToken;
-            if ((!tok.spaceBefore || !tok.spaceAfter) && (tok.name != ".."))
+            if ((!tok.SpaceBefore || !tok.SpaceAfter) && (tok.Name != ".."))
                 reportError("P1020",
                         new Dictionary<string, string>()
                         {
-                            { "operator", tok.name }
+                            { "operator", tok.Name }
                         },
                         "Infix operators must be surrounded by spaces.");
             nextToken();
             ParseNode rhs = parseExpressionNoOp();
-            ParseNode ret = new OperatorParseNode(tok, tok.name, lhs, rhs);
+            ParseNode ret = new OperatorParseNode(tok, tok.Name, lhs, rhs);
             tok = lexer.current as OperatorToken;
             while (tok != null)
             {
-                if ((!tok.spaceBefore || !tok.spaceAfter) && (tok.name != ".."))
+                if ((!tok.SpaceBefore || !tok.SpaceAfter) && (tok.Name != ".."))
                     reportError("P1020",
                             new Dictionary<string, string>()
                             {
-                                { "operator", tok.name }
+                                { "operator", tok.Name }
                             },
                             "Infix operators must be surrounded by spaces.");
                 nextToken();
@@ -925,7 +925,7 @@ namespace Grace.Parsing
                     comment = parseComment();
                 }
                 rhs = parseExpressionNoOp();
-                ret = new OperatorParseNode(tok, tok.name, ret, rhs);
+                ret = new OperatorParseNode(tok, tok.Name, ret, rhs);
                 ret.comment = comment;
                 tok = lexer.current as OperatorToken;
             }
@@ -951,11 +951,11 @@ namespace Grace.Parsing
             bool allArith = true;
             while (tok != null)
             {
-                if ((!tok.spaceBefore || !tok.spaceAfter) && (tok.name != ".."))
+                if ((!tok.SpaceBefore || !tok.SpaceAfter) && (tok.Name != ".."))
                     reportError("P1020",
                             new Dictionary<string, string>()
                             {
-                                { "operator", tok.name }
+                                { "operator", tok.Name }
                             },
                             "Infix operators must be surrounded by spaces.");
                 nextToken();
@@ -963,7 +963,7 @@ namespace Grace.Parsing
                 {
                     parseComment();
                 }
-                switch (tok.name)
+                switch (tok.Name)
                 {
                     case "*":
                     case "-":
@@ -974,28 +974,28 @@ namespace Grace.Parsing
                         allArith = false;
                         break;
                 }
-                if (firstOp != null && !allArith && firstOp != tok.name)
+                if (firstOp != null && !allArith && firstOp != tok.Name)
                 {
                     reportError("P1026",
                             new Dictionary<string, string>()
                             {
-                                { "operator", tok.name }
+                                { "operator", tok.Name }
                             },
                             "Mixed operators without parentheses");
                 }
                 else if (firstOp == null)
                 {
-                    firstOp = tok.name;
+                    firstOp = tok.Name;
                 }
-                int myprec = precedence(tok.name);
+                int myprec = precedence(tok.Name);
                 while (opstack.Count > 0
-                        && myprec <= precedence(opstack.Peek().name))
+                        && myprec <= precedence(opstack.Peek().Name))
                 {
                     var o2 = opstack.Pop();
                     var tmp2 = valstack.Pop();
                     var tmp1 = valstack.Pop();
                     valstack.Push(
-                            new OperatorParseNode(o2, o2.name,
+                            new OperatorParseNode(o2, o2.Name,
                                 tmp1, tmp2));
                 }
                 opstack.Push(tok);
@@ -1009,7 +1009,7 @@ namespace Grace.Parsing
                 var tmp2 = valstack.Pop();
                 var tmp1 = valstack.Pop();
                 valstack.Push(
-                        new OperatorParseNode(o, o.name, tmp1, tmp2));
+                        new OperatorParseNode(o, o.Name, tmp1, tmp2));
             }
             return valstack.Pop();
         }

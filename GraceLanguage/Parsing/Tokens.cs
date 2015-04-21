@@ -47,16 +47,22 @@ namespace Grace.Parsing
 
     class IdentifierToken : Token
     {
-        public string name;
+        private string _name;
+
+        public string Name
+        {
+            get { return _name; }
+            set { _name = value; }
+        }
         public IdentifierToken(string module, int line, int column, string val)
             : base(module, line, column)
         {
-            name = val;
+            _name = val;
         }
 
         protected override string describe()
         {
-            return "Identifier:" + name;
+            return "Identifier:" + _name;
         }
     }
 
@@ -75,30 +81,48 @@ namespace Grace.Parsing
 
     class StringToken : Token
     {
-        public string value;
-        public string raw;
-        public bool beginsInterpolation = false;
+        private string _value;
+
+        public string Value
+        {
+            get { return _value; }
+            set { _value = value; }
+        }
+        private string _raw;
+
+        public string Raw
+        {
+            get { return _raw; }
+            set { _raw = value; }
+        }
+        private bool _beginsInterpolation = false;
+
+        public bool BeginsInterpolation
+        {
+            get { return _beginsInterpolation; }
+            set { _beginsInterpolation = value; }
+        }
 
         public StringToken(string module, int line, int column, string val)
             : base(module, line, column)
         {
-            value = val;
+            _value = val;
         }
 
         public StringToken(string module, int line, int column, string val,
                 bool interp)
             : base(module, line, column)
         {
-            value = val;
-            beginsInterpolation = interp;
+            _value = val;
+            _beginsInterpolation = interp;
         }
 
         public StringToken(string module, int line, int column, string val,
                 string raw)
             : base(module, line, column)
         {
-            value = val;
-            this.raw = raw;
+            _value = val;
+            this._raw = raw;
         }
 
         public StringToken(string module, int line, int column, string val,
@@ -106,97 +130,140 @@ namespace Grace.Parsing
                 bool interp)
             : base(module, line, column)
         {
-            value = val;
-            this.raw = raw;
-            beginsInterpolation = interp;
+            _value = val;
+            this._raw = raw;
+            _beginsInterpolation = interp;
         }
 
         protected override string describe()
         {
-            return "String:" + value;
+            return "String:" + _value;
         }
     }
 
     class NumberToken : Token
     {
-        public int _base;
-        public string digits;
+        private int _base;
+
+        public int NumericBase
+        {
+            get { return _base; }
+            set { _base = value; }
+        }
+        private string _digits;
+
+        public string Digits
+        {
+            get { return _digits; }
+            set { _digits = value; }
+        }
 
         public NumberToken(string module, int line, int column, int b,
                 string digits)
             : base(module, line, column)
         {
             _base = b;
-            this.digits = digits;
+            this._digits = digits;
         }
 
         protected override string describe()
         {
             string ret = "Number:";
             if (_base == 10)
-                ret += digits;
+                ret += _digits;
             else if (_base == 16)
-                ret += "0x" + digits;
+                ret += "0x" + _digits;
             else
-                ret += _base + "x" + digits;
+                ret += _base + "x" + _digits;
             return ret;
         }
     }
 
     class OperatorToken : Token
     {
-        public string name;
-        public bool spaceBefore;
-        public bool spaceAfter;
+        private string _name;
+
+        public string Name
+        {
+            get { return _name; }
+            set { _name = value; }
+        }
+        private bool _spaceBefore;
+
+        public bool SpaceBefore
+        {
+            get { return _spaceBefore; }
+            set { _spaceBefore = value; }
+        }
+        private bool _spaceAfter;
+
+        public bool SpaceAfter
+        {
+            get { return _spaceAfter; }
+            set { _spaceAfter = value; }
+        }
+
         public OperatorToken(string module, int line, int column, string val)
             : base(module, line, column)
         {
-            name = val;
+            _name = val;
         }
 
         /// <summary>Set whether spaces were found before and after
         /// this operator symbol</summary>
         public void SetSpacing(bool before, bool after)
         {
-            spaceBefore = before;
-            spaceAfter = after;
+            _spaceBefore = before;
+            _spaceAfter = after;
         }
 
         protected override string describe()
         {
-            return "Operator:" + name;
+            return "Operator:" + _name;
         }
     }
 
     class CommentToken : Token
     {
-        public string value;
-        public bool beginsInterpolation = false;
+        private string _value;
+
+        public string Value
+        {
+            get { return _value; }
+            set { _value = value; }
+        }
 
         public CommentToken(string module, int line, int column, string val)
             : base(module, line, column)
         {
-            value = val;
+            _value = val;
         }
 
         protected override string describe()
         {
-            return "Comment:" + value;
+            return "Comment:" + _value;
         }
     }
 
     class SpaceToken : Token
     {
-        public int size;
+        private int _size;
+
+        public int Size
+        {
+            get { return _size; }
+            set { _size = value; }
+        }
+
         public SpaceToken(string module, int line, int column, int size)
             : base(module, line, column)
         {
-            this.size = size;
+            this._size = size;
         }
 
         protected override string describe()
         {
-            return "Space:" + size;
+            return "Space:" + _size;
         }
     }
 
