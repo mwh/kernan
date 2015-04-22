@@ -79,5 +79,8 @@ namespace Grace.Parsing
         /// <summary>Visit a DialectParseNode</summary>
         /// <param name="dpn">DialectParseNode to visit</param>
         T Visit(DialectParseNode dpn);
+        /// <summary>Visit an InheritsParseNode</summary>
+        /// <param name="ipn">InheritsParseNode to visit</param>
+        T Visit(InheritsParseNode ipn);
     }
 }

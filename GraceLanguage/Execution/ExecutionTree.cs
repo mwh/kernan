@@ -464,6 +464,13 @@ namespace Grace.Execution
             return new DialectNode(dpn.Token, dpn);
         }
 
+        /// <inheritdoc />
+        public Node Visit(InheritsParseNode ipn)
+        {
+            return new InheritsNode(ipn.Token, ipn,
+                    ipn.From.Visit(this));
+        }
+
         /// <summary>Transforms a list of ParseNodes into a list of the
         /// corresponding Nodes</summary>
         private List<Node> map(List<ParseNode> l)

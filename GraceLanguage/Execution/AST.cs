@@ -1408,4 +1408,36 @@ namespace Grace.Execution
         }
     }
 
+    /// <summary>An inherits clause</summary>
+    public class InheritsNode : Node
+    {
+
+        /// <summary>The request that is being inherited</summary>
+        public Node From { get; private set; }
+
+        /// <summary>Name given in an "as" clause</summary>
+        public string As { get; private set; }
+
+        internal InheritsNode(Token location, InheritsParseNode source,
+                Node from)
+            : base(location, source)
+        {
+            From = from;
+            As = "super";
+        }
+
+        /// <inheritdoc/>
+        public override void DebugPrint(System.IO.TextWriter tw, string prefix)
+        {
+            tw.WriteLine(prefix + "Inherits: ");
+            From.DebugPrint(tw, prefix + "    ");
+        }
+
+        /// <inheritdoc/>
+        public override GraceObject Evaluate(EvaluationContext ctx)
+        {
+            return null;
+        }
+    }
+
 }
