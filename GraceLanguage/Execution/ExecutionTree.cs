@@ -156,6 +156,12 @@ namespace Grace.Execution
             foreach (ParseNode p in d.Body)
                 if (!(p is CommentParseNode))
                     ret.Add(p.Visit(this));
+            if (d.Body.Count > 0 && d.Body[d.Body.Count - 1] is
+                    ObjectParseNode)
+            {
+                // This method returns a fresh object
+                ret.Fresh = true;
+            }
             return ret;
         }
 

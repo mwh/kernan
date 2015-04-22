@@ -507,6 +507,10 @@ namespace Grace.Execution
             else
             {
                 methods[meth.Name] = meth;
+                if (meth.Fresh)
+                {
+                    methods[meth.Name + " object"] = meth;
+                }
             }
         }
 
@@ -575,6 +579,9 @@ namespace Grace.Execution
 
         /// <summary>Whether this method is confidential or not</summary>
         public bool Confidential { get; set; }
+
+        /// <summary>Whether this method returns a fresh object or not</summary>
+        public bool Fresh { get; set; }
 
         internal MethodNode(Token token, ParseNode source)
             : base(token, source)
@@ -652,6 +659,14 @@ namespace Grace.Execution
             else
             {
                 tw.WriteLine(prefix + "  Is: Public");
+            }
+            if (Fresh)
+            {
+                tw.WriteLine(prefix + "  Fresh: Yes");
+            }
+            else
+            {
+                tw.WriteLine(prefix + "  Fresh: No");
             }
             tw.WriteLine(prefix + "  Parts:");
             int i = 1;
