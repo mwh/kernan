@@ -32,6 +32,7 @@ namespace Grace.Runtime
         private Flags flags;
 
         private string name;
+        private LocalScope _internalScope;
 
         /// <summary>Name of this object for debugging</summary>
         /// <value>This property gets/sets the value of the field name</value>
@@ -61,6 +62,14 @@ namespace Grace.Runtime
             this.name = name;
         }
 
+        /// <summary>An object with an internal scope</summary>
+        /// <param name="scope">Internal scope of this object</param>
+        public GraceObject(LocalScope scope)
+        {
+            initialise();
+            this._internalScope = scope;
+        }
+
         /// <summary>Initialisation code used by multiple constructors</summary>
         private void initialise()
         {
@@ -74,10 +83,12 @@ namespace Grace.Runtime
 
         /// <summary>Add a named superobject to this object</summary>
         /// <param name="name">Name of parent</param>
-        /// <param name="obj">Parent object</param>
+        /// <param name="obj">Parent part-object</param>
         public void AddParent(string name, GraceObject obj)
         {
             parents[name] = obj;
+            if (_internalScope != null)
+                _internalScope.AddLocalDef(name, obj);
         }
 
         /// <inheritdoc/>
@@ -203,6 +214,10 @@ namespace Grace.Runtime
             var m = findMethod(req.Name);
             if (!methods.ContainsKey(req.Name))
             {
+                if (req.IsInterior && parents.ContainsKey(req.Name))
+                {
+                    return parents[req.Name];
+                }
                 foreach (var o in parents.Values)
                 {
                     if (o.findMethod(req.Name) != null)

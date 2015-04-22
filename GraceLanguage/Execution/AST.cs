@@ -435,13 +435,18 @@ namespace Grace.Execution
         /// Make this request as the target of an inherits clause
         /// </summary>
         /// <param name="ctx">Current interpreter</param>
-        /// <param name="inheritor">Object inheriting from this request</param>
+        /// <param name="inheritor">Part-object immediately inheriting this one
+        /// </param>
+        /// <param name="parentName">"as" name of inherits clause</param>
+        /// <param name="self">Binding of self</param>
         public virtual GraceObject Inherit(EvaluationContext ctx,
-                GraceObject inheritor)
+                GraceObject inheritor, string parentName, GraceObject self)
         {
             var req = createRequest(ctx);
             req.IsInherits = true;
             req.InheritingObject = inheritor;
+            req.InheritingName = parentName;
+            req.InheritingSelf = self;
             var rec = GetReceiver(ctx, req);
             return performRequest(ctx, rec, req);
         }
@@ -559,32 +564,39 @@ namespace Grace.Execution
         /// <summary>Evaluate this object as the return of a
         /// fresh method being inherited</summary>
         /// <param name="ctx">Current interpreter</param>
-        /// <param name="inheritor">Binding of self</param>
+        /// <param name="inheritor">Part-object immediately inheriting this one
+        /// </param>
+        /// <param name="parentName">"as" name of inherits clause</param>
+        /// <param name="self">Binding of self</param>
         public GraceObject BeInherited(EvaluationContext ctx,
-                GraceObject inheritor)
+                GraceObject inheritor,
+                string parentName,
+                GraceObject self)
         {
-            GraceObject ret = new GraceObject();
+            LocalScope local = new LocalScope("object-inner");
+            GraceObject ret = new GraceObject(local);
+            inheritor.AddParent(parentName, ret);
             ret.SetFlag(GraceObject.Flags.UserspaceObject);
             ctx.Extend(ret);
-            LocalScope local = new LocalScope("object-inner");
-            local.AddLocalDef("self", inheritor);
-            local.RedirectSurrounding = inheritor;
-            return basicEvaluate(ctx, ret, local);
+            local.AddLocalDef("self", self);
+            local.RedirectSurrounding = self;
+            return basicEvaluate(ctx, ret, local, self);
         }
 
         /// <inheritdoc/>
         public override GraceObject Evaluate(EvaluationContext ctx)
         {
-            GraceObject ret = new GraceObject();
+            LocalScope local = new LocalScope("object-inner");
+            GraceObject ret = new GraceObject(local);
             ret.SetFlag(GraceObject.Flags.UserspaceObject);
             ctx.Extend(ret);
-            LocalScope local = new LocalScope("object-inner");
             local.AddLocalDef("self", ret);
-            return basicEvaluate(ctx, ret, local);
+            return basicEvaluate(ctx, ret, local, ret);
         }
 
         private GraceObject basicEvaluate(EvaluationContext ctx,
-                GraceObject ret, LocalScope local)
+                GraceObject ret, LocalScope local,
+                GraceObject self)
         {
             ctx.ExtendMinor(local);
             ret.RememberScope(ctx);
@@ -595,7 +607,7 @@ namespace Grace.Execution
                 if (n is InheritsNode)
                 {
                     var i = (InheritsNode)n;
-                    inherit(i.As, i.Inherit(ctx, ret), ret, local);
+                    i.Inherit(ctx, ret, self);
                 }
                 else {
                     n.Evaluate(ctx);
@@ -613,12 +625,6 @@ namespace Grace.Execution
             return ret;
         }
 
-        private void inherit(string name, GraceObject partObject,
-                GraceObject ret, LocalScope local)
-        {
-            local.AddLocalDef(name, partObject);
-            ret.AddParent(name, partObject);
-        }
     }
 
     /// <summary>A method declaration</summary>
@@ -839,7 +845,8 @@ namespace Grace.Execution
                         ret = n.Evaluate(ctx);
                     }
                     var last = body[body.Count - 1] as ObjectConstructorNode;
-                    ret = last.BeInherited(ctx, req.InheritingObject);
+                    ret = last.BeInherited(ctx, req.InheritingObject,
+                            req.InheritingName, req.InheritingSelf);
                 }
                 else
                 {
@@ -1493,11 +1500,14 @@ namespace Grace.Execution
 
         /// <summary>Inherit this request into an object</summary>
         /// <param name="ctx">Current interpreter</param>
-        /// <param name="self">Inheriting object</param>
-        public GraceObject Inherit(EvaluationContext ctx, GraceObject self)
+        /// <param name="partObject">Inheriting object</param>
+        /// <param name="self">Object identity</param>
+        public GraceObject Inherit(EvaluationContext ctx,
+                GraceObject partObject,
+                GraceObject self)
         {
             var f = From as RequestNode;
-            return f.Inherit(ctx, self);
+            return f.Inherit(ctx, partObject, As, self);
         }
 
         /// <inheritdoc/>
