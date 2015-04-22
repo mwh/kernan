@@ -633,7 +633,14 @@ namespace Grace.Parsing
             Token start = lexer.current;
             nextToken();
             ParseNode val = parseExpression();
-            return new InheritsParseNode(start, val);
+            IdentifierParseNode name = null;
+            if (lexer.current is AsToken)
+            {
+                nextToken();
+                expect<IdentifierToken>();
+                name = parseIdentifier();
+            }
+            return new InheritsParseNode(start, val, name);
         }
 
         private ParseNode parseImport()

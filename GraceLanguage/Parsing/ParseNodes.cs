@@ -1421,6 +1421,7 @@ namespace Grace.Parsing
     public class InheritsParseNode : ParseNode
     {
         private ParseNode _from;
+        private IdentifierParseNode _as;
 
         /// <summary>RHS of the inherits clause</summary>
         public ParseNode From
@@ -1429,10 +1430,18 @@ namespace Grace.Parsing
             set { _from = value; }
         }
 
-        internal InheritsParseNode(Token tok, ParseNode expr)
+        /// <summary>As clause of of inherits</summary>
+        public IdentifierParseNode As
+        {
+            get { return _as; }
+        }
+
+        internal InheritsParseNode(Token tok, ParseNode expr,
+                IdentifierParseNode asExpr)
             : base(tok)
         {
             _from = expr;
+            _as = asExpr;
         }
 
         /// <inheritdoc/>
@@ -1440,6 +1449,11 @@ namespace Grace.Parsing
         {
             tw.WriteLine(prefix + "Inherits:");
             _from.DebugPrint(tw, prefix + "    ");
+            if (_as != null)
+            {
+                tw.WriteLine(prefix + "  As:");
+                _as.DebugPrint(tw, prefix + "    ");
+            }
             writeComment(tw, prefix);
         }
 

@@ -1495,7 +1495,10 @@ namespace Grace.Execution
             : base(location, source)
         {
             From = from;
-            As = "super";
+            if (source.As != null)
+                As = source.As.Name;
+            else
+                As = "super";
         }
 
         /// <summary>Inherit this request into an object</summary>
