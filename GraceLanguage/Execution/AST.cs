@@ -616,6 +616,7 @@ namespace Grace.Execution
         private void inherit(string name, GraceObject partObject,
                 GraceObject ret, LocalScope local)
         {
+            local.AddLocalDef(name, partObject);
             ret.AddParent(name, partObject);
         }
     }
