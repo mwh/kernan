@@ -22,8 +22,7 @@ namespace Grace.Runtime
         private Dictionary<string, MethodNode> methods = new Dictionary<string, MethodNode>();
         private Dictionary<string, GraceObject> fields = new Dictionary<string, GraceObject>();
 
-        private Dictionary<string, GraceObject> parents =
-            new Dictionary<string, GraceObject>();
+        private Stack<GraceObject> parents = new Stack<GraceObject>();
 
         private FieldReaderMethod Reader;
         private FieldWriterMethod Writer;
@@ -86,8 +85,8 @@ namespace Grace.Runtime
         /// <param name="obj">Parent part-object</param>
         public void AddParent(string name, GraceObject obj)
         {
-            parents[name] = obj;
-            if (_internalScope != null)
+            parents.Push(obj);
+            if (_internalScope != null && name != null)
                 _internalScope.AddLocalDef(name, obj);
         }
 
@@ -184,7 +183,7 @@ namespace Grace.Runtime
         {
             if (methods.ContainsKey(req.Name))
                 return true;
-            foreach (var o in parents.Values)
+            foreach (var o in parents)
                 if (o.RespondsTo(req))
                     return true;
             return false;
@@ -194,7 +193,7 @@ namespace Grace.Runtime
         {
             if (methods.ContainsKey(name))
                 return methods[name];
-            foreach (var o in parents.Values)
+            foreach (var o in parents)
             {
                 var m = o.findMethod(name);
                 if (m != null)
@@ -214,11 +213,7 @@ namespace Grace.Runtime
             var m = findMethod(req.Name);
             if (!methods.ContainsKey(req.Name))
             {
-                if (req.IsInterior && parents.ContainsKey(req.Name))
-                {
-                    return parents[req.Name];
-                }
-                foreach (var o in parents.Values)
+                foreach (var o in parents)
                 {
                     if (o.findMethod(req.Name) != null)
                         return o.Request(ctx, req);
