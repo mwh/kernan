@@ -128,6 +128,12 @@ namespace Grace.Runtime
         /// request?</summary>
         public bool IsInterior { get; set; }
 
+        /// <summary>Is this method request being inherited from?</summary>
+        public bool IsInherits { get; set; }
+
+        /// <summary>Object being inherited from, or null</summary>
+        public GraceObject InheritingObject { get; set; }
+
         /// <summary>Get an enumerator giving each part of the request
         /// in turn</summary>
         public IEnumerator<RequestPart> GetEnumerator()
