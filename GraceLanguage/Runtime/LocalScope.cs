@@ -11,6 +11,10 @@ namespace Grace.Runtime
     /// <summary>Local scope of a method</summary>
     public class LocalScope : GraceObject
     {
+        /// <summary>Object to redirect any requests resolved on the
+        /// surrounding scope to</summary>
+        public GraceObject RedirectSurrounding { get; set; }
+
         /// <summary>Reusable method for reading a local variable</summary>
         public static readonly LocalReaderMethod Reader = new LocalReaderMethod();
 

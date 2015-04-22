@@ -382,10 +382,22 @@ namespace Grace.Execution
         public GraceObject FindReceiver(MethodRequest req)
         {
             ScopeLink sl = scope;
+            GraceObject capture = null;
             while (sl != null && sl.scope != null)
             {
                 if (sl.scope.RespondsTo(req))
+                {
+                    if (capture != null)
+                        return capture;
                     return sl.scope;
+                }
+                capture = null;
+                var ls = sl.scope as LocalScope;
+                if (ls != null)
+                {
+                    if (ls.RedirectSurrounding != null)
+                        capture = ls.RedirectSurrounding;
+                }
                 sl = sl.next;
             }
             return null;
