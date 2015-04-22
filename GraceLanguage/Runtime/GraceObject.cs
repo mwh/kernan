@@ -22,6 +22,9 @@ namespace Grace.Runtime
         private Dictionary<string, MethodNode> methods = new Dictionary<string, MethodNode>();
         private Dictionary<string, GraceObject> fields = new Dictionary<string, GraceObject>();
 
+        private Dictionary<string, GraceObject> parents =
+            new Dictionary<string, GraceObject>();
+
         private FieldReaderMethod Reader;
         private FieldWriterMethod Writer;
 
@@ -67,6 +70,14 @@ namespace Grace.Runtime
                         new NativeMethod0(this.AsString)));
             AddMethod("==", new DelegateMethodNode1(new NativeMethod1(this.EqualsEquals)));
             AddMethod("!=", new DelegateMethodNode1(new NativeMethod1(this.NotEquals)));
+        }
+
+        /// <summary>Add a named superobject to this object</summary>
+        /// <param name="name">Name of parent</param>
+        /// <param name="obj">Parent object</param>
+        public void AddParent(string name, GraceObject obj)
+        {
+            parents[name] = obj;
         }
 
         /// <inheritdoc/>
@@ -160,7 +171,25 @@ namespace Grace.Runtime
         /// false otherwise</returns>
         public virtual bool RespondsTo(MethodRequest req)
         {
-            return methods.ContainsKey(req.Name);
+            if (methods.ContainsKey(req.Name))
+                return true;
+            foreach (var o in parents.Values)
+                if (o.RespondsTo(req))
+                    return true;
+            return false;
+        }
+
+        private MethodNode findMethod(string name)
+        {
+            if (methods.ContainsKey(name))
+                return methods[name];
+            foreach (var o in parents.Values)
+            {
+                var m = o.findMethod(name);
+                if (m != null)
+                    return m;
+            }
+            return null;
         }
 
         /// <summary>Request a method of this object in a given
@@ -171,10 +200,14 @@ namespace Grace.Runtime
         public virtual GraceObject Request(EvaluationContext ctx,
                 MethodRequest req)
         {
-            if (lexicalScope != null)
-                ctx.Remember(lexicalScope);
+            var m = findMethod(req.Name);
             if (!methods.ContainsKey(req.Name))
             {
+                foreach (var o in parents.Values)
+                {
+                    if (o.findMethod(req.Name) != null)
+                        return o.Request(ctx, req);
+                }
                 ErrorReporting.RaiseError(ctx, "R2000",
                         new Dictionary<string, string> {
                             { "method", req.Name },
@@ -184,7 +217,8 @@ namespace Grace.Runtime
                             + "» not found in object «" + ToString() + "»"
                 );
             }
-            MethodNode m = methods[req.Name];
+            if (lexicalScope != null)
+                ctx.Remember(lexicalScope);
             Interpreter.Debug("calling method " + req.Name);
             var ret = m.Respond(ctx, this, req);
             if (lexicalScope != null)

@@ -430,6 +430,22 @@ namespace Grace.Execution
                 ctx.PopCallStackTo(start);
             }
         }
+
+        /// <summary>
+        /// Make this request as the target of an inherits clause
+        /// </summary>
+        /// <param name="ctx">Current interpreter</param>
+        /// <param name="inheritor">Object inheriting from this request</param>
+        public virtual GraceObject Inherit(EvaluationContext ctx,
+                GraceObject inheritor)
+        {
+            var req = createRequest(ctx);
+            req.IsInherits = true;
+            req.InheritingObject = inheritor;
+            var rec = GetReceiver(ctx, req);
+            return performRequest(ctx, rec, req);
+        }
+
     }
 
     /// <summary>A part of a method name and its arguments</summary>
@@ -554,7 +570,14 @@ namespace Grace.Execution
                 ret.AddMethod(m);
             foreach (Node n in body)
             {
-                n.Evaluate(ctx);
+                if (n is InheritsNode)
+                {
+                    var i = (InheritsNode)n;
+                    inherit(i.As, i.Inherit(ctx, ret), ret);
+                }
+                else {
+                    n.Evaluate(ctx);
+                }
             }
             if (ret.HasFlag(GraceObject.Flags.RunAtModuleEnd))
             {
@@ -566,6 +589,12 @@ namespace Grace.Execution
             ctx.Unextend(local);
             ctx.Unextend(ret);
             return ret;
+        }
+
+        private void inherit(string name, GraceObject partObject,
+                GraceObject ret)
+        {
+            ret.AddParent(name, partObject);
         }
     }
 
@@ -1424,6 +1453,15 @@ namespace Grace.Execution
         {
             From = from;
             As = "super";
+        }
+
+        /// <summary>Inherit this request into an object</summary>
+        /// <param name="ctx">Current interpreter</param>
+        /// <param name="self">Inheriting object</param>
+        public GraceObject Inherit(EvaluationContext ctx, GraceObject self)
+        {
+            var f = From as RequestNode;
+            return f.Inherit(ctx, self);
         }
 
         /// <inheritdoc/>
