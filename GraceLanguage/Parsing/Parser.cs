@@ -1110,7 +1110,8 @@ namespace Grace.Parsing
             // does not at all now. must recalculate after params list too
             if (lexer.current is IdentifierToken
                     || lexer.current is NumberToken
-                    || lexer.current is StringToken)
+                    || lexer.current is StringToken
+                    || lexer.current is LParenToken)
             {
                 // It *might* be a parameter.
                 ParseNode expr = parseExpression();
