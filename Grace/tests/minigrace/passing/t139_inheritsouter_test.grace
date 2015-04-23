@@ -1,7 +1,7 @@
 def a = object {
     method new {
         object {
-            print(outer)
+            print(outer.asString)
         }
     }
 
@@ -13,6 +13,6 @@ method asString { "m" }
 a.new
 object {
     inherits a.new
-    print(outer)
+    print(outer.asString)
 }
 

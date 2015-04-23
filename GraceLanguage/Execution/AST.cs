@@ -208,14 +208,28 @@ namespace Grace.Execution
         protected override GraceObject GetReceiver(EvaluationContext ctx,
                 MethodRequest req)
         {
-            GraceObject rec = receiver.Evaluate(ctx);
             var rirq = receiver as ImplicitReceiverRequestNode;
+            GraceObject rec;
             if (rirq != null)
             {
                 if (rirq.Name == "self")
                 {
                     req.IsInterior = true;
+                    rec = receiver.Evaluate(ctx);
                 }
+                else if (rirq.Name == "outer")
+                {
+                    req.IsInterior = true;
+                    rec = ctx.FindReceiver(req, 1);
+                }
+                else
+                {
+                    rec = receiver.Evaluate(ctx);
+                }
+            }
+            else
+            {
+                rec = receiver.Evaluate(ctx);
             }
             return rec;
         }
@@ -288,6 +302,14 @@ namespace Grace.Execution
                 RequestPart rp = new RequestPart(rpn.Name, generics, arguments);
                 req.AddPart(rp);
             }
+            string m = "";
+            int l = 0;
+            if (Location != null)
+            {
+                m = Location.Module;
+                l = Location.line;
+            }
+            int start = ctx.NestRequest(m, l, req.Name);
             GraceObject rec = ctx.FindReceiver(req);
             if (rec == null)
             {
@@ -299,14 +321,6 @@ namespace Grace.Execution
                         "LookupError: No receiver found for ${method}"
                 );
             }
-            string m = "";
-            int l = 0;
-            if (Location != null)
-            {
-                m = Location.Module;
-                l = Location.line;
-            }
-            int start = ctx.NestRequest(m, l, req.Name);
             try
             {
                 return rec.Request(ctx, req);

@@ -381,15 +381,33 @@ namespace Grace.Execution
         /// <inheritdoc />
         public GraceObject FindReceiver(MethodRequest req)
         {
+            return FindReceiver(req, 0);
+        }
+
+        /// <inheritdoc />
+        public GraceObject FindReceiver(MethodRequest req, int skipRedirects)
+        {
             ScopeLink sl = scope;
             GraceObject capture = null;
             while (sl != null && sl.scope != null)
             {
+                if (skipRedirects > 0 &&
+                        sl.scope.HasFlag(GraceObject.Flags.UserspaceObject))
+                {
+                    sl = sl.next;
+                    skipRedirects--;
+                    continue;
+                }
                 if (sl.scope.RespondsTo(req))
                 {
                     if (capture != null)
+                    {
                         return capture;
-                    return sl.scope;
+                    }
+                    else
+                    {
+                        return sl.scope;
+                    }
                 }
                 capture = null;
                 var ls = sl.scope as LocalScope;
@@ -560,6 +578,14 @@ namespace Grace.Execution
         /// <returns>An object that responds to <paramref name="req"/>,
         /// or null</returns>
         GraceObject FindReceiver(MethodRequest req);
+        /// <summary>Find a surrounding object able to process a given
+        /// request</summary>
+        /// <param name="req">Method request that must be accepted</param>
+        /// <param name="skipRedirects">Number of surrounding "self"
+        /// objects to skip over</param>
+        /// <returns>An object that responds to <paramref name="req"/>,
+        /// or null</returns>
+        GraceObject FindReceiver(MethodRequest req, int skipRedirects);
         /// <summary>Find the closest enclosing scope that is a method
         /// body</summary>
         /// <returns>The nearest method scope, or null</returns>
