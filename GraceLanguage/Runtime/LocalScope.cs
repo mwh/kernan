@@ -27,13 +27,20 @@ namespace Grace.Runtime
         private string name = "<anon>";
 
         /// <summary>Empty anonymous scope</summary>
-        public LocalScope() { }
+        public LocalScope() {
+            RemoveMethod("asString");
+            RemoveMethod("==");
+            RemoveMethod("!=");
+        }
 
         /// <summary>Empty named scope</summary>
         /// <param name="name">Name of this scope for debugging</param>
         public LocalScope(string name)
         {
             this.name = name;
+            RemoveMethod("asString");
+            RemoveMethod("==");
+            RemoveMethod("!=");
         }
 
         /// <inheritdoc/>

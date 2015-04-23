@@ -126,6 +126,13 @@ namespace Grace.Runtime
             lexicalScope = ctx.Memorise();
         }
 
+        /// <summary>Remove a method from this object</summary>
+        /// <param name="m">Method name to remove</param>
+        public virtual void RemoveMethod(string m)
+        {
+            methods.Remove(m);
+        }
+
         /// <summary>Add a method to this object</summary>
         /// <param name="m">Method to add</param>
         public virtual void AddMethod(MethodNode m)
