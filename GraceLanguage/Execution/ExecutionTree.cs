@@ -30,11 +30,23 @@ namespace Grace.Execution
         public Node Visit(ObjectParseNode obj)
         {
             ObjectConstructorNode ret = new ObjectConstructorNode(obj.Token, obj);
+            InheritsNode parent = null;
+            var singleParent = true;
             foreach (ParseNode p in obj.Body)
             {
+                var n = p.Visit<Node>(this);
                 if (!(p is CommentParseNode))
-                    ret.Add(p.Visit<Node>(this));
+                    ret.Add(n);
+                var i = n as InheritsNode;
+                if (i != null)
+                {
+                    if (parent != null)
+                        singleParent = false;
+                    parent = i;
+                }
             }
+            if (singleParent && parent != null)
+                parent.As = "super";
             return ret;
         }
 

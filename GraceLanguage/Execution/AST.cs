@@ -1488,7 +1488,7 @@ namespace Grace.Execution
         public Node From { get; private set; }
 
         /// <summary>Name given in an "as" clause</summary>
-        public string As { get; private set; }
+        public string As { get; set; }
 
         internal InheritsNode(Token location, InheritsParseNode source,
                 Node from)
@@ -1497,8 +1497,6 @@ namespace Grace.Execution
             From = from;
             if (source.As != null)
                 As = source.As.Name;
-            else
-                As = "super";
         }
 
         /// <summary>Inherit this request into an object</summary>
