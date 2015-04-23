@@ -712,13 +712,13 @@ namespace Grace.Parsing
             return maybeParseOperator(lhs);
         }
 
-        private ParseNode parseExpressionNoOp()
+        private ParseNode parseParenthesisedExpression()
         {
-            ParseNode lhs;
             if (lexer.current is LParenToken)
             {
+                var startToken = lexer.current;
                 nextToken();
-                lhs = parseExpression();
+                var expr = parseExpression();
                 consumeBlankLines();
                 if (lexer.current is RParenToken)
                 {
@@ -728,6 +728,17 @@ namespace Grace.Parsing
                 {
                     reportError("P1017", "Parenthesised expression does not have closing parenthesis");
                 }
+                return new ParenthesisedParseNode(startToken, expr);
+            }
+            return null;
+        }
+
+        private ParseNode parseExpressionNoOp()
+        {
+            ParseNode lhs;
+            if (lexer.current is LParenToken)
+            {
+                lhs = parseParenthesisedExpression();
             }
             else
             {
@@ -830,13 +841,7 @@ namespace Grace.Parsing
             ParseNode expr;
             if (lexer.current is LParenToken)
             {
-                nextToken();
-                expr = parseExpression();
-                if (!(lexer.current is RParenToken))
-                {
-                    reportError("P1017", "Parenthesised expression does not have closing parenthesis");
-                }
-                nextToken();
+                expr = parseParenthesisedExpression();
             }
             else
             {

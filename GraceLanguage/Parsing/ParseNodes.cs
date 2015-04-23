@@ -1599,6 +1599,40 @@ namespace Grace.Parsing
 
     }
 
+    /// <summary>Parse node for a parenthesised expression</summary>
+    public class ParenthesisedParseNode : ParseNode
+    {
+        private ParseNode _expr;
+
+        /// <summary>Expression in parentheses</summary>
+        public ParseNode Expression
+        {
+            get { return _expr; }
+            set { _expr = value; }
+        }
+
+        internal ParenthesisedParseNode(Token tok, ParseNode expr)
+            : base(tok)
+        {
+            _expr = expr;
+        }
+
+        /// <inheritdoc/>
+        public override void DebugPrint(System.IO.TextWriter tw, string prefix)
+        {
+            tw.WriteLine(prefix + "Parenthesised:");
+            _expr.DebugPrint(tw, prefix + "    ");
+            writeComment(tw, prefix);
+        }
+
+        /// <inheritdoc/>
+        public override T Visit<T>(ParseNodeVisitor<T> visitor)
+        {
+            return visitor.Visit(this);
+        }
+
+    }
+
     /// <summary>Parse node for a comment</summary>
     public class CommentParseNode : ParseNode
     {

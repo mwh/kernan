@@ -483,6 +483,12 @@ namespace Grace.Execution
                     ipn.From.Visit(this));
         }
 
+        /// <inheritdoc />
+        public Node Visit(ParenthesisedParseNode ppn)
+        {
+            return ppn.Expression.Visit(this);
+        }
+
         /// <summary>Transforms a list of ParseNodes into a list of the
         /// corresponding Nodes</summary>
         private List<Node> map(List<ParseNode> l)
