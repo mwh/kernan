@@ -1,9 +1,4 @@
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 using Grace.Execution;
 
 namespace Grace.Runtime
@@ -11,14 +6,13 @@ namespace Grace.Runtime
     /// <summary>A Grace type literal</summary>
     public class GraceType : GraceObject
     {
-        private string name;
+        private readonly string name;
         private List<MethodTypeNode> methods = new List<MethodTypeNode>();
         private List<MethodRequest> requests;
 
         /// <param name="name">Name of this type for debugging
         /// and reporting purposes</param>
         public GraceType(string name)
-            : base()
         {
             this.name = name;
             AddMethod("match", new DelegateMethodNode1Ctx(

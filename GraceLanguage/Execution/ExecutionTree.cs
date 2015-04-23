@@ -1,8 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Grace.Execution;
 using Grace.Parsing;
 
@@ -29,7 +26,7 @@ namespace Grace.Execution
         /// <inheritdoc />
         public Node Visit(ObjectParseNode obj)
         {
-            ObjectConstructorNode ret = new ObjectConstructorNode(obj.Token, obj);
+            var ret = new ObjectConstructorNode(obj.Token, obj);
             InheritsNode parent = null;
             var singleParent = true;
             foreach (ParseNode p in obj.Body)
@@ -40,8 +37,7 @@ namespace Grace.Execution
                 var i = n as InheritsNode;
                 if (i != null)
                 {
-                    if (parent != null)
-                        singleParent = false;
+                    singleParent = (parent == null);
                     parent = i;
                 }
             }
@@ -76,7 +72,7 @@ namespace Grace.Execution
                 {
                     var errn = new ExplicitReceiverRequestNode(n.Token, n,
                             ret);
-                    List<Node> args = new List<Node>();
+                    var args = new List<Node>();
                     if (!(part is StringLiteralParseNode))
                     {
                         var rpnAS = new RequestPartNode("asString",
@@ -90,7 +86,7 @@ namespace Grace.Execution
                     {
                         args.Add(part.Visit(this));
                     }
-                    RequestPartNode rpn = new RequestPartNode("++",
+                    var rpn = new RequestPartNode("++",
                             new List<Node>(), args);
                     errn.AddPart(rpn);
                     ret = errn;
@@ -102,21 +98,21 @@ namespace Grace.Execution
         /// <inheritdoc />
         public Node Visit(MethodDeclarationParseNode d)
         {
-            MethodNode ret = new MethodNode(d.Token, d);
+            var ret = new MethodNode(d.Token, d);
             string name = "";
             for (int i = 0; i < d.NameParts.Count; i++)
             {
                 if (name != "")
                     name += " ";
-                string partName = (d.NameParts[i] as IdentifierParseNode).Name;
+                string partName = ((IdentifierParseNode)d.NameParts[i]).Name;
                 name += partName;
                 List<ParseNode> partParams = d.Parameters[i];
-                List<Node> parameters = new List<Node>();
-                foreach (ParseNode p in partParams)
+                var parameters = new List<Node>();
+                foreach (var p in partParams)
                 {
-                    IdentifierParseNode id = p as IdentifierParseNode;
-                    TypedParameterParseNode tppn = p as TypedParameterParseNode;
-                    VarArgsParameterParseNode vappn = p as VarArgsParameterParseNode;
+                    var id = p as IdentifierParseNode;
+                    var tppn = p as TypedParameterParseNode;
+                    var vappn = p as VarArgsParameterParseNode;
                     if (id != null)
                         parameters.Add(new ParameterNode(id.Token, id));
                     else if (tppn != null)
@@ -146,10 +142,10 @@ namespace Grace.Execution
                         throw new Exception("unimplemented - unusual parameters");
                     }
                 }
-                List<Node> generics = new List<Node>();
+                var generics = new List<Node>();
                 foreach (ParseNode p in d.Generics[i])
                 {
-                    IdentifierParseNode id = p as IdentifierParseNode;
+                    var id = p as IdentifierParseNode;
                     if (id != null)
                     {
                         generics.Add(new IdentifierNode(id.Token, id));
@@ -159,29 +155,25 @@ namespace Grace.Execution
                         throw new Exception("unimplemented - bad generic parameters");
                     }
                 }
-                RequestPartNode rpn = new RequestPartNode(partName, generics, parameters);
+                var rpn = new RequestPartNode(partName, generics, parameters);
                 ret.AddPart(rpn);
             }
-            if (d.Annotations != null
-                    && d.Annotations.HasAnnotation("confidential"))
-                ret.Confidential = true;
+            ret.Confidential = (d.Annotations != null
+                    && d.Annotations.HasAnnotation("confidential"));
             foreach (ParseNode p in d.Body)
                 if (!(p is CommentParseNode))
                     ret.Add(p.Visit(this));
-            if (d.Body.Count > 0 && d.Body[d.Body.Count - 1] is
-                    ObjectParseNode)
-            {
-                // This method returns a fresh object
-                ret.Fresh = true;
-            }
+            // Indicate whether this method returns a fresh object
+            ret.Fresh = (d.Body.Count > 0 && d.Body[d.Body.Count - 1] is
+                    ObjectParseNode);
             return ret;
         }
 
         /// <inheritdoc />
         public Node Visit(IdentifierParseNode i)
         {
-            ImplicitReceiverRequestNode ret = new ImplicitReceiverRequestNode(i.Token, i);
-            RequestPartNode rpn = new RequestPartNode(i.Name, new List<Node>(), new List<Node>());
+            var ret = new ImplicitReceiverRequestNode(i.Token, i);
+            var rpn = new RequestPartNode(i.Name, new List<Node>(), new List<Node>());
             ret.AddPart(rpn);
             return ret;
         }
@@ -189,12 +181,13 @@ namespace Grace.Execution
         /// <inheritdoc />
         public Node Visit(ImplicitReceiverRequestParseNode irrpn)
         {
-            ImplicitReceiverRequestNode ret = new ImplicitReceiverRequestNode(irrpn.Token, irrpn);
+            var ret = new ImplicitReceiverRequestNode(irrpn.Token, irrpn);
             for (int i = 0; i < irrpn.Arguments.Count; i++)
             {
-                RequestPartNode rpn = new RequestPartNode((irrpn.NameParts[i] as IdentifierParseNode).Name,
-                    map(irrpn.GenericArguments[i]),
-                    map(irrpn.Arguments[i]));
+                var rpn = new RequestPartNode(
+                        ((IdentifierParseNode)irrpn.NameParts[i]).Name,
+                        map(irrpn.GenericArguments[i]),
+                        map(irrpn.Arguments[i]));
                 ret.AddPart(rpn);
             }
             return ret;
@@ -203,11 +196,12 @@ namespace Grace.Execution
         /// <inheritdoc />
         public Node Visit(ExplicitReceiverRequestParseNode irrpn)
         {
-            ExplicitReceiverRequestNode ret = new ExplicitReceiverRequestNode(irrpn.Token, irrpn,
+            var ret = new ExplicitReceiverRequestNode(irrpn.Token, irrpn,
                 irrpn.Receiver.Visit(this));
             for (int i = 0; i < irrpn.Arguments.Count; i++)
             {
-                RequestPartNode rpn = new RequestPartNode((irrpn.NameParts[i] as IdentifierParseNode).Name,
+                var rpn = new RequestPartNode(
+                    ((IdentifierParseNode)irrpn.NameParts[i]).Name,
                     map(irrpn.GenericArguments[i]),
                     map(irrpn.Arguments[i]));
                 ret.AddPart(rpn);
@@ -218,9 +212,9 @@ namespace Grace.Execution
         /// <inheritdoc />
         public Node Visit(PrefixOperatorParseNode popn)
         {
-            ExplicitReceiverRequestNode ret = new ExplicitReceiverRequestNode(popn.Token, popn,
+            var ret = new ExplicitReceiverRequestNode(popn.Token, popn,
                 popn.Receiver.Visit(this));
-            RequestPartNode rpn = new RequestPartNode("prefix" + popn.Name,
+            var rpn = new RequestPartNode("prefix" + popn.Name,
                     new List<Node>(),
                     new List<Node>());
             ret.AddPart(rpn);
@@ -230,10 +224,10 @@ namespace Grace.Execution
         /// <inheritdoc />
         public Node Visit(OperatorParseNode opn)
         {
-            ExplicitReceiverRequestNode ret = new ExplicitReceiverRequestNode(opn.Token, opn, opn.Left.Visit(this));
-            List<Node> args = new List<Node>();
+            var ret = new ExplicitReceiverRequestNode(opn.Token, opn, opn.Left.Visit(this));
+            var args = new List<Node>();
             args.Add(opn.Right.Visit(this));
-            RequestPartNode rpn = new RequestPartNode(opn.name, new List<Node>(), args);
+            var rpn = new RequestPartNode(opn.name, new List<Node>(), args);
             ret.AddPart(rpn);
             return ret;
         }
@@ -255,12 +249,13 @@ namespace Grace.Execution
                 ret.Readable = true;
                 ret.Writable = true;
             }
-            if (vdpn.Annotations != null
-                    && vdpn.Annotations.HasAnnotation("readable"))
-                ret.Readable = true;
-            if (vdpn.Annotations != null
-                    && vdpn.Annotations.HasAnnotation("writable"))
-                ret.Writable = true;
+            else
+            {
+                ret.Readable = (vdpn.Annotations != null
+                        && vdpn.Annotations.HasAnnotation("readable"));
+                ret.Writable = (vdpn.Annotations != null
+                        && vdpn.Annotations.HasAnnotation("writable"));
+            }
             return ret;
         }
 
@@ -278,9 +273,9 @@ namespace Grace.Execution
             if (vdpn.Annotations != null
                     && vdpn.Annotations.HasAnnotation("public"))
                 ret.Public = true;
-            if (vdpn.Annotations != null
-                    && vdpn.Annotations.HasAnnotation("readable"))
-                ret.Public = true;
+            ret.Public = (vdpn.Annotations != null
+                    && (vdpn.Annotations.HasAnnotation("public")
+                        || vdpn.Annotations.HasAnnotation("readable")));
             return ret;
         }
 
@@ -306,8 +301,8 @@ namespace Grace.Execution
             {
                 return n.Visit(this);
             }
-            IdentifierParseNode id = n as IdentifierParseNode;
-            TypedParameterParseNode tppn = n as TypedParameterParseNode;
+            var id = n as IdentifierParseNode;
+            var tppn = n as TypedParameterParseNode;
             if (id != null)
             {
                 parameters.Add(new ParameterNode(id.Token, id));
@@ -325,7 +320,7 @@ namespace Grace.Execution
                 varPattern.AddPart(new RequestPartNode("_VariablePattern",
                             new List<Node>(), new List<Node>()));
                 ret.AddPart(new RequestPartNode("_AndPattern",
-                            new List<Node>(), new List<Node>()
+                            new List<Node>(), new List<Node>
                             {
                                 varPattern,
                                 createDestructuringPattern(tppn.Type,
@@ -335,13 +330,13 @@ namespace Grace.Execution
             }
             var irrpn = n as ImplicitReceiverRequestParseNode;
             var errpn = n as ExplicitReceiverRequestParseNode;
-            if (irrpn != null || errpn != null)
+            List<List<ParseNode>> argLists = null;
+            if (irrpn != null)
+                argLists = irrpn.Arguments;
+            if (errpn != null)
+                argLists = errpn.Arguments;
+            if (argLists != null)
             {
-                List<List<ParseNode>> argLists;
-                if (irrpn != null)
-                    argLists = irrpn.Arguments;
-                else
-                    argLists = errpn.Arguments;
                 if (argLists.Count > 1)
                     ErrorReporting.ReportStaticError(tppn.Token.Module,
                             tppn.Line, "P1027",
@@ -368,7 +363,6 @@ namespace Grace.Execution
                     madpArgs.Add(createDestructuringPattern(a, parameters));
                 }
                 var ret = new PreludeRequestNode(n.Token, n);
-                var varPattern = new PreludeRequestNode(n.Token, n);
                 ret.AddPart(new RequestPartNode("_MatchAndDestructuringPattern",
                             new List<Node>(), madpArgs));
                 return ret;
@@ -392,13 +386,13 @@ namespace Grace.Execution
             }
             var irrpn = typeNode as ImplicitReceiverRequestParseNode;
             var errpn = typeNode as ExplicitReceiverRequestParseNode;
-            if (irrpn != null || errpn != null)
+            List<List<ParseNode>> argLists = null;
+            if (irrpn != null)
+                argLists = irrpn.Arguments;
+            if (errpn != null)
+                argLists = errpn.Arguments;
+            if (argLists != null)
             {
-                List<List<ParseNode>> argLists;
-                if (irrpn != null)
-                    argLists = irrpn.Arguments;
-                else
-                    argLists = errpn.Arguments;
                 if (argLists.Count > 1)
                     ErrorReporting.ReportStaticError(tppn.Token.Module,
                             tppn.Line, "P1027",
@@ -429,8 +423,8 @@ namespace Grace.Execution
             Node forcedPattern = null;
             foreach (ParseNode p in d.Parameters)
             {
-                IdentifierParseNode id = p as IdentifierParseNode;
-                TypedParameterParseNode tppn = p as TypedParameterParseNode;
+                var id = p as IdentifierParseNode;
+                var tppn = p as TypedParameterParseNode;
                 if (id != null)
                     parameters.Add(new ParameterNode(id.Token, id));
                 else if (tppn != null)
@@ -517,7 +511,7 @@ namespace Grace.Execution
             var tpn = tspn.Body as TypeParseNode;
             if (tpn != null)
             {
-                tpn.Name = (tspn.BaseName as IdentifierParseNode).Name;
+                tpn.Name = ((IdentifierParseNode)tspn.BaseName).Name;
             }
             meth.Body.Add(tspn.Body);
             return meth.Visit(this);
@@ -547,15 +541,15 @@ namespace Grace.Execution
             {
                 if (name != "")
                     name += " ";
-                string partName = (d.NameParts[i] as IdentifierParseNode).Name;
+                string partName = ((IdentifierParseNode)d.NameParts[i]).Name;
                 name += partName;
-                List<ParseNode> partParams = d.Parameters[i];
-                List<Node> parameters = new List<Node>();
+                var partParams = d.Parameters[i];
+                var parameters = new List<Node>();
                 foreach (ParseNode p in partParams)
                 {
-                    IdentifierParseNode id = p as IdentifierParseNode;
-                    TypedParameterParseNode tppn = p as TypedParameterParseNode;
-                    VarArgsParameterParseNode vappn = p as VarArgsParameterParseNode;
+                    var id = p as IdentifierParseNode;
+                    var tppn = p as TypedParameterParseNode;
+                    var vappn = p as VarArgsParameterParseNode;
                     if (id != null)
                         parameters.Add(new IdentifierNode(id.Token, id));
                     else if (tppn != null)
@@ -585,10 +579,10 @@ namespace Grace.Execution
                         throw new Exception("unimplemented - unusual parameters");
                     }
                 }
-                List<Node> generics = new List<Node>();
-                foreach (ParseNode p in d.Generics[i])
+                var generics = new List<Node>();
+                foreach (var p in d.Generics[i])
                 {
-                    IdentifierParseNode id = p as IdentifierParseNode;
+                    var id = p as IdentifierParseNode;
                     if (id != null)
                     {
                         generics.Add(new IdentifierNode(id.Token, id));
@@ -598,7 +592,7 @@ namespace Grace.Execution
                         throw new Exception("unimplemented - bad generic parameters");
                     }
                 }
-                RequestPartNode rpn = new RequestPartNode(partName, generics, parameters);
+                var rpn = new RequestPartNode(partName, generics, parameters);
                 ret.AddPart(rpn);
             }
             return ret;
@@ -657,9 +651,9 @@ namespace Grace.Execution
 
         /// <summary>Transforms a list of ParseNodes into a list of the
         /// corresponding Nodes</summary>
-        private List<Node> map(List<ParseNode> l)
+        private List<Node> map(IEnumerable<ParseNode> l)
         {
-            List<Node> ret = new List<Node>();
+            var ret = new List<Node>();
             foreach (ParseNode p in l)
                 if (!(p is CommentParseNode))
                     ret.Add(p.Visit(this));

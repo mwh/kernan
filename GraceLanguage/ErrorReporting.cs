@@ -1,16 +1,13 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.IO;
-using System.Threading.Tasks;
 using Grace.Execution;
 using Grace.Runtime;
 
 namespace Grace
 {
     /// <summary>Encapsulates behaviour relating to error reporting</summary>
-    public class ErrorReporting
+    public static class ErrorReporting
     {
         private static OutputSink sink;
 
@@ -23,12 +20,12 @@ namespace Grace
         /// or null</returns>
         public static string GetMessage(string code)
         {
-            string localGrace = Path.Combine(System.Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+            string localGrace = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
                 "grace");
             var msg = GetMessageFromFile(code, localGrace);
             if (msg != null)
                 return msg;
-            string dir = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+            string dir = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
             return GetMessageFromFile(code, dir);
         }
 
@@ -45,15 +42,16 @@ namespace Grace
         public static string GetMessageFromFile(string code, string dir)
         {
             string fp = Path.Combine(dir, "DefaultErrorMessages.txt");
-            if (!System.IO.File.Exists(fp))
+            if (!File.Exists(fp))
                 return null;
-            string codeSpace = code + " ";
             using (StreamReader reader = File.OpenText(fp))
             {
+                string codeSpace = code + " ";
                 while (!reader.EndOfStream)
                 {
                     string line = reader.ReadLine();
-                    if (line.StartsWith(codeSpace))
+                    if (line.StartsWith(codeSpace,
+                                StringComparison.InvariantCulture))
                     {
                         return line.Substring(codeSpace.Length).Trim();
                     }
@@ -76,7 +74,8 @@ namespace Grace
         /// <returns>The <paramref name="message" /> string with
         /// any substitutions made.</returns>
         /// <seealso cref="ErrorReporting.GetMessage" />
-        public static string FormatMessage(string message, Dictionary<string, string> vars)
+        public static string FormatMessage(string message,
+                IDictionary<string, string> vars)
         {
             string ret = message;
             foreach (string k in vars.Keys)
@@ -109,9 +108,7 @@ namespace Grace
         /// <seealso cref="ErrorReporting.GetMessage" />
         public static void ReportStaticError(string module, int line, string code, Dictionary<string, string> vars, string localDescription)
         {
-            string baseMessage = GetMessage(code);
-            if (baseMessage == null)
-                baseMessage = localDescription;
+            string baseMessage = GetMessage(code) ?? localDescription;
             string formattedMessage = FormatMessage(baseMessage, vars);
             WriteError(module, line, code, formattedMessage);
             throw new StaticErrorException();
@@ -138,9 +135,7 @@ namespace Grace
         /// <seealso cref="ErrorReporting.GetMessage" />
         public static void ReportStaticError(string module, int line, string code, string localDescription)
         {
-            string baseMessage = GetMessage(code);
-            if (baseMessage == null)
-                baseMessage = localDescription;
+            string baseMessage = GetMessage(code) ?? localDescription;
             WriteError(module, line, code, baseMessage);
         }
 
@@ -162,14 +157,14 @@ namespace Grace
         /// <seealso cref="ErrorReporting.GetMessage" />
         public static void WriteError(string module, int line, string code, string message)
         {
-            if (!System.Console.IsErrorRedirected)
+            if (!Console.IsErrorRedirected)
             {
-                System.Console.ForegroundColor = ConsoleColor.Red;
+                Console.ForegroundColor = ConsoleColor.Red;
             }
             sink.WriteLine(module + ":" + line + ": " + code + ": " + message);
-            if (!System.Console.IsErrorRedirected)
+            if (!Console.IsErrorRedirected)
             {
-                System.Console.ResetColor();
+                Console.ResetColor();
             }
             throw new StaticErrorException();
         }
@@ -186,14 +181,14 @@ namespace Grace
         /// <seealso cref="WriteError" />
         public static void WriteException(GraceExceptionPacket gep)
         {
-            if (!System.Console.IsErrorRedirected)
+            if (!Console.IsErrorRedirected)
             {
-                System.Console.ForegroundColor = ConsoleColor.Red;
+                Console.ForegroundColor = ConsoleColor.Red;
             }
             sink.WriteLine(gep.Description);
-            if (!System.Console.IsErrorRedirected)
+            if (!Console.IsErrorRedirected)
             {
-                System.Console.ResetColor();
+                Console.ResetColor();
             }
         }
 
@@ -218,10 +213,8 @@ namespace Grace
                 string code, Dictionary<string, string> vars,
                 string localDescription)
         {
-            string baseMessage = GetMessage(code);
-            if (baseMessage == null)
-                baseMessage = localDescription;
-            var parts = baseMessage.Split(new string[] { ": " }, 2,
+            string baseMessage = GetMessage(code) ?? localDescription;
+            var parts = baseMessage.Split(new[] { ": " }, 2,
                     StringSplitOptions.None);
             var kind = parts[0];
             var msg = parts[1];

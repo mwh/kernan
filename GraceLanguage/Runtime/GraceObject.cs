@@ -135,7 +135,7 @@ namespace Grace.Runtime
 
         /// <summary>Add a method to this object</summary>
         /// <param name="m">Method to add</param>
-        public virtual void AddMethod(MethodNode m)
+        public void AddMethod(MethodNode m)
         {
             methods[m.Name] = m;
         }
@@ -143,7 +143,7 @@ namespace Grace.Runtime
         /// <summary>Add a method to this object with a custom name</summary>
         /// <param name="name">Name to give this method</param>
         /// <param name="m">Method to add</param>
-        public virtual void AddMethod(string name, MethodNode m)
+        public void AddMethod(string name, MethodNode m)
         {
             methods[name] = m;
         }

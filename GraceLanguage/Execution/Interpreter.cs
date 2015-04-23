@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Grace.Runtime;
 using System.IO;
 using System.Reflection;
@@ -14,7 +12,7 @@ namespace Grace.Execution
     /// execution of a Grace program.</summary>
     public class Interpreter : EvaluationContext
     {
-        private static bool debugMessagesActive = false;
+        private static bool debugMessagesActive;
         private Dictionary<string, GraceObject> modules = new Dictionary<string, GraceObject>();
 
         /// <summary>Linked-list node for a stack of object scopes</summary>
@@ -51,7 +49,7 @@ namespace Grace.Execution
         /// state at a later point</summary>
         public class ScopeMemo
         {
-            private ScopeLink link;
+            private readonly ScopeLink link;
             internal ScopeLink Link { get { return link; } }
             internal int dynamicsSize;
             /// <param name="link">Top of the static scope stack</param>
@@ -73,8 +71,8 @@ namespace Grace.Execution
         /// <summary>A default interpreter</summary>
         public Interpreter()
         {
-            sink = new OutputSinkWrapper(System.Console.Out);
-            ErrorReporting.SetSink(new OutputSinkWrapper(System.Console.Error));
+            sink = new OutputSinkWrapper(Console.Out);
+            ErrorReporting.SetSink(new OutputSinkWrapper(Console.Error));
             initialise();
         }
 
@@ -92,11 +90,14 @@ namespace Grace.Execution
         {
             scope.scope = new GraceObject();
             majorScope = scope.scope;
-            scope.scope.AddMethod("print", new DelegateMethodNode1Ctx(this.Print));
+            scope.scope.AddMethod("print",
+                    new DelegateMethodNode1Ctx(Print));
             scope.scope.AddLocalDef("true", GraceBoolean.True);
             scope.scope.AddLocalDef("false", GraceBoolean.False);
-            scope.scope.AddMethod("_base_while_do", new DelegateMethodNodeReq(this.BaseWhileDo));
-            scope.scope.AddMethod("_base_try_catch_finally", new DelegateMethodNodeReq(this.BaseTryCatchFinally));
+            scope.scope.AddMethod("_base_while_do",
+                    new DelegateMethodNodeReq(BaseWhileDo));
+            scope.scope.AddMethod("_base_try_catch_finally",
+                    new DelegateMethodNodeReq(BaseTryCatchFinally));
             scope.scope.AddMethod("Exception",
                     new ConstantMethodNode(
                         new GraceExceptionKind("Exception")));
@@ -106,7 +107,7 @@ namespace Grace.Execution
         /// interprets it, and places the created module in scope</summary>
         public void LoadPrelude()
         {
-            string dir = System.IO.Path.GetDirectoryName(typeof(Interpreter).Assembly.Location);
+            string dir = Path.GetDirectoryName(typeof(Interpreter).Assembly.Location);
             string preludePath = Path.Combine(dir, "prelude.grace");
             using (StreamReader preludeReader = File.OpenText(preludePath))
             {
@@ -122,10 +123,10 @@ namespace Grace.Execution
         /// <summary>Gives the directory paths searched for imports</summary>
         public static List<string> GetModulePaths()
         {
-            string execDir = System.IO.Path.GetDirectoryName(typeof(Interpreter).Assembly.Location);
-            string localGrace = Path.Combine(System.Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+            string execDir = Path.GetDirectoryName(typeof(Interpreter).Assembly.Location);
+            string localGrace = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
                 "grace");
-            var bases = new List<string>() { localGrace, execDir };
+            var bases = new List<string> { localGrace, execDir };
             return bases;
         }
 
@@ -150,7 +151,8 @@ namespace Grace.Execution
                     return mod;
                 }
             }
-            ErrorReporting.RaiseError(this, "R2005", new Dictionary<string, string>() { { "path", path } },
+            ErrorReporting.RaiseError(this, "R2005",
+                new Dictionary<string, string> { { "path", path } },
                 "LookupError: Could not find module ${path}");
             return null;
         }
@@ -158,11 +160,9 @@ namespace Grace.Execution
         /// <summary>Load a module file if it exists</summary>
         private GraceObject tryLoadModuleFile(string path)
         {
-            if (System.IO.File.Exists(path))
-            {
-                return loadModuleFile(path);
-            }
-            return null;
+            return (File.Exists(path))
+                ? loadModuleFile(path)
+                : null;
         }
 
         /// <summary>Load a module file</summary>
@@ -217,13 +217,14 @@ namespace Grace.Execution
         public GraceObject Print(EvaluationContext ctx, GraceObject arg)
         {
             Object obj = arg;
-            if (arg is GraceObjectProxy)
+            var gop = arg as GraceObjectProxy;
+            if (gop != null)
             {
-                obj = ((GraceObjectProxy)arg).Object;
+                obj = gop.Object;
             }
-            if (obj is GraceObject)
+            var go = obj as GraceObject;
+            if (go != null)
             {
-                var go = (GraceObject)obj;
                 var req = new MethodRequest();
                 var part = RequestPart.Nullary("asString");
                 req.AddPart(part);
@@ -232,8 +233,9 @@ namespace Grace.Execution
                     obj = go.Request(ctx, req);
                 }
             }
-            if (obj is GraceString)
-                obj = ((GraceString)obj).Value.Replace("\u2028", Environment.NewLine);
+            var gs = obj as GraceString;
+            if (gs != null)
+                obj = gs.Value.Replace("\u2028", Environment.NewLine);
             sink.WriteLine("" + obj);
             return GraceObject.Done;
         }
@@ -242,7 +244,8 @@ namespace Grace.Execution
         /// </summary>
         /// <remarks>This while-do is more efficient than is possible to
         /// implement in bare Grace without it.</remarks>
-        public GraceObject BaseWhileDo(EvaluationContext ctx, MethodRequest req)
+        public static GraceObject BaseWhileDo(EvaluationContext ctx,
+                MethodRequest req)
         {
             GraceObject cond = req[0].Arguments[0];
             GraceObject block = req[0].Arguments[1];
@@ -257,22 +260,13 @@ namespace Grace.Execution
         /// <summary>Native version of the built-in Grace
         /// "try-*catch-?finally" method
         /// </summary>
-        public GraceObject BaseTryCatchFinally(EvaluationContext ctx,
+        public static GraceObject BaseTryCatchFinally(EvaluationContext ctx,
                 MethodRequest req)
         {
             Interpreter.ScopeMemo memo = ctx.Memorise();
-            GraceObject tryBlock = null;
-            GraceObject finallyBlock = null;
+            GraceObject tryBlock;
+            GraceObject finallyBlock;
             var catchBlocks = new List<GraceObject>();
-            /*foreach (var pt in req)
-            {
-                if (pt.Name == "try")
-                    tryBlock = pt.Arguments[0];
-                else if (pt.Name == "catch")
-                    catchBlocks.Add(pt.Arguments[0]);
-                else if (pt.Name == "finally")
-                    finallyBlock = pt.Arguments[0];
-            }*/
             tryBlock = req[0].Arguments[0];
             finallyBlock = req[0].Arguments[1];
             for (int i = 2; i < req[0].Arguments.Count; i++)
@@ -407,14 +401,7 @@ namespace Grace.Execution
                 }
                 if (sl.scope.RespondsTo(req))
                 {
-                    if (capture != null)
-                    {
-                        return capture;
-                    }
-                    else
-                    {
-                        return sl.scope;
-                    }
+                    return capture ?? sl.scope;
                 }
                 capture = null;
                 var ls = sl.scope as LocalScope;
@@ -434,7 +421,7 @@ namespace Grace.Execution
             ScopeLink sl = scope;
             while (sl != null && sl.scope != null)
             {
-                MethodScope ms = sl.scope as MethodScope;
+                var ms = sl.scope as MethodScope;
                 if (ms != null)
                     return ms;
                 sl = sl.next;
@@ -507,14 +494,14 @@ namespace Grace.Execution
         {
             if (!debugMessagesActive)
                 return;
-            if (!System.Console.IsErrorRedirected)
+            if (!Console.IsErrorRedirected)
             {
-                System.Console.ForegroundColor = ConsoleColor.DarkGray;
+                Console.ForegroundColor = ConsoleColor.DarkGray;
             }
-            System.Console.Error.WriteLine(message);
-            if (!System.Console.IsErrorRedirected)
+            Console.Error.WriteLine(message);
+            if (!Console.IsErrorRedirected)
             {
-                System.Console.ResetColor();
+                Console.ResetColor();
             }
         }
 
@@ -664,10 +651,10 @@ namespace Grace.Execution
     /// instance into an output sink</summary>
     public class OutputSinkWrapper : OutputSink
     {
-        System.IO.TextWriter writer;
+        readonly TextWriter writer;
 
         /// <param name="w">TextWriter to wrap</param>
-        public OutputSinkWrapper(System.IO.TextWriter w)
+        public OutputSinkWrapper(TextWriter w)
         {
             writer = w;
         }
