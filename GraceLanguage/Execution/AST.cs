@@ -283,34 +283,6 @@ namespace Grace.Execution
                 MethodRequest req)
         {
             GraceObject rec = ctx.FindReceiver(req);
-            req.IsInterior = true;
-            return rec;
-        }
-        /// <inheritdoc/>
-        public override GraceObject Evaluate(EvaluationContext ctx)
-        {
-            MethodRequest req = new MethodRequest();
-            req.IsInterior = true;
-            foreach (RequestPartNode rpn in this)
-            {
-                List<GraceObject> generics = new List<GraceObject>();
-                List<GraceObject> arguments = new List<GraceObject>();
-                foreach (Node n in rpn.GenericArguments)
-                    generics.Add(n.Evaluate(ctx));
-                foreach (Node n in rpn.Arguments)
-                    arguments.Add(n.Evaluate(ctx));
-                RequestPart rp = new RequestPart(rpn.Name, generics, arguments);
-                req.AddPart(rp);
-            }
-            string m = "";
-            int l = 0;
-            if (Location != null)
-            {
-                m = Location.Module;
-                l = Location.line;
-            }
-            int start = ctx.NestRequest(m, l, req.Name);
-            GraceObject rec = ctx.FindReceiver(req);
             if (rec == null)
             {
                 ctx.DebugScopes();
@@ -321,14 +293,58 @@ namespace Grace.Execution
                         "LookupError: No receiver found for ${method}"
                 );
             }
-            try
+            req.IsInterior = true;
+            return rec;
+        }
+    }
+
+    /// <summary>A method request on the inbuilt prelude</summary>
+    public class PreludeRequestNode : RequestNode
+    {
+        internal PreludeRequestNode(Token location, ParseNode source)
+            : base(location, source)
+        {
+
+        }
+
+        /// <inheritdoc/>
+        public override void DebugPrint(System.IO.TextWriter tw, string prefix)
+        {
+            tw.WriteLine(prefix + "PreludeRequest: " + Name);
+            if (parts.Count == 1)
             {
-                return rec.Request(ctx, req);
+                if (parts[0].Arguments.Count == 0
+                    && parts[0].GenericArguments.Count == 0)
+                    return;
             }
-            finally
+            tw.WriteLine(prefix + "  Parts:");
+            int i = 1;
+            foreach (RequestPartNode p in parts)
             {
-                ctx.PopCallStackTo(start);
+                string partName = p.Name;
+                tw.WriteLine(prefix + "    Part " + i + ": ");
+                tw.WriteLine(prefix + "      Name: " + p.Name);
+                if (p.GenericArguments.Count != 0)
+                {
+                    tw.WriteLine(prefix + "      Generic arguments:");
+                    foreach (Node arg in p.GenericArguments)
+                        arg.DebugPrint(tw, prefix + "        ");
+                }
+                if (p.Arguments.Count != 0)
+                {
+                    tw.WriteLine(prefix + "      Arguments:");
+                    foreach (Node arg in p.Arguments)
+                        arg.DebugPrint(tw, prefix + "        ");
+                }
+                i++;
             }
+        }
+
+        /// <inheritdoc/>
+        protected override GraceObject GetReceiver(EvaluationContext ctx,
+                MethodRequest req)
+        {
+            return ctx.Prelude;
         }
     }
 
