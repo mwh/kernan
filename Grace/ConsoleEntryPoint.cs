@@ -38,20 +38,8 @@ namespace Grace
                 System.Console.Error.WriteLine("Required filename argument missing.");
                 return 1;
             }
-            GraceObject prelude = null;
-            string dir = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
-            string preludePath = Path.Combine(dir, "prelude.grace");
             var interp = new Interpreter();
-            using (StreamReader preludeReader = File.OpenText(preludePath))
-            {
-                Parser parser = new Parser("“prelude” (not your code)",
-                        preludeReader.ReadToEnd());
-                var pt = parser.Parse() as ObjectParseNode;
-                var eMod = new ExecutionTreeTranslator().Translate(pt);
-                prelude = eMod.Evaluate(interp);
-                interp.Extend(prelude);
-                Interpreter.Debug("========== END PRELUDE ==========");
-            }
+            interp.LoadPrelude();
             using (StreamReader reader = File.OpenText(filename))
             {
                 Parser parser = new Parser(
