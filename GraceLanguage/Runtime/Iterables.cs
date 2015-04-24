@@ -37,6 +37,7 @@ namespace Grace.Runtime
                     new DelegateMethodNode1Ctx(
                         new NativeMethod1Ctx(this.Do)));
                 AddMethod("++", Iterables.ConcatMethod);
+                TagName = "ConcatenatedIterables";
             }
 
             /// <summary>Native method for Grace ++</summary>
@@ -89,6 +90,10 @@ namespace Grace.Runtime
                 new DelegateMethodNode1Ctx(
                     new NativeMethod1Ctx(this.Do)));
             AddMethod("++", Iterables.ConcatMethod);
+            AddMethod("with do",
+                new DelegateMethodNodeReq(
+                    new NativeMethodReq(this.WithDo)));
+            TagName = "VariadicList";
         }
 
         /// <summary>Add an object to the list</summary>
@@ -118,6 +123,50 @@ namespace Grace.Runtime
                 block.Request(ctx, req);
             }
             return GraceObject.Done;
+        }
+
+        private GraceObject WithDo(EvaluationContext ctx, MethodRequest req)
+        {
+            var with = req[0].Arguments[0];
+            var block = req[1].Arguments[0];
+            var withBlock = new WithBlock(elements, block);
+            var innerReq = MethodRequest.Single("do", withBlock);
+            with.Request(ctx, innerReq);
+            return GraceObject.Done;
+        }
+
+        private class WithBlock : GraceObject
+        {
+            private List<GraceObject> _elements;
+            private GraceObject _block;
+            private int index;
+
+            public WithBlock(List<GraceObject> elements,
+                    GraceObject block) {
+                _elements = elements;
+                _block = block;
+                AddMethod("apply",
+                    new DelegateMethodNode1Ctx(
+                        new NativeMethod1Ctx(this.apply)));
+            }
+
+            private GraceObject apply(EvaluationContext ctx,
+                    GraceObject arg)
+            {
+                if (index >= _elements.Count)
+                    return GraceObject.Done;
+                var el = _elements[index++];
+                var req = new MethodRequest();
+                var rpn = new RequestPart("apply",
+                    new List<GraceObject>(),
+                    new List<GraceObject>() {
+                        el, arg
+                    }
+                );
+                req.AddPart(rpn);
+                _block.Request(ctx, req);
+                return GraceObject.Done;
+            }
         }
     }
 
