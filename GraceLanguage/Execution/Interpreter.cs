@@ -200,6 +200,13 @@ namespace Grace.Execution
             return prelude.Request(this, req);
         }
 
+        /// <inheritdoc/>
+        public GraceObject Prelude {
+            get {
+                return prelude;
+            }
+        }
+
         /// <inheritdoc />
         public List<string> GetStackTrace()
         {
@@ -572,6 +579,8 @@ namespace Grace.Execution
         /// <param name="req">Request to perform</param>
         /// <returns>The return value of the request</returns>
         GraceObject PreludeRequest(MethodRequest req);
+        /// <summary>prelude.grace module object</summary>
+        GraceObject Prelude { get; }
         /// <summary>Find a surrounding object able to process a given
         /// request</summary>
         /// <param name="req">Method request that must be accepted</param>
