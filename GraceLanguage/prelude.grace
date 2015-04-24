@@ -98,10 +98,15 @@ type Boolean = type {
     orElse(b)
 }
 
-method _SuccessfulMatch(obj) {
+method _SuccessfulMatch(obj, *bindings) {
+    _SuccessfulMatchWithBindings(obj, bindings)
+}
+
+method _SuccessfulMatchWithBindings(obj, bindings') {
     object {
         def succeeded is public = true
         def asString is public = "SuccessfulMatch[{obj}]"
+        def bindings is public = bindings'
         method result {
             obj
         }
@@ -167,7 +172,12 @@ method _AndPattern(l, r) {
             def mr = l.match(o)
             if (mr) then {
                 // TODO: This should handle passing through destructured values
-                return r.match(o)
+                def mr2 = r.match(o)
+                if (mr2) then {
+                    return _SuccessfulMatchWithBindings(o,
+                        mr.bindings ++ mr2.bindings)
+                }
+                return mr2
             }
             return mr
         }
@@ -176,6 +186,39 @@ method _AndPattern(l, r) {
         }
         method &(o) {
             _AndPattern(self, o)
+        }
+    }
+}
+
+method _list(*x) {
+    x
+}
+
+method _MatchAndDestructuringPattern(pat, *items) {
+    object {
+        method match(o) {
+            def mr = pat.match(o)
+            mr.ifFalse {
+                return _FailedMatch(o)
+            }
+            var retBindings := _list
+            items.with(mr.bindings) do { ipat, ival ->
+                def mr2 = ipat.match(ival)
+                if (mr2) then {
+                    retBindings := retBindings ++ mr2.bindings
+                } else {
+                    return _FailedMatch(o)
+                }
+            }
+            _SuccessfulMatchWithBindings(mr.result, retBindings)
+        }
+    }
+}
+
+method _VariablePattern {
+    object {
+        method match(o) {
+            _SuccessfulMatch(o, o)
         }
     }
 }

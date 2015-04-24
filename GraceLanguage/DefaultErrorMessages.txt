@@ -25,6 +25,7 @@ P1023 Unexpected ${token} in argument list: expected either ',' or ')'
 P1024 Unexpected ${token} in generic argument list: expected either ',' or '>'
 P1025 Unexpected ${token} after '.': expected identifier
 P1026 Only the arithmetic operators +, -, *, / can be mixed together. To use '${operator}' in combination with others the expression must be disambiguated with parentheses.
+P1027 Invalid destructuring pattern match: pattern names cannot be multi-part.
 
 L0000 Character ${codepoint} (${name}) may not appear here
 L0001 Tab characters are not permitted in the source code

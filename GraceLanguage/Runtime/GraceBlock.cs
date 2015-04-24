@@ -14,6 +14,7 @@ namespace Grace.Runtime
         private readonly List<Node> body;
         private readonly Interpreter.ScopeMemo lexicalScope;
         private GraceObject Pattern;
+        private bool explicitPattern;
 
         private GraceBlock(EvaluationContext ctx, List<Node> parameters,
                 List<Node> body)
@@ -43,6 +44,23 @@ namespace Grace.Runtime
                     this.parameters = new List<Node>(parameters.Skip<Node>(1));
                 }
             }
+        }
+
+        /// <summary>
+        /// Enable this block as a matching block using a specified pattern
+        /// </summary>
+        /// <param name="pattern">Pattern to use</param>
+        public void ForcePattern(GraceObject pattern)
+        {
+            if (Pattern != null)
+                return;
+            explicitPattern = true;
+            AddMethod("match",
+                new DelegateMethodNodeReq(
+                    new NativeMethodReq(this.Match)));
+            AddMethod("|", Matching.OrMethod);
+            AddMethod("&", Matching.AndMethod);
+            Pattern = pattern;
         }
 
         /// <summary>Make a new block</summary>
@@ -110,10 +128,48 @@ namespace Grace.Runtime
             }
             var result = matchResult.Request(ctx,
                     MethodRequest.Nullary("result"));
-            var myResult = this.Apply(ctx,
-                    MethodRequest.Single("apply", result));
+            if (!explicitPattern)
+            {
+                var res = this.Apply(ctx,
+                        MethodRequest.Single("apply", result));
+                return Matching.SuccessfulMatch(ctx, res);
+            }
+            var args = new List<GraceObject>();
+            //args.Add(result);
+            var doReq = MethodRequest.Single("do", new AddToListBlock(args));
+            var bindings = matchResult.Request(ctx,
+                    MethodRequest.Nullary("bindings"));
+            bindings.Request(ctx, doReq);
+            var mReq = new MethodRequest();
+            var rpn = new RequestPart("apply", new List<GraceObject>(),
+                    args);
+            mReq.AddPart(rpn);
+            var myResult = this.Apply(ctx, mReq);
+            //var myResult = this.Apply(ctx,
+            //        MethodRequest.Single("apply", result));
             return Matching.SuccessfulMatch(ctx, myResult);
         }
+
+        private class AddToListBlock : GraceObject
+        {
+            private List<GraceObject> _dest;
+
+            public AddToListBlock(List<GraceObject> dest)
+            {
+                _dest = dest;
+                AddMethod("apply",
+                    new DelegateMethodNode1Ctx(
+                        new NativeMethod1Ctx(this.apply)));
+            }
+
+            private GraceObject apply(EvaluationContext ctx,
+                    GraceObject arg)
+            {
+                _dest.Add(arg);
+                return GraceObject.Done;
+            }
+        }
+
     }
 
     /// <summary>Object with the Block interface wrapping a Grace

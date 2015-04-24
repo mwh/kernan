@@ -297,10 +297,136 @@ namespace Grace.Execution
             return ret;
         }
 
+        private Node createDestructuringPattern(ParseNode n,
+                List<Node> parameters)
+        {
+            if (n is NumberParseNode
+                    || n is StringLiteralParseNode
+                    || n is OperatorParseNode)
+            {
+                return n.Visit(this);
+            }
+            IdentifierParseNode id = n as IdentifierParseNode;
+            TypedParameterParseNode tppn = n as TypedParameterParseNode;
+            if (id != null)
+            {
+                parameters.Add(new ParameterNode(id.Token, id));
+                var ret = new PreludeRequestNode(id.Token, id);
+                ret.AddPart(new RequestPartNode("_VariablePattern",
+                            new List<Node>(), new List<Node>()));
+                return ret;
+            }
+            if (tppn != null)
+            {
+                parameters.Add(new ParameterNode(tppn.Token,
+                            tppn.Name as IdentifierParseNode));
+                var ret = new PreludeRequestNode(tppn.Token, tppn);
+                var varPattern = new PreludeRequestNode(tppn.Token, tppn);
+                varPattern.AddPart(new RequestPartNode("_VariablePattern",
+                            new List<Node>(), new List<Node>()));
+                ret.AddPart(new RequestPartNode("_AndPattern",
+                            new List<Node>(), new List<Node>()
+                            {
+                                varPattern,
+                                createDestructuringPattern(tppn.Type,
+                                        parameters)
+                            }));
+                return ret;
+            }
+            var irrpn = n as ImplicitReceiverRequestParseNode;
+            var errpn = n as ExplicitReceiverRequestParseNode;
+            if (irrpn != null || errpn != null)
+            {
+                List<List<ParseNode>> argLists;
+                if (irrpn != null)
+                    argLists = irrpn.Arguments;
+                else
+                    argLists = errpn.Arguments;
+                if (argLists.Count > 1)
+                    ErrorReporting.ReportStaticError(tppn.Token.Module,
+                            tppn.Line, "P1027",
+                            "Invalid multi-part destructuring pattern match");
+                var args = argLists[0];
+                if (args.Count == 0)
+                {
+                    return n.Visit(this);
+                }
+                // At this point, we know it is another destructuring match
+                var madpArgs = new List<Node>();
+                if (irrpn != null)
+                    madpArgs.Add(new ImplicitReceiverRequestParseNode
+                            (irrpn.NameParts[0]).Visit(this));
+                else if (errpn != null)
+                {
+                    var tmp = new ExplicitReceiverRequestParseNode
+                            (errpn.Receiver);
+                    tmp.AddPart(errpn.NameParts[0]);
+                    madpArgs.Add(tmp.Visit(this));
+                }
+                foreach (var a in args)
+                {
+                    madpArgs.Add(createDestructuringPattern(a, parameters));
+                }
+                var ret = new PreludeRequestNode(n.Token, n);
+                var varPattern = new PreludeRequestNode(n.Token, n);
+                ret.AddPart(new RequestPartNode("_MatchAndDestructuringPattern",
+                            new List<Node>(), madpArgs));
+                return ret;
+            }
+            return null;
+        }
+
+        private Node handlePossibleDestructuringParam(
+                TypedParameterParseNode tppn, List<Node> parameters)
+        {
+            var typeNode = tppn.Type;
+            if (typeNode is NumberParseNode
+                    || typeNode is StringLiteralParseNode
+                    || typeNode is OperatorParseNode)
+            {
+                parameters.Add(
+                        new ParameterNode(tppn.Token,
+                            tppn.Name as IdentifierParseNode,
+                            typeNode.Visit(this)));
+                return null;
+            }
+            var irrpn = typeNode as ImplicitReceiverRequestParseNode;
+            var errpn = typeNode as ExplicitReceiverRequestParseNode;
+            if (irrpn != null || errpn != null)
+            {
+                List<List<ParseNode>> argLists;
+                if (irrpn != null)
+                    argLists = irrpn.Arguments;
+                else
+                    argLists = errpn.Arguments;
+                if (argLists.Count > 1)
+                    ErrorReporting.ReportStaticError(tppn.Token.Module,
+                            tppn.Line, "P1027",
+                            "Invalid multi-part destructuring pattern match");
+                var args = argLists[0];
+                if (args.Count == 0)
+                {
+                    parameters.Add(
+                            new ParameterNode(tppn.Token,
+                                tppn.Name as IdentifierParseNode,
+                                typeNode.Visit(this)));
+                    return null;
+                }
+                // At this point, we know it is a destructuring match
+                return createDestructuringPattern(tppn, parameters);
+            }
+            parameters.Add(
+                    new ParameterNode(tppn.Token,
+                        tppn.Name as IdentifierParseNode,
+                        typeNode.Visit(this)));
+            return null;
+        }
+
         /// <inheritdoc />
         public Node Visit(BlockParseNode d)
         {
             var parameters = new List<Node>();
+            Node forcedPattern = null;
             foreach (ParseNode p in d.Parameters)
             {
                 IdentifierParseNode id = p as IdentifierParseNode;
@@ -309,7 +435,15 @@ namespace Grace.Execution
                     parameters.Add(new ParameterNode(id.Token, id));
                 else if (tppn != null)
                 {
-                    parameters.Add(new ParameterNode(tppn.Token, tppn.Name as IdentifierParseNode, tppn.Type.Visit(this)));
+                    if (parameters.Count == 0)
+                    {
+                        forcedPattern = handlePossibleDestructuringParam(tppn, parameters);
+                    }
+                    else
+                        parameters.Add(
+                                new ParameterNode(tppn.Token,
+                                    tppn.Name as IdentifierParseNode,
+                                    tppn.Type.Visit(this)));
                 }
                 else if (p is NumberParseNode || p is StringLiteralParseNode
                         || p is OperatorParseNode)
@@ -331,7 +465,8 @@ namespace Grace.Execution
             }
             var ret = new BlockNode(d.Token, d,
                     parameters,
-                    map(d.Body));
+                    map(d.Body),
+                    forcedPattern);
             return ret;
         }
 

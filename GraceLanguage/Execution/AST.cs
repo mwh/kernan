@@ -842,6 +842,19 @@ namespace Grace.Execution
                         myScope.AddLocalDef(name, arg.val);
                     }
                 }
+                if (pp.mine.Arguments.Count > pp.req.Arguments.Count)
+                {
+                    // Variadic parameter with no arguments provided
+                    // for it - fill with an empty list.
+                    var arg = pp.mine.Arguments[pp.mine.Arguments.Count - 1];
+                    var idNode = arg as ParameterNode;
+                    string name = idNode.Name;
+                    if (idNode.Variadic)
+                    {
+                        var gvl = new GraceVariadicList();
+                        myScope.AddLocalDef(name, gvl);
+                    }
+                }
                 for (var i = 0; i < pp.mine.GenericArguments.Count; i++)
                 {
                     var g = pp.mine.GenericArguments[i];
@@ -905,14 +918,17 @@ namespace Grace.Execution
     {
         private List<Node> parameters;
         private List<Node> body;
+        private Node _forcedPattern;
 
         internal BlockNode(Token token, ParseNode source,
                 List<Node> parameters,
-                List<Node> body)
+                List<Node> body,
+                Node forcedPattern)
             : base(token, source)
         {
             this.parameters = parameters;
             this.body = body;
+            _forcedPattern = forcedPattern;
         }
 
         /// <summary>The parameters of this block</summary>
@@ -939,6 +955,11 @@ namespace Grace.Execution
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
             tw.WriteLine(prefix + "Block:");
+            if (_forcedPattern != null)
+            {
+                tw.WriteLine(prefix + "  Pattern:");
+                _forcedPattern.DebugPrint(tw, prefix + "    ");
+            }
             tw.WriteLine(prefix + "  Parameters:");
             foreach (Node arg in parameters)
                 arg.DebugPrint(tw, prefix + "    ");
@@ -953,6 +974,10 @@ namespace Grace.Execution
         public override GraceObject Evaluate(EvaluationContext ctx)
         {
             GraceBlock ret = GraceBlock.Create(ctx, parameters, body);
+            if (_forcedPattern != null)
+            {
+                ret.ForcePattern(_forcedPattern.Evaluate(ctx));
+            }
             return ret;
         }
 
