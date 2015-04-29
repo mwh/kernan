@@ -596,6 +596,25 @@ namespace Grace.Parsing
             int[] indices = StringInfo.ParseCombiningCharacters(bracket);
             int lastIndex = indices[indices.Length - 1];
             string l = StringInfo.GetNextTextElement(bracket, lastIndex);
+            // For ease, any ) characters at the end of a closing bracket
+            // are removed from the token.
+            int sub = 0;
+            int blen = bracket.Length;
+            int graphemeOffset = indices.Length - 1;
+            while (l == ")")
+            {
+                sub++;
+                graphemeOffset--;
+                lastIndex = indices[graphemeOffset];
+                l = StringInfo.GetNextTextElement(bracket, lastIndex);
+            }
+            if (sub > 0)
+            {
+                // Reset index to before the )s so that they will be
+                // lexed as the following tokens.
+                index -= sub;
+                bracket = bracket.Substring(0, bracket.Length - sub);
+            }
             if (!UnicodeLookup.CloseBrackets.Contains(l))
                 reportError("L0009",
                         new Dictionary<string, string>
