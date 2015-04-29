@@ -1151,6 +1151,11 @@ namespace Grace.Parsing
             _name = tok.Name;
         }
 
+        internal IdentifierParseNode(OpenBracketToken tok)
+            : base(tok)
+        {
+            _name = tok.Name + tok.Other;
+        }
 
         /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
@@ -1241,6 +1246,83 @@ namespace Grace.Parsing
 
     }
 
+    /// <summary>Parse node for an implicit-receiver bracket request</summary>
+    public class ImplicitBracketRequestParseNode : ParseNode
+    {
+        /// <summary>Name of this method</summary>
+        public string Name { get; private set; }
+
+        /// <summary>Arguments to this request</summary>
+        public List<ParseNode> Arguments { get; private set; }
+
+        internal ImplicitBracketRequestParseNode(Token start, string name,
+                List<ParseNode> arguments)
+            : base(start)
+        {
+            Name = name;
+            Arguments = arguments;
+        }
+
+        /// <inheritdoc/>
+        public override void DebugPrint(System.IO.TextWriter tw, string prefix)
+        {
+            tw.WriteLine(prefix + "ImplicitBracketRequest: " + Name);
+            tw.WriteLine(prefix + "  Parts:");
+            foreach (ParseNode arg in Arguments)
+                arg.DebugPrint(tw, prefix + "    ");
+            writeComment(tw, prefix);
+        }
+
+        /// <inheritdoc/>
+        public override T Visit<T>(ParseNodeVisitor<T> visitor)
+        {
+            return visitor.Visit(this);
+        }
+
+    }
+
+    /// <summary>Parse node for an explicit-receiver bracket request</summary>
+    public class ExplicitBracketRequestParseNode : ParseNode
+    {
+        /// <summary>Name of this method</summary>
+        public string Name { get; private set; }
+
+        /// <summary>Receiver  ofthis request</summary>
+        public ParseNode Receiver { get; private set; }
+
+        /// <summary>Arguments to this request</summary>
+        public List<ParseNode> Arguments { get; private set; }
+
+        internal ExplicitBracketRequestParseNode(Token start, string name,
+                ParseNode receiver,
+                List<ParseNode> arguments)
+            : base(start)
+        {
+            Name = name;
+            Receiver = receiver;
+            Arguments = arguments;
+        }
+
+        /// <inheritdoc/>
+        public override void DebugPrint(System.IO.TextWriter tw, string prefix)
+        {
+            tw.WriteLine(prefix + "ExplicitBracketRequest: " + Name);
+            tw.WriteLine(prefix + "  Receiver:");
+            Receiver.DebugPrint(tw, prefix + "    ");
+            tw.WriteLine(prefix + "  Arguments:");
+            foreach (ParseNode arg in Arguments)
+                arg.DebugPrint(tw, prefix + "    ");
+            writeComment(tw, prefix);
+        }
+
+        /// <inheritdoc/>
+        public override T Visit<T>(ParseNodeVisitor<T> visitor)
+        {
+            return visitor.Visit(this);
+        }
+
+    }
+
     /// <summary>Parse node for a implicit-receiver request</summary>
     public class ImplicitReceiverRequestParseNode : ParseNode
     {
@@ -1297,7 +1379,7 @@ namespace Grace.Parsing
                 name += (n as IdentifierParseNode).Name + " ";
             }
             tw.WriteLine(prefix + "ImplicitReceiverRequest: " + name);
-            tw.WriteLine(prefix + "  Parts:");
+            tw.WriteLine(prefix + "  Arguments:");
             for (int i = 0; i < _nameParts.Count; i++)
             {
                 ParseNode partName = _nameParts[i];

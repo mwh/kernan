@@ -82,8 +82,14 @@ namespace Grace.Parsing
         /// <summary>Visit an InheritsParseNode</summary>
         /// <param name="ipn">InheritsParseNode to visit</param>
         T Visit(InheritsParseNode ipn);
-        /// <summary>Visit an ParenthesisedParseNode</summary>
+        /// <summary>Visit a ParenthesisedParseNode</summary>
         /// <param name="ppn">ParenthesisedParseNode to visit</param>
         T Visit(ParenthesisedParseNode ppn);
+        /// <summary>Visit an ImplicitBracketRequestParseNode</summary>
+        /// <param name="ibrpn">ImplicitBracketRequestParseNode to visit</param>
+        T Visit(ImplicitBracketRequestParseNode ibrpn);
+        /// <summary>Visit an ExplicitBracketRequestParseNode</summary>
+        /// <param name="ebrpn">ExplicitBracketRequestParseNode to visit</param>
+        T Visit(ExplicitBracketRequestParseNode ebrpn);
     }
 }

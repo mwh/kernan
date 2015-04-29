@@ -345,10 +345,27 @@ namespace Grace.Parsing
 
         private void parseMethodHeader(Token start, MethodHeader ret)
         {
-            OperatorToken op = lexer.current as OperatorToken;
+            var op = lexer.current as OperatorToken;
+            var ob = lexer.current as OpenBracketToken;;
             if (op != null)
             {
                 ParseNode partName = new IdentifierParseNode(op);
+                nextToken();
+                PartParameters pp = ret.AddPart(partName);
+                List<ParseNode> theseParameters = pp.Ordinary;
+                if (lexer.current is LParenToken)
+                {
+                    Token lp = lexer.current;
+                    nextToken();
+                    parseParameterList<RParenToken>(lp, theseParameters);
+                    expect<RParenToken>();
+                    nextToken();
+                }
+            }
+            else if (ob != null)
+            {
+                ParseNode partName = new IdentifierParseNode(ob);
+                nextToken();
                 nextToken();
                 PartParameters pp = ret.AddPart(partName);
                 List<ParseNode> theseParameters = pp.Ordinary;
@@ -379,6 +396,14 @@ namespace Grace.Parsing
                     {
                         op = lexer.current as OperatorToken;
                         partName.Name += op.Name;
+                        nextToken();
+                    }
+                    else if ("circumfix" == partName.Name && first
+                          && lexer.current is OpenBracketToken)
+                    {
+                        ob = (OpenBracketToken)lexer.current;
+                        partName.Name += ob.Name + ob.Other;
+                        nextToken();
                         nextToken();
                     }
                     first = false;
@@ -687,12 +712,26 @@ namespace Grace.Parsing
             return new ReturnParseNode(start, val);
         }
 
+        private ParseNode parsePostcircumfixRequest(ParseNode rec)
+        {
+            var startToken = lexer.current as OpenBracketToken;
+            var arguments = new List<ParseNode>();
+            parseBracketConstruct(arguments);
+            return new ExplicitBracketRequestParseNode(startToken,
+                    startToken.Name + startToken.Other, rec, arguments);
+        }
+
         private ParseNode expressionRestNoOp(ParseNode ex)
         {
             ParseNode lhs = ex;
             while (lexer.current is DotToken)
             {
                 lhs = parseDotRequest(lhs);
+            }
+            if (lexer.current is OpenBracketToken)
+            {
+                lhs = parsePostcircumfixRequest(lhs);
+                return expressionRestNoOp(lhs);
             }
             return lhs;
         }
@@ -710,6 +749,52 @@ namespace Grace.Parsing
         {
             lhs = expressionRestNoOp(lhs);
             return maybeParseOperator(lhs);
+        }
+
+        private void parseBracketConstruct(List<ParseNode> arguments)
+        {
+            var startToken = lexer.current as OpenBracketToken;
+            if (startToken != null)
+            {
+                nextToken();
+                while (awaiting<CloseBracketToken>(startToken))
+                {
+                    var expr = parseExpression();
+                    arguments.Add(expr);
+                    consumeBlankLines();
+                    if (lexer.current is CommaToken)
+                    {
+                        nextToken();
+                    }
+                    else
+                    {
+                        expect<CloseBracketToken>();
+                    }
+                }
+                var cb = (CloseBracketToken)lexer.current;
+                if (cb.Name != startToken.Other)
+                {
+                    reportError("P1028",
+                            new Dictionary<string, string>
+                            {
+                                { "start", startToken.Name },
+                                { "expected", startToken.Other },
+                                { "found", cb.Name },
+                            },
+                            "Mismatched bracket construct"
+                            );
+                }
+                nextToken();
+            }
+        }
+
+        private ParseNode parseImplicitBracket()
+        {
+            var startToken = lexer.current as OpenBracketToken;
+            var arguments = new List<ParseNode>();
+            parseBracketConstruct(arguments);
+            return new ImplicitBracketRequestParseNode(startToken,
+                    startToken.Name + startToken.Other, arguments);
         }
 
         private ParseNode parseParenthesisedExpression()
@@ -739,6 +824,10 @@ namespace Grace.Parsing
             if (lexer.current is LParenToken)
             {
                 lhs = parseParenthesisedExpression();
+            }
+            else if (lexer.current is OpenBracketToken)
+            {
+                lhs = parseImplicitBracket();
             }
             else
             {

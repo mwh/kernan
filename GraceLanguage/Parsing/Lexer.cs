@@ -161,6 +161,7 @@ namespace Grace.Parsing
             column = index - lineStart;
             Token ret = null;
             UnicodeCategory cat = validateChar();
+            string cStr = StringInfo.GetNextTextElement(code, index);
             if (isIdentifierStartCharacter(c, cat))
                 ret = lexIdentifier();
             if (isOperatorCharacter(c, cat))
@@ -186,6 +187,12 @@ namespace Grace.Parsing
                 ret = lexLBrace();
             if (c == '}')
                 ret = lexRBrace();
+            if (ret == null && UnicodeLookup.OpenBrackets.Contains(cStr))
+                ret = lexOpenBracket();
+            if (ret == null && UnicodeLookup.CloseBrackets.Contains(cStr))
+                ret = lexCloseBracket();
+            //if (UnicodeLookup.CloseBrackets.Contains(cStr))
+            //    ret = lexCloseBracket();
             if (c == ',')
                 ret = lexComma();
             if (c == ';')
@@ -532,6 +539,71 @@ namespace Grace.Parsing
             advanceIndex();
             return new StringToken(moduleName, line, column, b.ToString(),
                     code.Substring(start, index - start - 1));
+        }
+
+        private Token lexOpenBracket()
+        {
+            int start = index;
+            advanceIndex();
+            UnicodeCategory cat = validateChar();
+            char c = code[index];
+            string cStr = StringInfo.GetNextTextElement(code, index);
+            while (UnicodeLookup.OpenBrackets.Contains(cStr)
+                    || isOperatorCharacter(c, cat))
+            {
+                advanceIndex();
+                cat = validateChar();
+                c = code[index];
+                cStr = StringInfo.GetNextTextElement(code, index);
+            }
+            string bracket = code.Substring(start, index - start);
+            int[] indices = StringInfo.ParseCombiningCharacters(bracket);
+            int lastIndex = indices[indices.Length - 1];
+            string l = StringInfo.GetNextTextElement(bracket, lastIndex);
+            if (!UnicodeLookup.OpenBrackets.Contains(l))
+                reportError("L0009",
+                        new Dictionary<string, string>
+                            {
+                                { "char", l }
+                            },
+                        "Invalid character at end of bracket sequence");
+            if (l == "(" || l == "{")
+                reportError("L0010",
+                        new Dictionary<string, string>
+                            {
+                                { "char", l }
+                            },
+                        "Invalid character at end of bracket sequence");
+            return new OpenBracketToken(moduleName, line, column, bracket);
+        }
+
+        private Token lexCloseBracket()
+        {
+            int start = index;
+            advanceIndex();
+            UnicodeCategory cat = validateChar();
+            char c = code[index];
+            string cStr = StringInfo.GetNextTextElement(code, index);
+            while (UnicodeLookup.CloseBrackets.Contains(cStr)
+                    || isOperatorCharacter(c, cat))
+            {
+                advanceIndex();
+                cat = validateChar();
+                c = code[index];
+                cStr = StringInfo.GetNextTextElement(code, index);
+            }
+            string bracket = code.Substring(start, index - start);
+            int[] indices = StringInfo.ParseCombiningCharacters(bracket);
+            int lastIndex = indices[indices.Length - 1];
+            string l = StringInfo.GetNextTextElement(bracket, lastIndex);
+            if (!UnicodeLookup.CloseBrackets.Contains(l))
+                reportError("L0009",
+                        new Dictionary<string, string>
+                            {
+                                { "char", l }
+                            },
+                        "Invalid character at end of bracket sequence");
+            return new CloseBracketToken(moduleName, line, column, bracket);
         }
 
         private Token lexLParen()

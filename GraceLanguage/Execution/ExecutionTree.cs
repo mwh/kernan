@@ -632,6 +632,29 @@ namespace Grace.Execution
             return ppn.Expression.Visit(this);
         }
 
+        /// <inheritdoc />
+        public Node Visit(ImplicitBracketRequestParseNode ibrpn)
+        {
+            ImplicitReceiverRequestNode ret = new ImplicitReceiverRequestNode(ibrpn.Token, ibrpn);
+            RequestPartNode rpn = new RequestPartNode("circumfix" + ibrpn.Name,
+                    new List<Node>(),
+                    map(ibrpn.Arguments));
+            ret.AddPart(rpn);
+            return ret;
+        }
+
+        /// <inheritdoc />
+        public Node Visit(ExplicitBracketRequestParseNode ebrpn)
+        {
+            ExplicitReceiverRequestNode ret = new ExplicitReceiverRequestNode(ebrpn.Token, ebrpn,
+                ebrpn.Receiver.Visit(this));
+            RequestPartNode rpn = new RequestPartNode(ebrpn.Name,
+                    new List<Node>(),
+                    map(ebrpn.Arguments));
+            ret.AddPart(rpn);
+            return ret;
+        }
+
         /// <summary>Transforms a list of ParseNodes into a list of the
         /// corresponding Nodes</summary>
         private List<Node> map(List<ParseNode> l)

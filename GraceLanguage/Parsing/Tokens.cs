@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Globalization;
 using System.Threading.Tasks;
+using Grace.Unicode;
 
 namespace Grace.Parsing
 {
@@ -220,6 +222,86 @@ namespace Grace.Parsing
         protected override string describe()
         {
             return "Operator:" + _name;
+        }
+    }
+
+    class BracketToken : Token
+    {
+        private string _name;
+        private string _other;
+
+        public string Name
+        {
+            get { return _name; }
+            set { _name = value; }
+        }
+
+        public bool Opening { get; protected set; }
+        public bool Closing { get; protected set; }
+        public string Other {
+            get {
+                if (_other == null)
+                {
+                    _other = computeOther();
+                }
+                return _other;
+            }
+        }
+
+        public BracketToken(string module, int line, int column, string val)
+            : base(module, line, column)
+        {
+            _name = val;
+        }
+
+        private string computeOther()
+        {
+            var sb = new StringBuilder();
+            int[] graphemeIndices = StringInfo.ParseCombiningCharacters(_name);
+            for (int i = graphemeIndices.Length - 1; i >= 0; i--)
+            {
+                string c = StringInfo.GetNextTextElement(_name, i);
+                if (UnicodeLookup.MirroredBrackets.ContainsKey(c))
+                    sb.Append(UnicodeLookup.MirroredBrackets[c]);
+                else
+                    sb.Append(c);
+            }
+            return sb.ToString();
+        }
+
+        protected override string describe()
+        {
+            return "Bracket:" + _name;
+        }
+    }
+
+    class OpenBracketToken : BracketToken
+    {
+        public OpenBracketToken(string module, int line, int column,
+                string val)
+            : base(module, line, column, val)
+        {
+            Opening = true;
+        }
+
+        protected override string describe()
+        {
+            return "OpenBracket:" + Name;
+        }
+    }
+
+    class CloseBracketToken : BracketToken
+    {
+        public CloseBracketToken(string module, int line, int column,
+                string val)
+            : base(module, line, column, val)
+        {
+            Closing = true;
+        }
+
+        protected override string describe()
+        {
+            return "CloseBracket:" + Name;
         }
     }
 
