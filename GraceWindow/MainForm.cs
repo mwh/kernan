@@ -29,16 +29,16 @@ namespace GraceWindow
 
         private void runButton_Click(object sender, EventArgs e)
         {
-            Console.WriteLine("here");
             OutputSink sink = new TextboxSink(outputText);
+            outputText.Text = "";
             var interp = new Interpreter(sink);
             interp.LoadPrelude();
             try
             {
-                Parser p = new Parser(codeText.Text);
-                ParseNode module = p.Parse();
-                ExecutionTreeTranslator ett = new ExecutionTreeTranslator();
-                Node eModule = ett.Translate(module as ObjectParseNode);
+                var p = new Parser(codeText.Text);
+                var module = p.Parse();
+                var ett = new ExecutionTreeTranslator();
+                var eModule = ett.Translate(module as ObjectParseNode);
                 try
                 {
                     eModule.Evaluate(interp);
