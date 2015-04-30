@@ -239,8 +239,9 @@ namespace Grace.Parsing
             {
                 reportError("P1029", "Unpaired closing brace found");
             }
-            if (lexer.current is NewLineToken || lexer.current is EndToken
-                    || lexer.current is RBraceToken)
+            if ((lexer.current is NewLineToken || lexer.current is EndToken
+                        || lexer.current is RBraceToken)
+                    && comments.Count != 0)
             {
                 // Took line comments, followed by a blank
                 ret = collapseComments(comments);
