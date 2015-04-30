@@ -120,6 +120,25 @@ namespace Grace.Parsing
                     "Expected something else, got " + lexer.current);
         }
 
+        /// <summary>Report an error if the current token is not
+        /// a particular kind</summary>
+        /// <typeparam name="T">Token class to expect</typeparam>
+        /// <param name="expectation">Description of what was expected
+        /// instead</param>
+        private void expect<T>(string expectation) where T : Token
+        {
+            if (lexer.current is T)
+                return;
+            ErrorReporting.ReportStaticError(moduleName, lexer.current.line,
+                    "P1002",
+                    new Dictionary<string, string>() {
+                        { "expected", expectation },
+                        { "found", lexer.current.ToString() }
+                    },
+                    "Expected something else, got " + lexer.current);
+        }
+
+
         /// <summary>Obtain the next meaningful token from the lexer,
         /// accounting for indentation rules and comments</summary>
         private Token nextToken()
@@ -216,6 +235,10 @@ namespace Grace.Parsing
             takeLineComments();
             Token start = lexer.current;
             ParseNode ret;
+            if (lexer.current is RBraceToken && comments.Count == 0)
+            {
+                reportError("P1029", "Unpaired closing brace found");
+            }
             if (lexer.current is NewLineToken || lexer.current is EndToken
                     || lexer.current is RBraceToken)
             {
@@ -266,8 +289,14 @@ namespace Grace.Parsing
                         || lexer.current is CommentToken
                         || lexer.current is EndToken
                         || lexer.current is RBraceToken))
-                reportError("P1004", lexer.current,
-                        "Unexpected token after statement.");
+            {
+                if (start.line == lexer.current.line)
+                    reportError("P1004", lexer.current,
+                            "Unexpected token after statement.");
+                else
+                    reportError("P1030", lexer.current,
+                            "Unexpected continuation token after statement.");
+            }
             while (lexer.current is NewLineToken)
                 lexer.NextToken();
             attachComments(ret, comments);
@@ -768,7 +797,8 @@ namespace Grace.Parsing
                     }
                     else
                     {
-                        expect<CloseBracketToken>();
+                        expect<CloseBracketToken>("CloseBracketToken '"
+                                + startToken.Other + "'");
                     }
                 }
                 var cb = (CloseBracketToken)lexer.current;

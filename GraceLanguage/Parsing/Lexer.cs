@@ -16,6 +16,7 @@ namespace Grace.Parsing
         private int line = 1;
         private int column = 1;
         private int lineStart = -1;
+        private bool allowShebang = true;
         public string moduleName;
         public Token current;
 
@@ -175,8 +176,10 @@ namespace Grace.Parsing
                 skipSpaces();
                 return NextToken();
             }
-            if (c == '#')
+            if (c == '#' && allowShebang && column == 1)
                 ret = lexComment();
+            else if (column == 1)
+                allowShebang = false;
             if (c == '"')
                 ret = lexString();
             if (c == '(')
@@ -387,7 +390,8 @@ namespace Grace.Parsing
                     || c == '+' || c == '-' || c == '*' || c == '/'
                     || c == '=' || c == '!' || c == '.' || c == '>'
                     || c == '<' || c == '@' || c == '$' || c == '?'
-                    || c == '&' || c == '|' || c == '^' || c == '%');
+                    || c == '&' || c == '|' || c == '^' || c == '%'
+                    || c == '#');
         }
 
         private void skipSpaces()
@@ -472,6 +476,11 @@ namespace Grace.Parsing
                     return new StringToken(moduleName, line, column, b.ToString(),
                             code.Substring(start, index - start),
                             true);
+                }
+                else if ((code[index] == '\n' || code[index] == '\r')
+                        && index < code.Length - 1 )
+                {
+                    reportError("L0011", "String literal contains line break.");
                 }
                 else if (escaped)
                 {

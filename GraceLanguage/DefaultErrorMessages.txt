@@ -27,6 +27,8 @@ P1025 Unexpected ${token} after '.': expected identifier
 P1026 Only the arithmetic operators +, -, *, / can be mixed together. To use '${operator}' in combination with others the expression must be disambiguated with parentheses.
 P1027 Invalid destructuring pattern match: pattern names cannot be multi-part.
 P1028 Bracketing request does not have matching brackets: request opening with '${start}' must end with '${expected}', not '${found}'.
+P1029 Closing brace '}' found without an opening brace first.
+P1030 Indented continuation line begins with '${token}', which cannot continue the previous line.
 
 L0000 Character ${codepoint} (${name}) may not appear here
 L0001 Tab characters are not permitted in the source code
@@ -39,6 +41,7 @@ L0007 Illegal lone surrogate
 L0008 Unknown escape character ${escape}
 L0009 Bracket operators must start and end with a bracketing character, not '${char}'
 L0010 Cannot end an opening bracket sequence with '${char}'.
+L0011 String literal continues past end of line.
 
 R2000 LookupError: Method «${method}» not found in object «${receiver}»
 R2001 ArgumentTypeError: Method «${method}» requires ${required} as argument ${index} of part «${part}»
