@@ -111,7 +111,7 @@ namespace Grace
             string baseMessage = GetMessage(code) ?? localDescription;
             string formattedMessage = FormatMessage(baseMessage, vars);
             WriteError(module, line, code, formattedMessage);
-            throw new StaticErrorException();
+            throw new StaticErrorException(code);
         }
 
         /// <summary>
@@ -166,7 +166,7 @@ namespace Grace
             {
                 Console.ResetColor();
             }
-            throw new StaticErrorException();
+            throw new StaticErrorException(code);
         }
 
         /// <summary>
@@ -237,7 +237,14 @@ namespace Grace
     /// <summary>Represents the fact that a static error occurred</summary>
     public class StaticErrorException : Exception
     {
+        /// <summary>Error code (X####) of this error</summary>
+        public string Code { get; private set; }
 
+        /// <param name="code">Error code (X####) of this error</param>
+        public StaticErrorException(string code)
+        {
+            Code = code;
+        }
     }
 
 }

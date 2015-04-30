@@ -18,8 +18,10 @@ namespace Grace
             string filename = null;
             string mode = "run";
             bool verbose = false;
-            foreach (string arg in args)
+            string errorCodeTarget = null;
+            for (int i = 0; i < args.Length; i++)
             {
+                var arg = args[i];
                 if (arg == "--parse-tree")
                     mode = "parse-tree";
                 else if (arg == "--execution-tree")
@@ -30,6 +32,10 @@ namespace Grace
                 {
                     Interpreter.ActivateDebuggingMessages();
                     verbose = true;
+                }
+                else if (arg == "--errors-to-file")
+                {
+                    errorCodeTarget = args[++i];
                 }
                 else
                     filename = arg;
@@ -89,6 +95,10 @@ namespace Grace
                 {
                     if (verbose)
                         System.Console.WriteLine(e.StackTrace);
+                    if (errorCodeTarget != null)
+                    {
+                        File.WriteAllText(errorCodeTarget, e.Code);
+                    }
                     return 1;
                 }
                 catch (Exception e)
