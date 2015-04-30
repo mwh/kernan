@@ -48,9 +48,13 @@ namespace GraceWindow
                     sink.WriteLine("=== A run-time error occurred: " + ex.Message + " ===");
                 }
             }
-            catch (StaticErrorException ex)
+            catch (StaticErrorException)
             {
                 sink.WriteLine("=== A static error prevented the program from running. ===");
+            }
+            catch (Exception)
+            {
+                sink.WriteLine("=== An internal error occurred. ===");
             }
 
         }
