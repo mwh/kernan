@@ -43,6 +43,18 @@ namespace GraceWindow
                 {
                     eModule.Evaluate(interp);
                 }
+                catch (GraceExceptionPacketException gep)
+                {
+                    sink.WriteLine("Uncaught exception:");
+                    ErrorReporting.WriteException(gep.ExceptionPacket);
+                    if (gep.ExceptionPacket.StackTrace != null)
+                    {
+                        foreach (var l in gep.ExceptionPacket.StackTrace)
+                        {
+                            sink.WriteLine("    from " + l);
+                        }
+                    }
+                }
                 catch (Exception ex)
                 {
                     sink.WriteLine("=== A run-time error occurred: " + ex.Message + " ===");
