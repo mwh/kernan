@@ -492,7 +492,6 @@ namespace Grace.Parsing
                         nextToken();
                         nextToken();
                     }
-                    first = false;
                     PartParameters pp = ret.AddPart(partName);
                     List<ParseNode> theseParameters = pp.Ordinary;
                     List<ParseNode> theseGenerics = pp.Generics;
@@ -504,6 +503,8 @@ namespace Grace.Parsing
                         expect<RGenericToken>();
                         nextToken();
                     }
+                    if (!first)
+                        expect<LParenToken>();
                     if (lexer.current is LParenToken)
                     {
                         Token lp = lexer.current;
@@ -512,6 +513,7 @@ namespace Grace.Parsing
                         expect<RParenToken>();
                         nextToken();
                     }
+                    first = false;
                 }
             }
             if (lexer.current is ArrowToken)
