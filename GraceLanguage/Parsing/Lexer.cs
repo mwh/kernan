@@ -430,6 +430,11 @@ namespace Grace.Parsing
                 numbase = (base1 - '0') * 10 + base2 - '0';
                 index += 3;
             }
+            if (numbase == 1 || numbase > 36)
+                reportError("L0012", new Dictionary<string, string> {
+                        { "base", "" + numbase }
+                    },
+                    "Invalid base ${base}.");
             int start = index;
             while (isDigitInBase(code[index], numbase))
                 advanceIndex();

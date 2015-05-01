@@ -46,6 +46,7 @@ L0008 Unknown escape character ${escape}
 L0009 Bracket operators must start and end with a bracketing character, not '${char}'
 L0010 Cannot end an opening bracket sequence with '${char}'.
 L0011 String literal continues past end of line.
+L0012 Base ${base} is not supported; must be in range 2-36.
 
 R2000 LookupError: Method «${method}» not found in object «${receiver}»
 R2001 ArgumentTypeError: Method «${method}» requires ${required} as argument ${index} of part «${part}»
