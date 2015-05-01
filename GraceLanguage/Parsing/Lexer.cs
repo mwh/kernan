@@ -19,6 +19,7 @@ namespace Grace.Parsing
         private bool allowShebang = true;
         public string moduleName;
         public Token current;
+        public Token previous;
 
         /// <param name="module">Module of this code</param>
         /// <param name="code">Code of this module as a string</param>
@@ -76,10 +77,12 @@ namespace Grace.Parsing
             int startIndex = index;
             Token startCurrent = current;
             int startLine = line;
+            var startPrevious = previous;
             Token ret = NextToken();
             index = startIndex;
             line = startLine;
             current = startCurrent;
+            previous = startPrevious;
             return ret;
         }
 
@@ -153,6 +156,7 @@ namespace Grace.Parsing
         /// advance the lexer</summary>
         public Token NextToken()
         {
+            previous = current;
             if (index >= code.Length)
             {
                 current = new EndToken(moduleName, line, column);

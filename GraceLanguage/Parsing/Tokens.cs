@@ -45,6 +45,20 @@ namespace Grace.Parsing
                 return module;
             }
         }
+
+        /// <summary>
+        /// Give a string description of a token class, suitable for
+        /// use in an error message.
+        /// </summary>
+        /// <typeparam name="T">Class to describe</typeparam>
+        public static string DescribeSubclass<T>() where T : Token
+        {
+            if (typeof(ArrowToken).Equals(typeof(T)))
+                return "->";
+            if (typeof(RParenToken).Equals(typeof(T)))
+                return ")";
+            return typeof(T).Name;
+        }
     }
 
     class IdentifierToken : Token
@@ -682,6 +696,11 @@ namespace Grace.Parsing
         protected override string describe()
         {
             return "End";
+        }
+
+        public override string ToString()
+        {
+            return "end of file";
         }
     }
 

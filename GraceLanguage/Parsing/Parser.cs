@@ -100,7 +100,13 @@ namespace Grace.Parsing
                 return false;
             if (lexer.current is EndToken)
                 ErrorReporting.ReportStaticError(moduleName, start.line,
-                        "P1001", "Unexpected end of file");
+                        "P1001",
+                        new Dictionary<string, string>
+                        {
+                            { "expected", typeof(T).Name },
+                            { "found", lexer.current.ToString() }
+                        },
+                        "Unexpected end of file");
             return true;
         }
 
@@ -112,7 +118,7 @@ namespace Grace.Parsing
             if (lexer.current is T)
                 return;
             ErrorReporting.ReportStaticError(moduleName, lexer.current.line,
-                    "P1002",
+                    lexer.current is EndToken ? "P1001" : "P1002",
                     new Dictionary<string, string>() {
                         { "expected", typeof(T).Name },
                         { "found", lexer.current.ToString() }
@@ -130,7 +136,44 @@ namespace Grace.Parsing
             if (lexer.current is T)
                 return;
             ErrorReporting.ReportStaticError(moduleName, lexer.current.line,
-                    "P1002",
+                    lexer.current is EndToken ? "P1001" : "P1002",
+                    new Dictionary<string, string>() {
+                        { "expected", expectation },
+                        { "found", lexer.current.ToString() }
+                    },
+                    "Expected something else, got " + lexer.current);
+        }
+
+        /// <summary>Report a specific error if the current token is not
+        /// a particular kind</summary>
+        /// <typeparam name="T">Token class to expect</typeparam>
+        /// <param name="code">Error code to report</param>
+        private void expectWithError<T>(string code) where T : Token
+        {
+            if (lexer.current is T)
+                return;
+            ErrorReporting.ReportStaticError(moduleName, lexer.current.line,
+                    code,
+                    new Dictionary<string, string>() {
+                        { "expected", typeof(T).Name },
+                        { "found", lexer.current.ToString() }
+                    },
+                    "Expected something else, got " + lexer.current);
+        }
+
+        /// <summary>Report a specific error if the current token is not
+        /// a particular kind, with a string expectation</summary>
+        /// <typeparam name="T">Token class to expect</typeparam>
+        /// <param name="code">Error code to report</param>
+        /// <param name="expectation">Description of what was expected
+        /// instead</param>
+        private void expectWithError<T>(string code, string expectation)
+            where T : Token
+        {
+            if (lexer.current is T)
+                return;
+            ErrorReporting.ReportStaticError(moduleName, lexer.current.line,
+                    code,
                     new Dictionary<string, string>() {
                         { "expected", expectation },
                         { "found", lexer.current.ToString() }
@@ -291,7 +334,8 @@ namespace Grace.Parsing
                         || lexer.current is EndToken
                         || lexer.current is RBraceToken))
             {
-                if (start.line == lexer.current.line)
+                if (start.line == lexer.current.line
+                        || lexer.current.line == lexer.previous.line)
                     reportError("P1004", lexer.current,
                             "Unexpected token after statement.");
                 else
@@ -396,6 +440,18 @@ namespace Grace.Parsing
             {
                 ParseNode partName = new IdentifierParseNode(ob);
                 nextToken();
+                expectWithError<CloseBracketToken>("P1033",  ob.Name + ob.Other);
+                var cb = (CloseBracketToken)lexer.current;
+                if (cb.Name != ob.Other)
+                {
+                    ErrorReporting.ReportStaticError(moduleName, cb.line,
+                            "P1033",
+                            new Dictionary<string, string>() {
+                                { "expected", ob.Name + ob.Other },
+                                { "found", cb.Name }
+                            },
+                            "Expected bracket name ${expected}, got ${found}.");
+                }
                 nextToken();
                 PartParameters pp = ret.AddPart(partName);
                 List<ParseNode> theseParameters = pp.Ordinary;
@@ -410,7 +466,7 @@ namespace Grace.Parsing
             }
             else
             {
-                expect<IdentifierToken>();
+                expectWithError<IdentifierToken>("P1032");
                 IdentifierParseNode partName;
                 bool first = true;
                 while (lexer.current is IdentifierToken)
@@ -505,10 +561,10 @@ namespace Grace.Parsing
         {
             Token start = lexer.current;
             Token peeked = lexer.Peek();
-            if (!(peeked is IdentifierToken))
+            if (peeked is LBraceToken)
                 return parseType();
             nextToken();
-            expect<IdentifierToken>();
+            expectWithError<IdentifierToken>("P1034");
             ParseNode name = parseIdentifier();
             List<ParseNode> genericParameters = new List<ParseNode>();
             if (lexer.current is LGenericToken)
@@ -614,9 +670,7 @@ namespace Grace.Parsing
             while (awaiting<Terminator>(start))
             {
                 ParseNode param = null;
-                if (lexer.current is IdentifierToken
-                        || lexer.current is NumberToken
-                        || lexer.current is StringToken)
+                if (lexer.current is IdentifierToken)
                 {
                     Token after = lexer.Peek();
                     if (after is ColonToken)
@@ -629,18 +683,16 @@ namespace Grace.Parsing
                     {
                         param = parseTerm();
                     }
+                    else if (lexer.current is IdentifierToken)
+                    {
+                        param = parseIdentifier();
+                    }
                     else
                     {
-                        // TODO destructuring patterns
+                        reportError("P1013", after,
+                                "In parameter list, expected "
+                                + " ',' or end of list.");
                     }
-                }
-                else if (lexer.current is NumberToken)
-                {
-                    // TODO number patterns
-                }
-                else if (lexer.current is StringToken)
-                {
-                    // TODO string patterns
                 }
                 else if (lexer.current is OperatorToken)
                 {
@@ -650,7 +702,7 @@ namespace Grace.Parsing
                         reportError("P1012", new Dictionary<string, string>() { { "operator", op.Name } },
                                 "Unexpected operator in parameter list.");
                     nextToken();
-                    expect<IdentifierToken>();
+                    expectWithError<IdentifierToken>("P1031");
                     ParseNode id = parseIdentifier();
                     param = id;
                     if (lexer.current is ColonToken)
@@ -663,12 +715,16 @@ namespace Grace.Parsing
                 if (param != null)
                     parameters.Add(param);
                 else
-                    reportError("TEMP0001", "Other sorts of parameter not yet supported.");
+                    expectWithError<IdentifierToken>("P1031");
                 if (lexer.current is CommaToken)
                     nextToken();
                 else if (!(lexer.current is Terminator))
                 {
-                    reportError("P1013", lexer.current,
+                    reportError("P1013",
+                            new Dictionary<string, string> {
+                                { "token", lexer.current.ToString() },
+                                { "end", Token.DescribeSubclass<Terminator>() }
+                            },
                             "In parameter list, expected "
                             + " ',' or end of list.");
                     break;
@@ -795,6 +851,9 @@ namespace Grace.Parsing
                     if (lexer.current is CommaToken)
                     {
                         nextToken();
+                        if (lexer.current is CloseBracketToken)
+                            reportError("P1018", lexer.current,
+                                    "Expected argument after comma.");
                     }
                     else
                     {
@@ -1318,15 +1377,15 @@ namespace Grace.Parsing
                 while (awaiting<RParenToken>(start))
                 {
                     ParseNode expr = parseExpression();
-                    if (lexer.current is ColonToken)
-                    {
-                        ParseNode type = parseTypeAnnotation();
-                        expr = new TypedParameterParseNode(expr, type);
-                    }
                     arguments.Add(expr);
                     consumeBlankLines();
                     if (lexer.current is CommaToken)
+                    {
                         nextToken();
+                        if (lexer.current is RParenToken)
+                            reportError("P1018", lexer.current,
+                                    "Expected argument after comma.");
+                    }
                     else if (!(lexer.current is RParenToken))
                     {
                         reportError("P1023", lexer.current,
@@ -1377,7 +1436,10 @@ namespace Grace.Parsing
             {
                 // This is a multi-part method name
                 ret.AddPart(parseIdentifier());
+                var hadParen = lexer.current is LParenToken;
                 parseArgumentList(ret.Arguments.Last());
+                if (ret.Arguments.Last().Count == 0 && !hadParen)
+                    return ret;
             }
             return ret;
         }
@@ -1392,7 +1454,10 @@ namespace Grace.Parsing
                 // Add this part of the method name
                 ret.AddPart(parseIdentifier());
                 parseGenericArgumentList(ret.GenericArguments.Last());
+                var hadParen = lexer.current is LParenToken;
                 parseArgumentList(ret.Arguments.Last());
+                if (ret.Arguments.Last().Count == 0 && !hadParen)
+                    return ret;
                 named = true;
             }
             if (!named)
