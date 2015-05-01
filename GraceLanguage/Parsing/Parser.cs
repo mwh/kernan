@@ -404,16 +404,23 @@ namespace Grace.Parsing
                 return null;
             AnnotationsParseNode ret = new AnnotationsParseNode(lexer.current);
             nextToken();
+            bool expecting = true;
             while (lexer.current is IdentifierToken)
             {
                 doNotAcceptDelimitedBlock = true;
                 ret.AddAnnotation(parseExpression());
                 doNotAcceptDelimitedBlock = false;
+                expecting = false;
                 if (lexer.current is CommaToken)
+                {
                     nextToken();
+                    expecting = true;
+                }
                 else
                     break;
             }
+            if (expecting)
+                reportError("P1037", lexer.current, "Expected annotation.");
             return ret;
         }
 
