@@ -1044,6 +1044,9 @@ namespace Grace.Parsing
                 {
                     ret.Parts.Add(new StringLiteralParseNode(lastTok));
                     lexer.NextToken();
+                    if (lexer.current is RBraceToken)
+                        reportError("P1035", lexer.current,
+                                "Empty interpolation.");
                     ParseNode expr = parseExpression();
                     ret.Parts.Add(expr);
                     if (lexer.current is RBraceToken)
