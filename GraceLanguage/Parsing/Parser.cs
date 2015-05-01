@@ -720,6 +720,7 @@ namespace Grace.Parsing
                         param = new TypedParameterParseNode(param, type);
                     }
                     param = new VarArgsParameterParseNode(param);
+                    expectWithError<Terminator>("P1039");
                 }
                 if (param != null)
                     parameters.Add(param);
