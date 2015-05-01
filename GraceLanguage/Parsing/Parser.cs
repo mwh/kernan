@@ -669,6 +669,10 @@ namespace Grace.Parsing
                 attachComments(tmn, comments);
                 restoreComments(origComments);
                 consumeBlankLines();
+                if (tmn.Token.line == lexer.current.line
+                        && lexer.current.line != start.line)
+                    reportError("P1004", lexer.current,
+                            "Unexpected token after statement.");
             }
             lexer.NextToken();
             indentColumn = indentBefore;
