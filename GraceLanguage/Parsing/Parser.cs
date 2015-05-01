@@ -1451,11 +1451,17 @@ namespace Grace.Parsing
             while (lexer.current is IdentifierToken)
             {
                 // This is a multi-part method name
-                ret.AddPart(parseIdentifier());
+                var partName = parseIdentifier();
+                ret.AddPart(partName);
                 var hadParen = lexer.current is LParenToken;
                 parseArgumentList(ret.Arguments.Last());
                 if (ret.Arguments.Last().Count == 0 && !hadParen)
-                    return ret;
+                {
+                    reportError("P1040", new Dictionary<string, string> {
+                                { "part", partName.Name }
+                            },
+                            "No argument list in request.");
+                }
             }
             return ret;
         }

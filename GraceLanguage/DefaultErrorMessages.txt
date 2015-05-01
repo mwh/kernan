@@ -37,6 +37,7 @@ P1035 Empty interpolation '{}'.
 P1036 Empty parentheses '()' have no value.
 P1037 Expected annotation in 'is' list, but saw '${token}' instead.
 P1039 Variadic *parameter must be at end of parameter list, but saw '${found}' afterwards.
+P1040 Part '${part}' of method request needs an argument list.
 
 L0000 Character ${codepoint} (${name}) may not appear here
 L0001 Tab characters are not permitted in the source code
