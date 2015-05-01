@@ -33,7 +33,8 @@ P1031 Expected a parameter name, but found '${found}' instead.
 P1032 Expected a method name, but saw '${found} instead.
 P1033 Bracketing method names must be symmetrical: should be '${expected}', but saw '${found}' instead of closing half.
 P1034 Expected a type name to declare, but saw '${found}' instead.
-P1035 Empty interpolation.
+P1035 Empty interpolation '{}'.
+P1036 Empty parentheses '()' have no value.
 
 L0000 Character ${codepoint} (${name}) may not appear here
 L0001 Tab characters are not permitted in the source code

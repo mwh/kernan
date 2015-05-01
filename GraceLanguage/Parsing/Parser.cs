@@ -895,6 +895,9 @@ namespace Grace.Parsing
             {
                 var startToken = lexer.current;
                 nextToken();
+                if (lexer.current is RParenToken)
+                    reportError("P1036", lexer.current,
+                            "Empty parentheses.");
                 var expr = parseExpression();
                 consumeBlankLines();
                 if (lexer.current is RParenToken)
