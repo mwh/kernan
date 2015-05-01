@@ -1,0 +1,85 @@
+#!/bin/bash
+
+MALFORMED=0
+CORRECT=0
+INCORRECT=0
+ACCEPTED=0
+CRASHED=0
+TOTAL=0
+
+GRACE=../../../grace
+
+mark() {
+    local name="$1"
+    local file="$2"
+    printf '%6s %s\n' "$file" "$name ($(($name = $name + 1)))"
+}
+
+test_file() {
+    rm -f error.tmp
+    TOTAL=$((TOTAL + 1))
+    local file="$1"
+    local top="$(head -n 1 "$file")"
+    local short="$(basename -s .grace "$file")"
+    if ! grep -q '^// ERROR = ' <<<"$top"
+    then
+        mark MALFORMED_TEST "$short"
+        if ! $GRACE --errors-to-file error.tmp --execution-tree "$file" >/dev/null 2>&1
+        then
+            if [ -e error.tmp ]
+            then
+                local code="$(< error.tmp)"
+                printf '             -> '
+                grep "^$code " ../../../bin/Debug/DefaultErrorMessages.txt || printf '%s\n' "$code"
+            else
+                CRASHED=$((CRASHED + 1))
+                printf '             !! %s\n' "CRASHED"
+            fi
+        else
+            ACCEPTED=$((ACCEPTED + 1))
+            printf '             -- %s\n' "ACCEPTED"
+        fi
+        return
+    fi
+    read a b c expect rest <<<"$top"
+    if $GRACE --errors-to-file error.tmp --execution-tree "$file" >/dev/null 2>&1
+    then
+        mark ACCEPTED "$short"
+        return
+    fi
+    if ! [ -e error.tmp ]
+    then
+        mark CRASHED "$short"
+        return
+    fi
+    code=$(< error.tmp)
+    if [[ "$code" != "$expect" ]]
+    then
+        mark INCORRECT "$short"
+    else
+        mark CORRECT "$short"
+    fi
+}
+
+summarise() {
+    printf '%s\n' '------------------------------------------------'
+    printf 'Passed           %i/%i\n' $CORRECT $TOTAL
+    printf 'Malformed tests: %i\n' $MALFORMED
+    printf 'Incorrect error: %i\n' $INCORRECT
+    printf 'No error at all: %i\n' $ACCEPTED
+    printf 'Crashed:         %i\n' $CRASHED
+}
+
+if [[ "$1" ]]
+then
+    for x in "$@"
+    do
+        test_file "$x"
+    done
+else
+    for x in *.grace
+    do
+        test_file "$x"
+    done
+fi
+summarise
