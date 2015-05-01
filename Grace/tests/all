@@ -7,13 +7,28 @@ declare -a FAILED_TESTS=()
 
 exec 3> testdata.tmp
 
+PIDS=()
+spawn() {
+    "$@" &
+    PIDS+=($!)
+}
+
+join() {
+    for pid in ${PIDS[@]}
+    do
+        wait $pid
+    done
+}
+
 pushd minigrace >/dev/null
-./harness ../../../grace passing
+spawn ./harness ../../../grace passing
 popd >/dev/null
 
 pushd gibbs/errors >/dev/null
-./harness
+spawn ./harness
 popd >/dev/null
+
+join
 
 source ./testdata.tmp
 rm -f ./testdata.tmp
