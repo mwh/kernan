@@ -476,7 +476,8 @@ namespace Grace.Parsing
                 expectWithError<IdentifierToken>("P1032");
                 IdentifierParseNode partName;
                 bool first = true;
-                while (lexer.current is IdentifierToken)
+                bool noMore = false;
+                while (lexer.current is IdentifierToken && !noMore)
                 {
                     partName = parseIdentifier();
                     if (lexer.current is BindToken)
@@ -519,6 +520,8 @@ namespace Grace.Parsing
                         parseParameterList<RParenToken>(lp, theseParameters);
                         expect<RParenToken>();
                         nextToken();
+                    } else {
+                        noMore = true;
                     }
                     first = false;
                 }
