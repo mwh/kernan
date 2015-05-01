@@ -1,0 +1,32 @@
+#!/bin/bash
+
+declare -i TOTAL=0
+declare -i PASSED=0
+declare -i FAILED=0
+declare -a FAILED_TESTS=()
+
+exec 3> testdata.tmp
+
+pushd minigrace >/dev/null
+./harness ../../../grace passing
+popd >/dev/null
+
+pushd gibbs/errors >/dev/null
+./harness
+popd >/dev/null
+
+source ./testdata.tmp
+rm -f ./testdata.tmp
+printf '\n%s\n\n' '======================================================='
+printf 'Passed %i/%i total tests\n' $TOTAL $PASSED
+
+if [[ "$TOTAL" != "$PASSED" ]]
+then
+    printf 'FAILED %i tests:\n' $FAILED
+    for t in "${FAILED_TESTS[@]}"
+    do
+        printf '* %s\n' "$t"
+    done
+    exit 1
+fi
+exit 0

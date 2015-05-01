@@ -6,13 +6,34 @@ INCORRECT=0
 ACCEPTED=0
 CRASHED=0
 TOTAL=0
+declare -a FAILED_TESTS=()
 
 GRACE=../../../grace
 
 mark() {
     local name="$1"
     local file="$2"
-    printf '%6s %s\n' "$file" "$name ($(($name = $name + 1)))"
+    local got="$3"
+    local expect="$4"
+    if [ "$got" ]
+    then
+        if [ "$got" = "$expect" ]
+        then
+            eq=
+            got=
+        else
+            eq="->"
+        fi
+    fi
+    local X="$name"
+    if [ "$X" = "CORRECT" ]
+    then
+        X=
+    else
+        FAILED_TESTS+=("gibbs:errors:$file")
+    fi
+    printf '%6s  %5s %2s %-6s %14s %s' "$file" "$expect" "$eq" "$got" "$X" "($(($name = $name + 1))/$TOTAL)"
+    printf '\n'
 }
 
 test_file() {
@@ -55,9 +76,9 @@ test_file() {
     code=$(< error.tmp)
     if [[ "$code" != "$expect" ]]
     then
-        mark INCORRECT "$short"
+        mark INCORRECT "$short" "$code" "$expect"
     else
-        mark CORRECT "$short"
+        mark CORRECT "$short" "$code" "$expect"
     fi
 }
 
@@ -83,3 +104,11 @@ else
     done
 fi
 summarise
+rm -f error.tmp
+(
+    echo "TOTAL+=$TOTAL" >&3
+    echo "PASSED+=$CORRECT" >&3
+    echo "FAILED+=$((TOTAL - CORRECT))" >&3
+    [ "${#FAILED_TESTS}" -gt 0 ] && echo "FAILED_TESTS+=(${FAILED_TESTS[@]})" >&3
+) 2>/dev/null
+[ "$CORRECT" = "$TOTAL" ]
