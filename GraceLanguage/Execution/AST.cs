@@ -1218,7 +1218,7 @@ namespace Grace.Execution
                 pair.Read.Confidential = false;
             if (Writable)
                 pair.Write.Confidential = false;
-            return GraceObject.Uninitialised;
+            return GraceObject.Done;
         }
 
         /// <inheritdoc/>
@@ -1285,7 +1285,7 @@ namespace Grace.Execution
             var meth = ctx.AddDef(Name, Value.Evaluate(ctx));
             if (Public)
                 meth.Confidential = false;
-            return GraceObject.Uninitialised;
+            return GraceObject.Done;
         }
 
         /// <inheritdoc/>
