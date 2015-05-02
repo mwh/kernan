@@ -587,6 +587,16 @@ namespace Grace.Execution
             }
         }
 
+        /// <summary>The methods of this object constructor</summary>
+        /// <value>This property gets the value of the field methods</value>
+        public Dictionary<string, MethodNode> Methods
+        {
+            get
+            {
+                return methods;
+            }
+        }
+
         /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
