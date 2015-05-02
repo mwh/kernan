@@ -427,7 +427,7 @@ namespace Grace.Parsing
         private void parseMethodHeader(Token start, MethodHeader ret)
         {
             var op = lexer.current as OperatorToken;
-            var ob = lexer.current as OpenBracketToken;;
+            var ob = lexer.current as OpenBracketToken;
             if (op != null)
             {
                 ParseNode partName = new IdentifierParseNode(op);
@@ -447,27 +447,59 @@ namespace Grace.Parsing
             {
                 ParseNode partName = new IdentifierParseNode(ob);
                 nextToken();
-                expectWithError<CloseBracketToken>("P1033",  ob.Name + ob.Other);
-                var cb = (CloseBracketToken)lexer.current;
-                if (cb.Name != ob.Other)
+                var cb = lexer.current as CloseBracketToken;
+                // There are currently two possibilities in question:
+                // parameters are given either between the brackets,
+                // or in parentheses after the complete bracket pair.
+                if (cb != null)
                 {
-                    ErrorReporting.ReportStaticError(moduleName, cb.line,
-                            "P1033",
-                            new Dictionary<string, string>() {
-                                { "expected", ob.Name + ob.Other },
-                                { "found", cb.Name }
-                            },
-                            "Expected bracket name ${expected}, got ${found}.");
-                }
-                nextToken();
-                PartParameters pp = ret.AddPart(partName);
-                List<ParseNode> theseParameters = pp.Ordinary;
-                if (lexer.current is LParenToken)
-                {
-                    Token lp = lexer.current;
+                    // Bracket pair, optional parentheses after.
+                    if (cb.Name != ob.Other)
+                    {
+                        ErrorReporting.ReportStaticError(moduleName, cb.line,
+                                "P1033",
+                                new Dictionary<string, string> {
+                                    { "expected", ob.Name + ob.Other },
+                                    { "found", cb.Name }
+                                },
+                                "Expected bracket name ${expected}, "
+                                    + "got ${found}.");
+                    }
                     nextToken();
-                    parseParameterList<RParenToken>(lp, theseParameters);
-                    expect<RParenToken>();
+                    PartParameters pp = ret.AddPart(partName);
+                    // Nullary bracket methods are currently OK.
+                    if (lexer.current is LParenToken)
+                    {
+                        var theseParameters = pp.Ordinary;
+                        Token lp = lexer.current;
+                        nextToken();
+                        parseParameterList<RParenToken>(lp, theseParameters);
+                        expect<RParenToken>();
+                        nextToken();
+                    }
+                }
+                else
+                {
+                    // Something other than a closing bracket, so
+                    // expect a non-empty parameter list in between.
+                    PartParameters pp = ret.AddPart(partName);
+                    var theseParameters = pp.Ordinary;
+                    parseParameterList<CloseBracketToken>(ob,
+                            theseParameters);
+                    expectWithError<CloseBracketToken>("P1033",
+                            ob.Name + " ... " + ob.Other);
+                    cb = (CloseBracketToken)lexer.current;
+                    if (cb.Name != ob.Other)
+                    {
+                        ErrorReporting.ReportStaticError(moduleName, cb.line,
+                                "P1033",
+                                new Dictionary<string, string> {
+                                    { "expected", ob.Name + " ... " + ob.Other},
+                                    { "found", cb.Name }
+                                },
+                                "Expected bracket name ${expected}, "
+                                    + "got ${found}.");
+                    }
                     nextToken();
                 }
             }
@@ -495,10 +527,51 @@ namespace Grace.Parsing
                     else if ("circumfix" == partName.Name && first
                           && lexer.current is OpenBracketToken)
                     {
+                        // As above:
+                        // There are currently two possibilities in question:
+                        // parameters are given either between the brackets,
+                        // or in parentheses after the complete bracket pair.
                         ob = (OpenBracketToken)lexer.current;
                         partName.Name += ob.Name + ob.Other;
                         nextToken();
-                        nextToken();
+                        var cb = lexer.current as CloseBracketToken;
+                        if (cb != null)
+                        {
+                            if (cb.Name != ob.Other)
+                                ErrorReporting.ReportStaticError(moduleName,
+                                        cb.line,
+                                        "P1033",
+                                        new Dictionary<string, string> {
+                                            { "expected", ob.Name + ob.Other},
+                                            { "found", cb.Name }
+                                        },
+                                        "Expected bracket name ${expected}, "
+                                            + "got ${found}.");
+                            nextToken();
+                        }
+                        else
+                        {
+                            var ppb = ret.AddPart(partName);
+                            parseParameterList<CloseBracketToken>(ob,
+                                    ppb.Ordinary);
+                            expectWithError<CloseBracketToken>("P1033",
+                                    ob.Name + " ... " + ob.Other);
+                            cb = (CloseBracketToken)lexer.current;
+                            nextToken();
+                            if (cb.Name != ob.Other)
+                                ErrorReporting.ReportStaticError(moduleName,
+                                        cb.line,
+                                        "P1033",
+                                        new Dictionary<string, string> {
+                                            { "expected", ob.Name + ob.Other},
+                                            { "found", cb.Name }
+                                        },
+                                        "Expected bracket name ${expected}, "
+                                            + "got ${found}.");
+                            // This must be the last (sole) part of the
+                            // method name.
+                            break;
+                        }
                     }
                     PartParameters pp = ret.AddPart(partName);
                     List<ParseNode> theseParameters = pp.Ordinary;
