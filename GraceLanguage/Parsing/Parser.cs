@@ -501,6 +501,20 @@ namespace Grace.Parsing
                                     + "got ${found}.");
                     }
                     nextToken();
+                    var bind = lexer.current as BindToken;
+                    if (bind != null)
+                    {
+                        partName = new IdentifierParseNode(bind);
+                        pp = ret.AddPart(partName);
+                        nextToken();
+                        var lp = lexer.current;
+                        expect<LParenToken>();
+                        nextToken();
+                        parseParameterList<RParenToken>(lp,
+                                pp.Ordinary);
+                        expect<RParenToken>();
+                        nextToken();
+                    }
                 }
             }
             else
