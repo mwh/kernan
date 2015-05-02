@@ -367,9 +367,9 @@ namespace Grace.Execution
         /// <param name="val">Value to assign</param>
         public void MakeBind(Node val)
         {
-            name += ":=";
-            parts[0].MakeBind();
-            parts[0].Arguments.Add(val);
+            var rpn = new RequestPartNode(":=", new List<Node>(),
+                    new List<Node> { val });
+            AddPart(rpn);
         }
 
         /// <summary>Add another part to this request</summary>

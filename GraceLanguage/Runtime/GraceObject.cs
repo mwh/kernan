@@ -158,7 +158,7 @@ namespace Grace.Runtime
         {
             fields[name] = val;
             AddMethod(name, Reader);
-            AddMethod(name + ":=", Writer);
+            AddMethod(name + " :=", Writer);
             return new ReaderWriterPair { Read = Reader, Write = Writer };
         }
 
@@ -309,8 +309,8 @@ namespace Grace.Runtime
         public override GraceObject Respond(EvaluationContext ctx, GraceObject self, MethodRequest req)
         {
             checkAccessibility(ctx, req);
-            string name = req.Name.Substring(0, req.Name.Length - 2);
-            fields[name] = req[0].Arguments[0];
+            string name = req[0].Name;
+            fields[name] = req[1].Arguments[0];
             Interpreter.Debug("field '" + name + "' set to " + fields[name]);
             return GraceObject.Uninitialised;
         }

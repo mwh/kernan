@@ -85,7 +85,7 @@ namespace Grace.Runtime
         {
             locals[name] = val;
             AddMethod(name, Reader);
-            AddMethod(name + ":=", Writer);
+            AddMethod(name + " :=", Writer);
             return new ReaderWriterPair { Read = Reader, Write = Writer };
         }
 
@@ -144,8 +144,8 @@ namespace Grace.Runtime
         {
             checkAccessibility(ctx, req);
             LocalScope s = self as LocalScope;
-            string name = req.Name.Substring(0, req.Name.Length - 2);
-            s[name] = req[0].Arguments[0];
+            string name = req[0].Name;
+            s[name] = req[1].Arguments[0];
             Interpreter.Debug("local '" + name + "' set to " + s[name]);
             return GraceObject.Uninitialised;
         }

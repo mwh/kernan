@@ -1157,6 +1157,12 @@ namespace Grace.Parsing
             _name = tok.Name + tok.Other;
         }
 
+        internal IdentifierParseNode(BindToken tok)
+            : base(tok)
+        {
+            _name = ":=";
+        }
+
         /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {

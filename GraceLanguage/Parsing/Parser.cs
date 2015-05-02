@@ -512,10 +512,13 @@ namespace Grace.Parsing
                 while (lexer.current is IdentifierToken && !noMore)
                 {
                     partName = parseIdentifier();
-                    if (lexer.current is BindToken)
+                    var bind = lexer.current as BindToken;
+                    if (bind != null)
                     {
-                        partName.Name += ":=";
+                        ret.AddPart(partName);
+                        partName = new IdentifierParseNode(bind);
                         nextToken();
+                        noMore = true;
                     }
                     else if ("prefix" == partName.Name && first
                           && lexer.current is OperatorToken)
