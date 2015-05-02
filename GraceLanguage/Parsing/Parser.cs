@@ -75,11 +75,18 @@ namespace Grace.Parsing
 
         private void reportError(string code, Token t1, string localDescription)
         {
-            ErrorReporting.ReportStaticError(moduleName, lexer.current.line,
-                    code,
+            var vars =
                     new Dictionary<string, string>() {
                         {"token", t1.ToString()}
-                    },
+                    };
+            if (code == "P1018" && t1 is EndToken)
+            {
+                code = "P1001";
+                vars["expected"] = "expression";
+            }
+            ErrorReporting.ReportStaticError(moduleName, lexer.current.line,
+                    code,
+                    vars,
                     localDescription);
         }
 

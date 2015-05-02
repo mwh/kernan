@@ -1,4 +1,4 @@
-// ERROR = P1018
+// ERROR = P1001
 if(false) then {
 }
 else {

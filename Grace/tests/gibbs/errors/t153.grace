@@ -1,3 +1,3 @@
-// ERROR = P1018
+// ERROR = P1001
 var x
 x :=
