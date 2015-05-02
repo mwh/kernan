@@ -59,3 +59,4 @@ R2002 LookupError: No receiver found for ${method}
 R2003 AccessibilityError: Confidential method «${method}» cannot be accessed from outside the object
 R2004 InsufficientArgumentsError: Part «${part}» of method «${method}» requires ${need} arguments, but only ${have} provided
 R2005 LookupError: Could not find module "${path}" to import
+R2006 SurplusArgumentsError: Part «${part}» of method «${method}» can only accept ${need} arguments, but ${have} provided

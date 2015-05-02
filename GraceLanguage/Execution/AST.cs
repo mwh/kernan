@@ -828,6 +828,43 @@ namespace Grace.Execution
             }
         }
 
+        /// <summary>
+        /// Check that the number of arguments provided is satisfactory,
+        /// and report a runtime error if not.
+        /// </summary>
+        /// <param name="ctx">Current interpreter</param>
+        /// <param name="methodName">Name of method</param>
+        /// <param name="partName">Name of part</param>
+        /// <param name="need">Number of parameters of method</param>
+        /// <param name="variadic">Whether this method is variadic</param>
+        /// <param name="got">Number of arguments provided</param>
+        public static void CheckArgCount(EvaluationContext ctx,
+                string methodName, string partName, int need, bool variadic,
+                int got)
+        {
+            if (!variadic && got > need)
+                ErrorReporting.RaiseError(ctx, "R2006",
+                        new Dictionary<string, string> {
+                            { "method", methodName },
+                            { "part",  partName },
+                            { "need", need.ToString()},
+                            { "have", got.ToString() }
+                        },
+                        "SurplusArgumentsError: Too many arguments for method"
+                );
+            if (got < need - (variadic ? 1 : 0))
+                ErrorReporting.RaiseError(ctx, "R2004",
+                        new Dictionary<string, string> {
+                            { "method", methodName },
+                            { "part",  partName },
+                            { "need", variadic ? (need - 1) + "+"
+                                               : need.ToString() },
+                            { "have", got.ToString() }
+                        },
+                        "InsufficientArgumentsError: Not enough arguments for method"
+                );
+        }
+
         /// <summary>Respond to a given request with a given binding of the
         /// receiver</summary>
         /// <param name="ctx">Current interpreter</param>
@@ -844,12 +881,14 @@ namespace Grace.Execution
             var myScope = new MethodScope(req.Name);
             foreach (var pp in parts.Zip(req, (dp, rp) => new { mine = dp, req = rp }))
             {
+                bool hadVariadic = false;
                 foreach (var arg in pp.mine.Arguments.Zip(pp.req.Arguments, (a, b) => new { name = a, val = b }))
                 {
-                    var idNode = arg.name as ParameterNode;
+                    var idNode = (ParameterNode)arg.name;
                     string name = idNode.Name;
                     if (idNode.Variadic)
                     {
+                        hadVariadic = true;
                         var gvl = new GraceVariadicList();
                         for (var i = pp.mine.Arguments.Count - 1;
                                 i < pp.req.Arguments.Count;
@@ -864,6 +903,15 @@ namespace Grace.Execution
                         myScope.AddLocalDef(name, arg.val);
                     }
                 }
+                if (!hadVariadic && pp.mine.Arguments.Count > 0)
+                {
+                    var p = pp.mine.Arguments.Last() as ParameterNode;
+                    if (p != null)
+                        hadVariadic |= p.Variadic;
+                }
+                CheckArgCount(ctx, req.Name, pp.mine.Name,
+                        pp.mine.Arguments.Count, hadVariadic,
+                        pp.req.Arguments.Count);
                 if (pp.mine.Arguments.Count > pp.req.Arguments.Count)
                 {
                     // Variadic parameter with no arguments provided

@@ -41,6 +41,7 @@ namespace Grace.Runtime
                         || par is ExplicitReceiverRequestNode)
                 {
                     Pattern = par.Evaluate(ctx);
+                    explicitPattern = true;
                     this.parameters = new List<Node>(parameters.Skip<Node>(1));
                 }
             }
@@ -80,18 +81,9 @@ namespace Grace.Runtime
         public GraceObject Apply(EvaluationContext ctx, MethodRequest req)
         {
             GraceObject ret = null;
-            if (parameters.Count > req[0].Arguments.Count)
-            {
-                ErrorReporting.RaiseError(ctx, "R2004",
-                        new Dictionary<string, string>() {
-                            { "method", req.Name },
-                            { "part", "apply" },
-                            { "need", parameters.Count.ToString() },
-                            { "have", req[0].Arguments.Count.ToString() }
-                        },
-                        "InsufficientArgumentsError: Insufficient arguments for block"
-                );
-            }
+            MethodNode.CheckArgCount(ctx, "apply", "apply",
+                    parameters.Count, false,
+                    req[0].Arguments.Count);
             ctx.Remember(lexicalScope);
             var myScope = new LocalScope(req.Name);
             foreach (var arg in parameters.Zip(req[0].Arguments, (a, b) => new { name = a, val = b }))

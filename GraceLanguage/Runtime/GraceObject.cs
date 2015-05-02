@@ -284,6 +284,9 @@ namespace Grace.Runtime
                 GraceObject self, MethodRequest req)
         {
             checkAccessibility(ctx, req);
+            CheckArgCount(ctx, req.Name, req.Name,
+                    0, false,
+                    req[0].Arguments.Count);
             string name = req.Name;
             Interpreter.Debug("field '" + name + "' is " + fields[name]);
             return fields[name];
