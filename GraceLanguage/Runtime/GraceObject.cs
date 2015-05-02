@@ -1,8 +1,5 @@
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Runtime.CompilerServices;
 using Grace.Execution;
 
 namespace Grace.Runtime
@@ -94,8 +91,11 @@ namespace Grace.Runtime
         public override string ToString()
         {
             if (name != null)
-                return "GraceObject[" + name + "]";
-            return "GraceObject";
+                return string.Format("{0}[{1:X}]",
+                        name,
+                        RuntimeHelpers.GetHashCode(this));
+            return string.Format("GraceObject[{0:X}]",
+                    RuntimeHelpers.GetHashCode(this));
         }
 
         /// <summary>Native method supporting Grace AsString</summary>
