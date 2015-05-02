@@ -10,6 +10,7 @@ namespace Grace
     public static class ErrorReporting
     {
         private static OutputSink sink;
+        private static HashSet<string> SilencedErrors = new HashSet<string>();
 
         /// <summary>
         /// Retrieve the error message for a given code from the
@@ -110,7 +111,8 @@ namespace Grace
         {
             string baseMessage = GetMessage(code) ?? localDescription;
             string formattedMessage = FormatMessage(baseMessage, vars);
-            WriteError(module, line, code, formattedMessage);
+            if (!SilencedErrors.Contains(code))
+                WriteError(module, line, code, formattedMessage);
             throw new StaticErrorException(code);
         }
 
@@ -232,6 +234,14 @@ namespace Grace
             sink = s;
         }
 
+        /// <summary>
+        /// Suppress printing of a particular static error.
+        /// </summary>
+        /// <param name="code">Error to silence</param>
+        public static void SilenceError(string code)
+        {
+            SilencedErrors.Add(code);
+        }
     }
 
     /// <summary>Represents the fact that a static error occurred</summary>
