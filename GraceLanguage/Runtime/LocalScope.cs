@@ -27,28 +27,25 @@ namespace Grace.Runtime
         private string name = "<anon>";
 
         /// <summary>Empty anonymous scope</summary>
-        public LocalScope() {
-            RemoveMethod("asString");
-            RemoveMethod("==");
-            RemoveMethod("!=");
+        public LocalScope()
+            : base("LocalScope", true)
+        {
         }
 
         /// <summary>Empty named scope</summary>
         /// <param name="name">Name of this scope for debugging</param>
         public LocalScope(string name)
+            : base("LocalScope[" + name + "]", true)
         {
             this.name = name;
-            RemoveMethod("asString");
-            RemoveMethod("==");
-            RemoveMethod("!=");
         }
 
         /// <inheritdoc/>
         public override string ToString()
         {
             if (name != null)
-                return "GraceObject[" + name + "]";
-            return "GraceObject";
+                return "LocalScope[" + name + "]";
+            return "LocalScope";
         }
 
         /// <summary>Add a new def to this scope</summary>

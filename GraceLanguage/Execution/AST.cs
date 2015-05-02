@@ -552,6 +552,7 @@ namespace Grace.Execution
     {
         private List<Node> body = new List<Node>();
         private Dictionary<string, MethodNode> methods = new Dictionary<string, MethodNode>();
+        private bool containsInheritance;
 
         internal ObjectConstructorNode(Token token, ParseNode source)
             : base(token, source)
@@ -565,6 +566,8 @@ namespace Grace.Execution
         public void Add(Node node)
         {
             MethodNode meth = node as MethodNode;
+            if (node is InheritsNode)
+                containsInheritance = true;
             if (meth == null)
                 body.Add(node);
             else
@@ -626,7 +629,7 @@ namespace Grace.Execution
                 GraceObject self)
         {
             LocalScope local = new LocalScope("object-inner");
-            GraceObject ret = new GraceObject(local);
+            GraceObject ret = new GraceObject(local, true);
             inheritor.AddParent(parentName, ret);
             ret.SetFlag(GraceObject.Flags.UserspaceObject);
             ctx.Extend(ret);
@@ -639,7 +642,7 @@ namespace Grace.Execution
         public override GraceObject Evaluate(EvaluationContext ctx)
         {
             LocalScope local = new LocalScope("object-inner");
-            GraceObject ret = new GraceObject(local);
+            GraceObject ret = new GraceObject(local, true);
             ret.SetFlag(GraceObject.Flags.UserspaceObject);
             ctx.Extend(ret);
             local.AddLocalDef("self", ret);
@@ -650,6 +653,8 @@ namespace Grace.Execution
                 GraceObject ret, LocalScope local,
                 GraceObject self)
         {
+            if (!containsInheritance)
+                ret.AddParent("super", GraceObject.DefaultMethods);
             ctx.ExtendMinor(local);
             ret.RememberScope(ctx);
             foreach (MethodNode m in methods.Values)
@@ -692,6 +697,13 @@ namespace Grace.Execution
 
         /// <summary>Whether this method returns a fresh object or not</summary>
         public bool Fresh { get; set; }
+
+        /// <summary>
+        /// Whether this method should be given the user-facing receiver
+        /// (true) or the concrete part-object on which it was found
+        /// (false)
+        /// </summary>
+        public bool UseRealReceiver { get; set; }
 
         internal MethodNode(Token token, ParseNode source)
             : base(token, source)

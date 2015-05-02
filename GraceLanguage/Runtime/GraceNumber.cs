@@ -21,6 +21,7 @@ namespace Grace.Runtime
         }
 
         private GraceNumber(double val)
+            : base(true)
         {
             Interpreter.Debug("made new number " + val);
             Double = val;
@@ -59,7 +60,7 @@ namespace Grace.Runtime
 
         /// <summary>Native method for Grace ==</summary>
         /// <param name="other">Argument to the method</param>
-        new public GraceObject EqualsEquals(GraceObject other)
+        public GraceObject EqualsEquals(GraceObject other)
         {
             var oth = other as GraceNumber;
             if (oth == null)
@@ -69,7 +70,7 @@ namespace Grace.Runtime
 
         /// <summary>Native method for Grace !=</summary>
         /// <param name="other">Argument to the method</param>
-        new public GraceObject NotEquals(GraceObject other)
+        public GraceObject NotEquals(GraceObject other)
         {
             var oth = other as GraceNumber;
             if (oth == null)

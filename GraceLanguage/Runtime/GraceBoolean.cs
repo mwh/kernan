@@ -53,8 +53,6 @@ namespace Grace.Runtime
                         new NativeMethod1Ctx(this.Match)));
             AddMethod("asString",
                     new DelegateMethodNode0(new NativeMethod0(this.AsString)));
-            AddMethod("==", new DelegateMethodNode1(new NativeMethod1(this.EqualsEquals)));
-            AddMethod("!=", new DelegateMethodNode1(new NativeMethod1(this.NotEquals)));
         }
 
         /// <summary>Native method for Grace !</summary>
@@ -70,10 +68,9 @@ namespace Grace.Runtime
         /// <param name="target">Target of the match</param>
         public GraceObject Match(EvaluationContext ctx, GraceObject target)
         {
-            if (this.EqualsEquals(target) == GraceBoolean.True)
-            {
+            var b = target as GraceBoolean;
+            if (b != null && b.Boolean == Boolean)
                 return Matching.SuccessfulMatch(ctx, target);
-            }
             return Matching.FailedMatch(ctx, target);
         }
 

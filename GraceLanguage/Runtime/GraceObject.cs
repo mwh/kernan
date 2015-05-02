@@ -30,6 +30,9 @@ namespace Grace.Runtime
         private string name;
         private LocalScope _internalScope;
 
+        /// <summary>Part-object with built-in default methods</summary>
+        public static readonly GraceObject DefaultMethods = new GraceObject();
+
         /// <summary>Name of this object for debugging</summary>
         /// <value>This property gets/sets the value of the field name</value>
         public string TagName
@@ -47,34 +50,79 @@ namespace Grace.Runtime
         /// <summary>A default object</summary>
         public GraceObject()
         {
-            initialise();
+            initialise(true);
+        }
+
+        /// <summary>An object with or without default methods</summary>
+        /// <param name="omitDefaultMethods">
+        /// Leave out the default methods ==, asString, etc,
+        /// from this (part-)object.
+        /// </param>
+        public GraceObject(bool omitDefaultMethods)
+        {
+            initialise(!omitDefaultMethods);
         }
 
         /// <summary>An object with a debugging name</summary>
         /// <param name="name">Debugging name of this object</param>
         public GraceObject(string name)
         {
-            initialise();
+            initialise(true);
+            this.name = name;
+        }
+
+        /// <summary>An object with a debugging name</summary>
+        /// <param name="name">Debugging name of this object</param>
+        /// <param name="omitDefaultMethods">
+        /// Leave out the default methods ==, asString, etc,
+        /// from this (part-)object.
+        /// </param>
+        public GraceObject(string name, bool omitDefaultMethods)
+        {
+            initialise(!omitDefaultMethods);
             this.name = name;
         }
 
         /// <summary>An object with an internal scope</summary>
         /// <param name="scope">Internal scope of this object</param>
-        public GraceObject(LocalScope scope)
+        /// <param name="omitDefaultMethods">
+        /// Leave out the default methods ==, asString, etc,
+        /// from this (part-)object.
+        /// </param>
+        public GraceObject(LocalScope scope, bool omitDefaultMethods)
         {
-            initialise();
+            initialise(!omitDefaultMethods);
             this._internalScope = scope;
         }
 
         /// <summary>Initialisation code used by multiple constructors</summary>
-        private void initialise()
+        private void initialise(bool defaults)
         {
             Reader = new FieldReaderMethod(fields);
             Writer = new FieldWriterMethod(fields);
-            AddMethod("asString", new DelegateMethodNode0(
-                        new NativeMethod0(this.AsString)));
-            AddMethod("==", new DelegateMethodNode1(new NativeMethod1(this.EqualsEquals)));
-            AddMethod("!=", new DelegateMethodNode1(new NativeMethod1(this.NotEquals)));
+            if (defaults)
+            {
+                // The default methods are found on all objects,
+                // but should not be defined on all part-objects.
+                // User objects obtain them by inheritance, but
+                // others will have them directly. These methods
+                // should be given the final object's identity as
+                // their receiver, as otherwise equality will
+                // always fail. The UseRealReceiver flag on
+                // a method node ensures this.
+                MethodNode m = new DelegateMethodNode0(
+                            new NativeMethod0(AsString));
+                m.UseRealReceiver = true;
+                AddMethod("asString", m);
+                m = new DelegateMethodNodeReceiver1Ctx(
+                            new NativeMethodReceiver1Ctx(mEqualsEquals));
+                m.UseRealReceiver = true;
+                AddMethod("==", m);
+                m = new DelegateMethodNodeReceiver1Ctx(
+                            new NativeMethodReceiver1Ctx(mNotEquals));
+                m.UseRealReceiver = true;
+                AddMethod("!=", m);
+            }
         }
 
         /// <summary>Add a named superobject to this object</summary>
@@ -105,17 +153,25 @@ namespace Grace.Runtime
         }
 
         /// <summary>Native method supporting Grace ==</summary>
+        /// <param name="ctx">Current interpreter</param>
+        /// <param name="self">Receiver</param>
         /// <param name="other">Object to compare</param>
-        public GraceObject EqualsEquals(GraceObject other)
+        private static GraceObject mEqualsEquals(EvaluationContext ctx,
+                GraceObject self,
+                GraceObject other)
         {
-            return GraceBoolean.Create(this == other);
+            return GraceBoolean.Create(object.ReferenceEquals(self, other));
         }
 
         /// <summary>Native method supporting Grace !=</summary>
+        /// <param name="ctx">Current interpreter</param>
+        /// <param name="self">Receiver</param>
         /// <param name="other">Object to compare</param>
-        public GraceObject NotEquals(GraceObject other)
+        private static GraceObject mNotEquals(EvaluationContext ctx,
+                GraceObject self,
+                GraceObject other)
         {
-            return GraceBoolean.Create(this != other);
+            return GraceBoolean.Create(!object.ReferenceEquals(self, other));
         }
 
         /// <summary>Save the current scope of this interpreter into
@@ -220,12 +276,22 @@ namespace Grace.Runtime
             var m = findMethod(req.Name);
             if (!methods.ContainsKey(req.Name))
             {
+                bool found = false;
                 foreach (var o in parents)
                 {
-                    if (o.findMethod(req.Name) != null)
+                    m = o.findMethod(req.Name);
+                    if (m != null)
+                    {
+                        if (m.UseRealReceiver)
+                        {
+                            found = true;
+                            break;
+                        }
                         return o.Request(ctx, req);
+                    }
                 }
-                ErrorReporting.RaiseError(ctx, "R2000",
+                if (!found)
+                    ErrorReporting.RaiseError(ctx, "R2000",
                         new Dictionary<string, string> {
                             { "method", req.Name },
                             { "receiver", ToString() }

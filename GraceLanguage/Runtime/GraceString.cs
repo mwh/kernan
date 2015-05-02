@@ -20,6 +20,7 @@ namespace Grace.Runtime
             set;
         }
         private GraceString(string val)
+            : base(true)
         {
             Interpreter.Debug("made new string " + val);
             Value = val;
@@ -56,7 +57,7 @@ namespace Grace.Runtime
 
         /// <summary>Native method for Grace ==</summary>
         /// <param name="other">Argument to the method</param>
-        new public GraceObject EqualsEquals(GraceObject other)
+        public GraceObject EqualsEquals(GraceObject other)
         {
             var oth = other as GraceString;
             return (oth == null) ? GraceBoolean.False
@@ -65,7 +66,7 @@ namespace Grace.Runtime
 
         /// <summary>Native method for Grace !=</summary>
         /// <param name="other">Argument to the method</param>
-        new public GraceObject NotEquals(GraceObject other)
+        public GraceObject NotEquals(GraceObject other)
         {
             var oth = other as GraceString;
             return (oth == null) ? GraceBoolean.True
