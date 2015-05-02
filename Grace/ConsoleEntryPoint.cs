@@ -28,6 +28,8 @@ namespace Grace
                     mode = "execution-tree";
                 else if (arg == "--no-run")
                     mode = "no-run";
+                else if (arg == "--repl")
+                    mode = "repl";
                 else if (arg == "--verbose")
                 {
                     Interpreter.ActivateDebuggingMessages();
@@ -40,6 +42,8 @@ namespace Grace
                 else
                     filename = arg;
             }
+            if (mode == "repl")
+                return repl(filename);
             if (filename == null) {
                 System.Console.Error.WriteLine("Required filename argument missing.");
                 return 1;
@@ -118,5 +122,129 @@ namespace Grace
             }
             return 0;
         }
+
+        private static int repl(string filename)
+        {
+            Console.WriteLine("* Grace REPL with runtime "
+                    + Interpreter.GetRuntimeVersion());
+            ParseNode module;
+            var interp = new Interpreter();
+            interp.LoadPrelude();
+            var obj = new GraceObject();
+            if (filename != null)
+            {
+                Console.WriteLine("* Loading " + filename + "...");
+                using (StreamReader reader = File.OpenText(filename))
+                {
+                    var parser = new Parser(
+                            Path.GetFileNameWithoutExtension(filename),
+                            reader.ReadToEnd());
+                    module = parser.Parse();
+                    ExecutionTreeTranslator ett = new ExecutionTreeTranslator();
+                    Node eModule = ett.Translate(module as ObjectParseNode);
+                    try
+                    {
+                        obj = eModule.Evaluate(interp);
+                    }
+                    catch (GraceExceptionPacketException e)
+                    {
+                        Console.Error.WriteLine("Uncaught exception:");
+                        ErrorReporting.WriteException(e.ExceptionPacket);
+                        if (e.ExceptionPacket.StackTrace != null)
+                        {
+                            foreach (var l in e.ExceptionPacket.StackTrace)
+                            {
+                                Console.Error.WriteLine("    from "
+                                        + l);
+                            }
+                        }
+                        return 1;
+                    }
+                }
+                Console.WriteLine("* Loaded.");
+            }
+            Console.WriteLine("* Enter code at the prompt.\n");
+            ErrorReporting.SilenceError("P1001");
+            interp.Extend(obj);
+            var memo = interp.Memorise();
+            Console.Write(">>> ");
+            string line = Console.ReadLine();
+            string accum = String.Empty;
+            while (line != null)
+            {
+                accum += line.Replace("\u0000", "") + "\n";
+                ObjectConstructorNode mod = null;
+                try {
+                    var p = new Parser("source code", accum);
+                    module = p.Parse();
+                    var trans = new ExecutionTreeTranslator();
+                    mod = (ObjectConstructorNode)trans.Translate((ObjectParseNode)module);
+                }
+                catch (StaticErrorException ex)
+                {
+                    if (ex.Code == "P1001")
+                    {
+                        // "Unexpected end of file" is expected here
+                        // for unfinished statements.
+                        Console.Write("... ");
+                    }
+                    else
+                    {
+                        // All other errors are errors, and should
+                        // clear the accumulated buffer and let the
+                        // user start again.
+                        Console.Write(">>> ");
+                        accum = String.Empty;
+                    }
+                }
+                if (mod != null)
+                {
+                    try
+                    {
+                        // The "module" object can only really have
+                        // a single element, but we don't know whether
+                        // it's a method, statement, or expression yet.
+                        foreach (var meth in mod.Methods.Values)
+                        {
+                            obj.AddMethod(meth);
+                        }
+                        foreach (var node in mod.Body)
+                        {
+                            var ret = node.Evaluate(interp);
+                            if (ret != null
+                                    && ret != GraceObject.Done
+                                    && ret != GraceObject.Uninitialised)
+                            {
+                                interp.Print(interp, ret);
+                            }
+                        }
+                    }
+                    catch (GraceExceptionPacketException e)
+                    {
+                        Console.Error.WriteLine("Uncaught exception:");
+                        ErrorReporting.WriteException(e.ExceptionPacket);
+                        if (e.ExceptionPacket.StackTrace != null)
+                        {
+                            foreach (var l in e.ExceptionPacket.StackTrace)
+                            {
+                                Console.Error.WriteLine("    from "
+                                        + l);
+                            }
+                        }
+                    }
+                    // No matter what happened, restore the interpreter
+                    // to as pristine a state as we can manage before
+                    // the next time.
+                    interp.RestoreExactly(memo);
+                    interp.PopCallStackTo(0);
+                    accum = String.Empty;
+                    mod = null;
+                    Console.Write(">>> ");
+                }
+                line = Console.ReadLine();
+            }
+            return 0;
+        }
     }
+
 }
