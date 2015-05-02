@@ -285,9 +285,10 @@ namespace Grace.Execution
             GraceObject rec = ctx.FindReceiver(req);
             if (rec == null)
             {
+                NestRequest(ctx, req);
                 ctx.DebugScopes();
                 ErrorReporting.RaiseError(ctx, "R2002",
-                        new Dictionary<string, string>() {
+                        new Dictionary<string, string> {
                             { "method", Name }
                         },
                         "LookupError: No receiver found for ${method}"
@@ -440,8 +441,13 @@ namespace Grace.Execution
             return performRequest(ctx, rec, req);
         }
 
-        private GraceObject performRequest(EvaluationContext ctx,
-                GraceObject rec, MethodRequest req)
+        /// <summary>
+        /// Notify interpreter of this request for backtrace purposes.
+        /// </summary>
+        /// <param name="ctx">Current interpreter</param>
+        /// <param name="req">Request being made</param>
+        /// <returns>Depth of method nesting</returns>
+        protected int NestRequest(EvaluationContext ctx, MethodRequest req)
         {
             string m = "";
             int l = 0;
@@ -450,7 +456,13 @@ namespace Grace.Execution
                 m = Location.Module;
                 l = Location.line;
             }
-            int start = ctx.NestRequest(m, l, req.Name);
+            return ctx.NestRequest(m, l, req.Name);
+        }
+
+        private GraceObject performRequest(EvaluationContext ctx,
+                GraceObject rec, MethodRequest req)
+        {
+            int start = NestRequest(ctx, req);
             try
             {
                 return rec.Request(ctx, req);
