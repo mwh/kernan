@@ -1407,6 +1407,7 @@ namespace Grace.Parsing
             indentColumn = firstBodyToken.column;
             // TODO fix to handle indentation properly
             // does not at all now. must recalculate after params list too
+            var op = lexer.current as OperatorToken;
             if (lexer.current is IdentifierToken
                     || lexer.current is NumberToken
                     || lexer.current is StringToken
@@ -1459,6 +1460,69 @@ namespace Grace.Parsing
                 {
                     nextToken();
                     parseParameterList<ArrowToken>(start, ret.Parameters);
+                }
+            }
+            else if (op != null)
+            {
+                // This could be either a variadic parameter or an
+                // expression.
+                if (op.Name != "*")
+                {
+                    // It's definitely an expression.
+                    ret.Body.Add(parseExpression());
+                }
+                else
+                {
+                    // It could still be either a variadic parameter
+                    // or an expression.
+                    var expr = parseExpression();
+                    if (!(expr is PrefixOperatorParseNode))
+                    {
+                        // It's definitely an expression.
+                        ret.Body.Add(expr);
+                    }
+                    else
+                    {
+                        var popn = (PrefixOperatorParseNode)expr;
+                        var id = popn.Receiver as IdentifierParseNode;
+                        if (id == null)
+                        {
+                            // Not an identifier, so has to be an expression
+                            ret.Body.Add(expr);
+                        }
+                        else if (lexer.current is ColonToken)
+                        {
+                            // Definitely a parameter, has a type.
+                            ParseNode type = parseTypeAnnotation();
+                            ret.Parameters.Add(
+                                    new VarArgsParameterParseNode(
+                                        new TypedParameterParseNode(id,
+                                            type)));
+                        }
+                        else if (lexer.current is CommaToken)
+                        {
+                            // Can only be a parameter.
+                            ret.Parameters.Add(
+                                    new VarArgsParameterParseNode(id));
+                        }
+                        else if (lexer.current is ArrowToken)
+                        {
+                            // End of parameter list
+                            ret.Parameters.Add(
+                                    new VarArgsParameterParseNode(id));
+                        }
+                        else
+                        {
+                            // Something else means it's not a parameter.
+                            ret.Body.Add(expr);
+                        }
+                        if (lexer.current is CommaToken)
+                        {
+                            nextToken();
+                            parseParameterList<ArrowToken>(start,
+                                    ret.Parameters);
+                        }
+                    }
                 }
             }
             if (lexer.current is ArrowToken)

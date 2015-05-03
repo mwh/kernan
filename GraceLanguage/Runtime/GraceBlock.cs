@@ -16,6 +16,9 @@ namespace Grace.Runtime
         private GraceObject Pattern;
         private bool explicitPattern;
 
+        /// <summary>Whether this block is variadic or not</summary>
+        public bool Variadic { get; set; }
+
         private GraceBlock(EvaluationContext ctx, List<Node> parameters,
                 List<Node> body)
         {
@@ -82,14 +85,40 @@ namespace Grace.Runtime
         {
             GraceObject ret = null;
             MethodNode.CheckArgCount(ctx, "apply", "apply",
-                    parameters.Count, false,
+                    parameters.Count, Variadic,
                     req[0].Arguments.Count);
             ctx.Remember(lexicalScope);
             var myScope = new LocalScope(req.Name);
             foreach (var arg in parameters.Zip(req[0].Arguments, (a, b) => new { name = a, val = b }))
             {
-                string name = ((IdentifierNode)arg.name).Name;
-                myScope.AddLocalDef(name, arg.val);
+                var id = arg.name as ParameterNode;
+                if (id != null && id.Variadic)
+                {
+                    // Populate variadic parameter with all remaining
+                    // arguments.
+                    var gvl = new GraceVariadicList();
+                    for (var i = parameters.Count - 1;
+                            i < req[0].Arguments.Count;
+                            i++)
+                    {
+                        gvl.Add(req[0].Arguments[i]);
+                    }
+                    myScope.AddLocalDef(id.Name, gvl);
+                } else {
+                    string name = ((IdentifierNode)arg.name).Name;
+                    myScope.AddLocalDef(name, arg.val);
+                }
+            }
+            if (Variadic && parameters.Count > req[0].Arguments.Count)
+            {
+                // Empty variadic parameter.
+                var param = parameters.Last();
+                var idNode = param as ParameterNode;
+                if (idNode != null && idNode.Variadic)
+                {
+                    var gvl = new GraceVariadicList();
+                    myScope.AddLocalDef(idNode.Name, gvl);
+                }
             }
             ctx.Extend(myScope);
             foreach (Node n in body)

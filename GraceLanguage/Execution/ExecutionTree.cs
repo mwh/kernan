@@ -425,6 +425,7 @@ namespace Grace.Execution
             {
                 var id = p as IdentifierParseNode;
                 var tppn = p as TypedParameterParseNode;
+                var vappn = p as VarArgsParameterParseNode;
                 if (id != null)
                     parameters.Add(new ParameterNode(id.Token, id));
                 else if (tppn != null)
@@ -438,6 +439,24 @@ namespace Grace.Execution
                                 new ParameterNode(tppn.Token,
                                     tppn.Name as IdentifierParseNode,
                                     tppn.Type.Visit(this)));
+                }
+                else if (vappn != null)
+                {
+                    // Inside could be either an identifier or a
+                    // TypedParameterParseNode - check for both.
+                    var inIPN = vappn.Name as IdentifierParseNode;
+                    var inTPPN = vappn.Name as TypedParameterParseNode;
+                    if (inIPN != null)
+                        parameters.Add(new ParameterNode(inIPN.Token,
+                                    inIPN,
+                                    true // Variadic
+                                    ));
+                    else if (inTPPN != null)
+                        parameters.Add(new ParameterNode(inTPPN.Token,
+                                    inTPPN.Name as IdentifierParseNode,
+                                    true, // Variadic
+                                    inTPPN.Type.Visit(this)
+                                    ));
                 }
                 else if (p is NumberParseNode || p is StringLiteralParseNode
                         || p is OperatorParseNode)

@@ -1001,6 +1001,7 @@ namespace Grace.Execution
         private List<Node> parameters;
         private List<Node> body;
         private Node _forcedPattern;
+        private bool variadic;
 
         internal BlockNode(Token token, ParseNode source,
                 List<Node> parameters,
@@ -1011,6 +1012,12 @@ namespace Grace.Execution
             this.parameters = parameters;
             this.body = body;
             _forcedPattern = forcedPattern;
+            foreach (var p in parameters)
+            {
+                var param = p as ParameterNode;
+                if (param != null)
+                    variadic |= param.Variadic;
+            }
         }
 
         /// <summary>The parameters of this block</summary>
@@ -1060,6 +1067,7 @@ namespace Grace.Execution
             {
                 ret.ForcePattern(_forcedPattern.Evaluate(ctx));
             }
+            ret.Variadic = variadic;
             return ret;
         }
 
