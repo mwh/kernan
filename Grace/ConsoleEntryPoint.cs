@@ -166,6 +166,9 @@ namespace Grace
             Console.WriteLine("* Enter code at the prompt.\n");
             ErrorReporting.SilenceError("P1001");
             interp.Extend(obj);
+            var ls = new LocalScope("repl-inner");
+            ls.AddLocalDef("self", obj);
+            interp.ExtendMinor(ls);
             var memo = interp.Memorise();
             Console.Write(">>> ");
             string line = Console.ReadLine();
