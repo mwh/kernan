@@ -389,8 +389,11 @@ namespace Grace.Parsing
 
         private bool isOperatorCharacter(char c, UnicodeCategory cat)
         {
-            return (cat == UnicodeCategory.MathSymbol
+            return c != ':' && c != '"' && c != ',' && c != ';'
+                && c != '\'' &&
+                (cat == UnicodeCategory.MathSymbol
                     || cat == UnicodeCategory.OtherSymbol
+                    || cat == UnicodeCategory.OtherPunctuation
                     || c == '+' || c == '-' || c == '*' || c == '/'
                     || c == '=' || c == '!' || c == '.' || c == '>'
                     || c == '<' || c == '@' || c == '$' || c == '?'
