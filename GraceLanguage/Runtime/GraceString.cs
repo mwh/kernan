@@ -6,6 +6,16 @@ namespace Grace.Runtime
     /// <summary>A Grace string object</summary>
     class GraceString : GraceObject
     {
+        /// <summary>
+        /// User code to extend all builtin numbers.
+        /// </summary>
+        public static ObjectConstructorNode Extension { get ; set; }
+
+        /// <summary>
+        /// Interpreter to use for creating the extension objects.
+        /// </summary>
+        public static EvaluationContext ExtensionInterpreter { get ; set; }
+
         /// <summary>This string in normalization form C</summary>
         private string nfc;
 
@@ -44,14 +54,14 @@ namespace Grace.Runtime
                 GraceObject other)
         {
             Interpreter.Debug("called ++");
-            var oth = other as GraceString;
+            var oth = other.FindNativeParent<GraceString>();
             if (oth != null)
                 return GraceString.Create(Value + oth.Value);
             var op = other as GraceObjectProxy;
             if (op != null)
                 return GraceString.Create(Value + op.Object);
             other = other.Request(ctx, MethodRequest.Nullary("asString"));
-            oth = (GraceString)other;
+            oth = other.FindNativeParent<GraceString>();
             return GraceString.Create(Value + oth.Value);
         }
 
@@ -59,7 +69,7 @@ namespace Grace.Runtime
         /// <param name="other">Argument to the method</param>
         public GraceObject EqualsEquals(GraceObject other)
         {
-            var oth = other as GraceString;
+            var oth = other.FindNativeParent<GraceString>();
             return (oth == null) ? GraceBoolean.False
                                  : GraceBoolean.Create(nfc == oth.nfc);
         }
@@ -68,7 +78,7 @@ namespace Grace.Runtime
         /// <param name="other">Argument to the method</param>
         public GraceObject NotEquals(GraceObject other)
         {
-            var oth = other as GraceString;
+            var oth = other.FindNativeParent<GraceString>();
             return (oth == null) ? GraceBoolean.True
                                  : GraceBoolean.Create(nfc != oth.nfc);
         }
@@ -77,7 +87,7 @@ namespace Grace.Runtime
         /// <param name="other">Argument to the method</param>
         public GraceObject At(GraceObject other)
         {
-            var oth = other as GraceNumber;
+            var oth = other.FindNativeParent<GraceNumber>();
             if (oth == null)
                 return GraceString.Create("bad index");
             int idx = oth.GetInt() - 1;
@@ -117,7 +127,12 @@ namespace Grace.Runtime
         /// <param name="val">Value of string to create</param>
         public static GraceObject Create(string val)
         {
-            return new GraceString(val);
+            if (Extension == null)
+                return new GraceString(val);
+            var str = new GraceString(val);
+            var o = Extension.Evaluate(ExtensionInterpreter);
+            o.AddParent("builtin", str);
+            return o;
         }
 
     }

@@ -12,6 +12,7 @@ namespace Grace
 {
     class ConsoleEntryPoint
     {
+        static string builtinsFile;
         static int Main(string[] args)
         {
             ParseNode module;
@@ -39,6 +40,10 @@ namespace Grace
                 {
                     errorCodeTarget = args[++i];
                 }
+                else if (arg == "--builtins-override")
+                {
+                    builtinsFile = args[++i];
+                }
                 else
                     filename = arg;
             }
@@ -50,6 +55,8 @@ namespace Grace
             }
             var interp = new Interpreter();
             interp.LoadPrelude();
+            if (builtinsFile != null)
+                interp.LoadBuiltins(builtinsFile);
             using (StreamReader reader = File.OpenText(filename))
             {
                 Parser parser = new Parser(
@@ -130,6 +137,8 @@ namespace Grace
             ParseNode module;
             var interp = new Interpreter();
             interp.LoadPrelude();
+            if (builtinsFile != null)
+                interp.LoadBuiltins(builtinsFile);
             var obj = new GraceObject();
             if (filename != null)
             {

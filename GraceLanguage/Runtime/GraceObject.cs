@@ -135,6 +135,32 @@ namespace Grace.Runtime
                 _internalScope.AddLocalDef(name, obj);
         }
 
+        /// <summary>
+        /// Find a Grace superobject that is an instance of the native
+        /// type T.
+        /// </summary>
+        /// <returns>The parent of that type, or null</returns>
+        /// <typeparam name="T">Type to find</typeparam>
+        public T FindNativeParent<T>() where T : GraceObject
+        {
+            var s = this as T;
+            if (s != null)
+                return s;
+            foreach (var p in parents)
+            {
+                s = p as T;
+                if (s != null)
+                    return s;
+            }
+            foreach (var p in parents)
+            {
+                s = p.FindNativeParent<T>();
+                if (s != null)
+                    return s;
+            }
+            return null;
+        }
+
         /// <inheritdoc/>
         public override string ToString()
         {

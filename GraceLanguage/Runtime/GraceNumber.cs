@@ -20,6 +20,16 @@ namespace Grace.Runtime
             set;
         }
 
+        /// <summary>
+        /// User code to extend all builtin numbers.
+        /// </summary>
+        public static ObjectConstructorNode Extension { get ; set; }
+
+        /// <summary>
+        /// Interpreter to use for creating the extension objects.
+        /// </summary>
+        public static EvaluationContext ExtensionInterpreter { get ; set; }
+
         private GraceNumber(double val)
             : base(true)
         {
@@ -62,7 +72,7 @@ namespace Grace.Runtime
         /// <param name="other">Argument to the method</param>
         public GraceObject EqualsEquals(GraceObject other)
         {
-            var oth = other as GraceNumber;
+            var oth = other.FindNativeParent<GraceNumber>();
             if (oth == null)
                 return GraceBoolean.False;
             return GraceBoolean.Create(this.Double == oth.Double);
@@ -72,7 +82,7 @@ namespace Grace.Runtime
         /// <param name="other">Argument to the method</param>
         public GraceObject NotEquals(GraceObject other)
         {
-            var oth = other as GraceNumber;
+            var oth = other.FindNativeParent<GraceNumber>();
             if (oth == null)
                 return GraceBoolean.True;
             return GraceBoolean.Create(this.Double != oth.Double);
@@ -96,7 +106,7 @@ namespace Grace.Runtime
         public GraceObject Add(GraceObject other)
         {
             Interpreter.Debug("called +");
-            GraceNumber oth = other as GraceNumber;
+            var oth = other.FindNativeParent<GraceNumber>();
             return GraceNumber.Create(this.Double + oth.Double);
         }
 
@@ -105,7 +115,7 @@ namespace Grace.Runtime
         public GraceObject Multiply(GraceObject other)
         {
             Interpreter.Debug("called *");
-            GraceNumber oth = other as GraceNumber;
+            var oth = other.FindNativeParent<GraceNumber>();
             return GraceNumber.Create(this.Double * oth.Double);
         }
 
@@ -114,7 +124,7 @@ namespace Grace.Runtime
         public GraceObject Subtract(GraceObject other)
         {
             Interpreter.Debug("called -");
-            GraceNumber oth = other as GraceNumber;
+            var oth = other.FindNativeParent<GraceNumber>();
             return GraceNumber.Create(this.Double - oth.Double);
         }
 
@@ -123,7 +133,7 @@ namespace Grace.Runtime
         public GraceObject Divide(GraceObject other)
         {
             Interpreter.Debug("called /");
-            GraceNumber oth = other as GraceNumber;
+            var oth = other.FindNativeParent<GraceNumber>();
             return GraceNumber.Create(this.Double / oth.Double);
         }
 
@@ -132,7 +142,7 @@ namespace Grace.Runtime
         public GraceObject Modulus(GraceObject other)
         {
             Interpreter.Debug("called %");
-            GraceNumber oth = other as GraceNumber;
+            var oth = other.FindNativeParent<GraceNumber>();
             return GraceNumber.Create(this.Double % oth.Double);
         }
 
@@ -141,7 +151,7 @@ namespace Grace.Runtime
         public GraceObject Exponentiate(GraceObject other)
         {
             Interpreter.Debug("called ^");
-            GraceNumber oth = other as GraceNumber;
+            var oth = other.FindNativeParent<GraceNumber>();
             return GraceNumber.Create(Math.Pow(this.Double, oth.Double));
         }
 
@@ -149,7 +159,7 @@ namespace Grace.Runtime
         /// <param name="other">Argument to the method</param>
         public GraceObject GreaterThan(GraceObject other)
         {
-            GraceNumber oth = other as GraceNumber;
+            var oth = other.FindNativeParent<GraceNumber>();
             return GraceBoolean.Create(this.Double > oth.Double);
         }
 
@@ -157,7 +167,7 @@ namespace Grace.Runtime
         /// <param name="other">Argument to the method</param>
         public GraceObject GreaterEqual(GraceObject other)
         {
-            GraceNumber oth = other as GraceNumber;
+            var oth = other.FindNativeParent<GraceNumber>();
             return GraceBoolean.Create(this.Double >= oth.Double);
         }
 
@@ -165,7 +175,7 @@ namespace Grace.Runtime
         /// <param name="other">Argument to the method</param>
         public GraceObject LessThan(GraceObject other)
         {
-            GraceNumber oth = other as GraceNumber;
+            var oth = other.FindNativeParent<GraceNumber>();
             return GraceBoolean.Create(this.Double < oth.Double);
         }
 
@@ -173,7 +183,7 @@ namespace Grace.Runtime
         /// <param name="other">Argument to the method</param>
         public GraceObject LessEqual(GraceObject other)
         {
-            GraceNumber oth = other as GraceNumber;
+            var oth = other.FindNativeParent<GraceNumber>();
             return GraceBoolean.Create(this.Double <= oth.Double);
         }
 
@@ -205,7 +215,12 @@ namespace Grace.Runtime
         /// <param name="val">Number to create</param>
         public static GraceObject Create(double val)
         {
-            return new GraceNumber(val);
+            if (Extension == null)
+                return new GraceNumber(val);
+            var num = new GraceNumber(val);
+            var o = Extension.Evaluate(ExtensionInterpreter);
+            o.AddParent("builtin", num);
+            return o;
         }
 
     }

@@ -271,7 +271,8 @@ namespace Grace.Runtime
         public GraceObject Refine(EvaluationContext ctx, GraceObject name)
         {
             var asGraceString = name.Request(ctx,
-                    MethodRequest.Nullary("asString")) as GraceString;
+                    MethodRequest.Nullary("asString"))
+                .FindNativeParent<GraceString>();
             var nameStr = asGraceString.Value;
             AddDescendant(nameStr);
             return new GraceExceptionKind(this, nameStr);
@@ -293,7 +294,8 @@ namespace Grace.Runtime
         {
             var msg = "<<No message>>";
             var asGraceString = message.Request(ctx,
-                    MethodRequest.Nullary("asString")) as GraceString;
+                    MethodRequest.Nullary("asString"))
+                .FindNativeParent<GraceString>();
             if (asGraceString != null)
             {
                 msg = asGraceString.Value;
