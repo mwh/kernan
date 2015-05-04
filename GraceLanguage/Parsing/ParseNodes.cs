@@ -959,6 +959,13 @@ namespace Grace.Parsing
         /// <summary>The name (symbol) of the operator</summary>
         public string name;
 
+        /// <summary>The name (symbol) of the operator</summary>
+        public String Name {
+            get {
+                return name;
+            }
+        }
+
         internal OperatorParseNode(Token tok, string name, ParseNode l,
                 ParseNode r)
             : base(tok)
@@ -1190,9 +1197,15 @@ namespace Grace.Parsing
             set { _value = value; }
         }
 
+        private string raw;
+
         /// <summary>Literal string as written, without
         /// escape processing</summary>
-        public string raw;
+        public string Raw {
+            get {
+                return raw;
+            }
+        }
 
         internal StringLiteralParseNode(Token tok)
             : base(tok)
