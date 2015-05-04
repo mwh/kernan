@@ -374,7 +374,7 @@ namespace Grace.Parsing
             advanceIndex();
             advanceIndex();
             int start = index;
-            while (code[index] != '\n')
+            while (code[index] != '\n' && code[index] != '\u2028')
             {
                 validateChar();
                 // If this is a leading surrogate, skip over
@@ -481,7 +481,7 @@ namespace Grace.Parsing
             while (index < code.Length && ('"' != code[index] || escaped))
             {
                 validateChar();
-                if (code[index] == '\\')
+                if (!escaped && code[index] == '\\')
                     escaped = true;
                 else if (code[index] == '{' && !escaped)
                 {
