@@ -27,9 +27,9 @@ namespace Grace.Runtime
         /// <param name="obj">Object to proxy</param>
         public GraceObjectProxy(Object obj)
         {
-            Interpreter.Debug("created proxy object for: " + obj.GetType() + " " + obj);
             this.obj = obj;
-            this.type = obj.GetType();
+            if (obj != null)
+                this.type = obj.GetType();
         }
 
         /// <inheritsdoc/>
@@ -51,6 +51,10 @@ namespace Grace.Runtime
             string name = req.Name;
             switch (name)
             {
+                case "isNull":
+                    if (obj == null)
+                        return GraceBoolean.True;
+                    return GraceBoolean.False;
                 case "+":
                     return GraceObjectProxy.Create((dynamic)obj + (dynamic)viewAsNative(req[0].Arguments[0]));
                 case "-":
@@ -79,6 +83,10 @@ namespace Grace.Runtime
                     return GraceString.Create(obj.ToString());
                 case "prefix!":
                     return GraceObjectProxy.Create(!(dynamic)obj);
+                case "[]":
+                    return GraceObjectProxy.Create(
+                            ((dynamic)obj)[
+                                (dynamic)viewAsNative(req[0].Arguments[0])]);
             }
             object[] args = new object[req[0].Arguments.Count];
             for (int i = 0; i < req[0].Arguments.Count; i++)
@@ -103,7 +111,12 @@ namespace Grace.Runtime
             if (obj is GraceObjectProxy)
                 return viewAsNative(((GraceObjectProxy)obj).Object);
             if (obj is GraceNumber)
-                return (obj as GraceNumber).Double;
+            {
+                var d = (obj as GraceNumber).Double;
+                if (d == (int)d)
+                    return (int)d;
+                return d;
+            }
             return obj;
         }
 
@@ -115,6 +128,8 @@ namespace Grace.Runtime
             {
                 return GraceBoolean.Create((dynamic)o);
             }
+            if (o is int)
+                return GraceNumber.Create((dynamic)o);
             return new GraceObjectProxy(o);
         }
     }
