@@ -178,6 +178,10 @@ namespace Grace.Execution
         {
             if (modules.ContainsKey(path))
                 return modules[path];
+            if (path == "!compiler")
+            {
+                return new ExposedCompiler();
+            }
             var bases = GetModulePaths();
             foreach (var p in bases)
             {
