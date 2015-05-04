@@ -156,6 +156,7 @@ method _OrPattern(l, r) {
             if (mr2) then {
                 return _SuccessfulMatch(mr2.result)
             }
+            _FailedMatch(o)
         }
         method |(o) {
             _OrPattern(self, o)
@@ -438,6 +439,1716 @@ method match(target) case(case1) case(case2) case(case3) case(case4)
         return mr.result
     }
     mr := case9.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    fail "match-case fell through"
+}
+
+method match(target) case(case1) case(case2) case(case3) case(case4)
+        case(case5) case(case6) case(case7) case(case8) case(case9)
+        case(case10) {
+    var mr := case1.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case2.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case3.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case4.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case5.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case6.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case7.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case8.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case9.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case10.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    fail "match-case fell through"
+}
+
+method match(target) case(case1) case(case2) case(case3) case(case4)
+        case(case5) case(case6) case(case7) case(case8) case(case9)
+        case(case10) case(case11) {
+    var mr := case1.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case2.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case3.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case4.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case5.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case6.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case7.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case8.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case9.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case10.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case11.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    fail "match-case fell through"
+}
+
+method match(target) case(case1) case(case2) case(case3) case(case4)
+        case(case5) case(case6) case(case7) case(case8) case(case9)
+        case(case10) case(case11) case(case12) {
+    var mr := case1.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case2.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case3.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case4.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case5.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case6.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case7.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case8.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case9.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case10.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case11.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case12.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    fail "match-case fell through"
+}
+
+method match(target) case(case1) case(case2) case(case3) case(case4)
+        case(case5) case(case6) case(case7) case(case8) case(case9)
+        case(case10) case(case11) case(case12) case(case13) {
+    var mr := case1.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case2.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case3.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case4.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case5.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case6.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case7.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case8.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case9.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case10.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case11.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case12.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case13.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    fail "match-case fell through"
+}
+
+method match(target) case(case1) case(case2) case(case3) case(case4)
+        case(case5) case(case6) case(case7) case(case8) case(case9)
+        case(case10) case(case11) case(case12) case(case13) case(case14) {
+    var mr := case1.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case2.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case3.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case4.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case5.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case6.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case7.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case8.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case9.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case10.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case11.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case12.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case13.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case14.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    fail "match-case fell through"
+}
+
+method match(target) case(case1) case(case2) case(case3) case(case4)
+        case(case5) case(case6) case(case7) case(case8) case(case9)
+        case(case10) case(case11) case(case12) case(case13) case(case14)
+        case(case15) {
+    var mr := case1.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case2.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case3.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case4.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case5.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case6.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case7.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case8.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case9.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case10.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case11.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case12.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case13.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case14.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case15.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    fail "match-case fell through"
+}
+
+method match(target) case(case1) case(case2) case(case3) case(case4)
+        case(case5) case(case6) case(case7) case(case8) case(case9)
+        case(case10) case(case11) case(case12) case(case13) case(case14)
+        case(case15) case(case16) {
+    var mr := case1.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case2.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case3.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case4.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case5.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case6.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case7.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case8.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case9.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case10.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case11.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case12.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case13.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case14.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case15.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case16.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    fail "match-case fell through"
+}
+
+method match(target) case(case1) case(case2) case(case3) case(case4)
+        case(case5) case(case6) case(case7) case(case8) case(case9)
+        case(case10) case(case11) case(case12) case(case13) case(case14)
+        case(case15) case(case16) case(case17) {
+    var mr := case1.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case2.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case3.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case4.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case5.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case6.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case7.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case8.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case9.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case10.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case11.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case12.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case13.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case14.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case15.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case16.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case17.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    fail "match-case fell through"
+}
+
+method match(target) case(case1) case(case2) case(case3) case(case4)
+        case(case5) case(case6) case(case7) case(case8) case(case9)
+        case(case10) case(case11) case(case12) case(case13) case(case14)
+        case(case15) case(case16) case(case17) case(case18) {
+    var mr := case1.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case2.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case3.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case4.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case5.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case6.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case7.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case8.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case9.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case10.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case11.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case12.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case13.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case14.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case15.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case16.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case17.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case18.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    fail "match-case fell through"
+}
+
+method match(target) case(case1) case(case2) case(case3) case(case4)
+        case(case5) case(case6) case(case7) case(case8) case(case9)
+        case(case10) case(case11) case(case12) case(case13) case(case14)
+        case(case15) case(case16) case(case17) case(case18) case(case19) {
+    var mr := case1.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case2.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case3.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case4.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case5.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case6.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case7.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case8.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case9.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case10.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case11.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case12.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case13.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case14.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case15.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case16.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case17.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case18.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case19.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    fail "match-case fell through"
+}
+
+method match(target) case(case1) case(case2) case(case3) case(case4)
+        case(case5) case(case6) case(case7) case(case8) case(case9)
+        case(case10) case(case11) case(case12) case(case13) case(case14)
+        case(case15) case(case16) case(case17) case(case18) case(case19)
+        case(case20) {
+    var mr := case1.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case2.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case3.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case4.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case5.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case6.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case7.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case8.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case9.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case10.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case11.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case12.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case13.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case14.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case15.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case16.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case17.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case18.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case19.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case20.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    fail "match-case fell through"
+}
+
+method match(target) case(case1) case(case2) case(case3) case(case4)
+        case(case5) case(case6) case(case7) case(case8) case(case9)
+        case(case10) case(case11) case(case12) case(case13) case(case14)
+        case(case15) case(case16) case(case17) case(case18) case(case19)
+        case(case20) case(case21) {
+    var mr := case1.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case2.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case3.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case4.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case5.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case6.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case7.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case8.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case9.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case10.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case11.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case12.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case13.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case14.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case15.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case16.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case17.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case18.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case19.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case20.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case21.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    fail "match-case fell through"
+}
+
+method match(target) case(case1) case(case2) case(case3) case(case4)
+        case(case5) case(case6) case(case7) case(case8) case(case9)
+        case(case10) case(case11) case(case12) case(case13) case(case14)
+        case(case15) case(case16) case(case17) case(case18) case(case19)
+        case(case20) case(case21) case(case22) {
+    var mr := case1.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case2.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case3.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case4.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case5.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case6.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case7.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case8.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case9.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case10.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case11.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case12.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case13.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case14.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case15.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case16.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case17.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case18.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case19.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case20.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case21.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case22.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    fail "match-case fell through"
+}
+
+method match(target) case(case1) case(case2) case(case3) case(case4)
+        case(case5) case(case6) case(case7) case(case8) case(case9)
+        case(case10) case(case11) case(case12) case(case13) case(case14)
+        case(case15) case(case16) case(case17) case(case18) case(case19)
+        case(case20) case(case21) case(case22) case(case23) {
+    var mr := case1.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case2.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case3.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case4.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case5.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case6.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case7.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case8.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case9.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case10.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case11.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case12.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case13.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case14.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case15.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case16.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case17.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case18.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case19.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case20.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case21.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case22.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case23.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    fail "match-case fell through"
+}
+
+method match(target) case(case1) case(case2) case(case3) case(case4)
+        case(case5) case(case6) case(case7) case(case8) case(case9)
+        case(case10) case(case11) case(case12) case(case13) case(case14)
+        case(case15) case(case16) case(case17) case(case18) case(case19)
+        case(case20) case(case21) case(case22) case(case23) case(case24) {
+    var mr := case1.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case2.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case3.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case4.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case5.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case6.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case7.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case8.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case9.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case10.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case11.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case12.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case13.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case14.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case15.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case16.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case17.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case18.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case19.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case20.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case21.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case22.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case23.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case24.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    fail "match-case fell through"
+}
+
+method match(target) case(case1) case(case2) case(case3) case(case4)
+        case(case5) case(case6) case(case7) case(case8) case(case9)
+        case(case10) case(case11) case(case12) case(case13) case(case14)
+        case(case15) case(case16) case(case17) case(case18) case(case19)
+        case(case20) case(case21) case(case22) case(case23) case(case24)
+        case(case25) {
+    var mr := case1.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case2.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case3.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case4.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case5.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case6.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case7.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case8.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case9.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case10.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case11.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case12.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case13.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case14.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case15.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case16.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case17.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case18.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case19.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case20.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case21.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case22.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case23.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case24.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case25.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    fail "match-case fell through"
+}
+
+method match(target) case(case1) case(case2) case(case3) case(case4)
+        case(case5) case(case6) case(case7) case(case8) case(case9)
+        case(case10) case(case11) case(case12) case(case13) case(case14)
+        case(case15) case(case16) case(case17) case(case18) case(case19)
+        case(case20) case(case21) case(case22) case(case23) case(case24)
+        case(case25) case(case26) {
+    var mr := case1.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case2.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case3.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case4.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case5.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case6.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case7.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case8.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case9.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case10.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case11.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case12.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case13.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case14.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case15.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case16.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case17.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case18.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case19.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case20.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case21.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case22.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case23.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case24.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case25.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case26.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    fail "match-case fell through"
+}
+
+method match(target) case(case1) case(case2) case(case3) case(case4)
+        case(case5) case(case6) case(case7) case(case8) case(case9)
+        case(case10) case(case11) case(case12) case(case13) case(case14)
+        case(case15) case(case16) case(case17) case(case18) case(case19)
+        case(case20) case(case21) case(case22) case(case23) case(case24)
+        case(case25) case(case26) case(case27) {
+    var mr := case1.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case2.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case3.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case4.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case5.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case6.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case7.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case8.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case9.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case10.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case11.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case12.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case13.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case14.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case15.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case16.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case17.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case18.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case19.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case20.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case21.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case22.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case23.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case24.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case25.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case26.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case27.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    fail "match-case fell through"
+}
+
+method match(target) case(case1) case(case2) case(case3) case(case4)
+        case(case5) case(case6) case(case7) case(case8) case(case9)
+        case(case10) case(case11) case(case12) case(case13) case(case14)
+        case(case15) case(case16) case(case17) case(case18) case(case19)
+        case(case20) case(case21) case(case22) case(case23) case(case24)
+        case(case25) case(case26) case(case27) case(case28) {
+    var mr := case1.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case2.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case3.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case4.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case5.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case6.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case7.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case8.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case9.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case10.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case11.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case12.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case13.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case14.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case15.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case16.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case17.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case18.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case19.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case20.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case21.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case22.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case23.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case24.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case25.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case26.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case27.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case28.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    fail "match-case fell through"
+}
+
+method match(target) case(case1) case(case2) case(case3) case(case4)
+        case(case5) case(case6) case(case7) case(case8) case(case9)
+        case(case10) case(case11) case(case12) case(case13) case(case14)
+        case(case15) case(case16) case(case17) case(case18) case(case19)
+        case(case20) case(case21) case(case22) case(case23) case(case24)
+        case(case25) case(case26) case(case27) case(case28) case(case29) {
+    var mr := case1.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case2.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case3.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case4.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case5.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case6.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case7.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case8.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case9.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case10.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case11.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case12.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case13.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case14.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case15.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case16.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case17.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case18.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case19.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case20.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case21.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case22.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case23.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case24.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case25.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case26.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case27.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case28.match(target)
+    if (mr) then {
+        return mr.result
+    }
+    mr := case29.match(target)
     if (mr) then {
         return mr.result
     }
