@@ -83,7 +83,7 @@ namespace Grace.Runtime
         /// <param name="req">Request that obtained this method</param>
         public GraceObject Apply(EvaluationContext ctx, MethodRequest req)
         {
-            GraceObject ret = null;
+            GraceObject ret = GraceObject.Done;
             MethodNode.CheckArgCount(ctx, "apply", "apply",
                     parameters.Count, Variadic,
                     req[0].Arguments.Count);
