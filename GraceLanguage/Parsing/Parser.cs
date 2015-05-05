@@ -327,15 +327,7 @@ namespace Grace.Parsing
                     ret = new BindParseNode(start, ret, expr);
                 }
             }
-            if (lexer.current is SemicolonToken)
-            {
-                lexer.NextToken();
-                if (!(lexer.current is NewLineToken
-                            || lexer.current is CommentToken
-                            || lexer.current is EndToken
-                            || lexer.current is RBraceToken))
-                    reportError("P1003", "Other code cannot follow a semicolon on the same line.");
-            }
+            takeSemicolon();
             if (!(lexer.current is NewLineToken
                         || lexer.current is CommentToken
                         || lexer.current is EndToken
@@ -1396,6 +1388,19 @@ namespace Grace.Parsing
             return ret;
         }
 
+        private void takeSemicolon()
+        {
+            if (lexer.current is SemicolonToken)
+            {
+                lexer.NextToken();
+                if (!(lexer.current is NewLineToken
+                            || lexer.current is CommentToken
+                            || lexer.current is EndToken
+                            || lexer.current is RBraceToken))
+                    reportError("P1003", "Other code cannot follow a semicolon on the same line.");
+            }
+        }
+
         private ParseNode parseBlock()
         {
             int indentStart = indentColumn;
@@ -1424,16 +1429,12 @@ namespace Grace.Parsing
                     if (lexer.current is CommaToken
                         || lexer.current is ArrowToken)
                         reportError("P1022", lexer.current, "Block parameter list contained invalid symbol.");
+                    takeSemicolon();
                 }
                 else if (lexer.current is SemicolonToken)
                 {
                     // Definitely not a parameter
-                    lexer.NextToken();
-                    if (!(lexer.current is NewLineToken
-                                || lexer.current is CommentToken
-                                || lexer.current is EndToken
-                                || lexer.current is RBraceToken))
-                        reportError("P1003", "Other code cannot follow a semicolon on the same line.");
+                    takeSemicolon();
                     ret.Body.Add(expr);
                 }
                 else if (lexer.current is ColonToken)
@@ -1455,6 +1456,7 @@ namespace Grace.Parsing
                 else
                 {
                     ret.Body.Add(expr);
+                    takeSemicolon();
                 }
                 if (lexer.current is CommaToken)
                 {
