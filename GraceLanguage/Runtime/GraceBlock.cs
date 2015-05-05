@@ -27,6 +27,7 @@ namespace Grace.Runtime
             lexicalScope = ctx.Memorise();
             AddMethod("apply",
                     new DelegateMethodNodeReq(new NativeMethodReq(this.Apply)));
+            AddMethod("spawn", new DelegateMethodNode0Ctx(mSpawn));
             if (parameters.Count == 1)
             {
                 AddMethod("match",
@@ -78,6 +79,10 @@ namespace Grace.Runtime
             return new GraceBlock(ctx, parameters, body);
         }
 
+        private GraceObject mSpawn(EvaluationContext ctx)
+        {
+            return new GraceThread(ctx, this);
+        }
         /// <summary>Native method representing the apply method</summary>
         /// <param name="ctx">Current interpreter</param>
         /// <param name="req">Request that obtained this method</param>

@@ -15,6 +15,9 @@ namespace Grace.Runtime
     /// <summary>A native method accepting no arguments</summary>
     public delegate GraceObject NativeMethod0();
 
+    /// <summary>A native method accepting no and taking a context</summary>
+    public delegate GraceObject NativeMethod0Ctx(EvaluationContext ctx);
+
     /// <summary>A native method accepting a single Grace argument</summary>
     public delegate GraceObject NativeMethod1(GraceObject other);
 
@@ -28,6 +31,27 @@ namespace Grace.Runtime
     public delegate GraceObject NativeMethodReceiver1Ctx(EvaluationContext ctx,
             GraceObject self,
             GraceObject other);
+
+    /// <summary>A Grace method wrapping a native method accepting
+    /// a single Grace argument and an interpreter</summary>
+    public class DelegateMethodNode0Ctx : MethodNode
+    {
+        readonly NativeMethod0Ctx method;
+
+        /// <param name="rm">Native method to wrap</param>
+        public DelegateMethodNode0Ctx(NativeMethod0Ctx rm)
+            : base(null, null)
+        {
+            method = rm;
+        }
+
+        /// <inheritdoc/>
+        public override GraceObject Respond(EvaluationContext ctx,
+                GraceObject self, MethodRequest req)
+        {
+            return method(ctx);
+        }
+    }
 
     /// <summary>A Grace method wrapping a native method accepting
     /// a single Grace argument and an interpreter</summary>
