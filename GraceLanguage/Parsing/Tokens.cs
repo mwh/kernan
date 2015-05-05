@@ -9,7 +9,7 @@ using Grace.Unicode;
 namespace Grace.Parsing
 {
     /// <summary>A token of Grace source</summary>
-    internal abstract class Token
+    public abstract class Token
     {
         /// <summary>Module this token was found in</summary>
         public string module;
@@ -30,14 +30,21 @@ namespace Grace.Parsing
             this.column = column;
         }
 
+        /// <inheritdoc />
         public override string ToString()
         {
             return "<Token:" + module + ":" + line + ":" + column
                 + "::" + describe() + ">";
         }
 
+        /// <summary>
+        /// Subclass-specific description of the value of this token.
+        /// </summary>
         abstract protected string describe();
 
+        /// <summary>
+        /// Module this token was found in.
+        /// </summary>
         public string Module
         {
             get

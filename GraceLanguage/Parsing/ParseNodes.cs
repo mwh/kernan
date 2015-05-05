@@ -36,7 +36,11 @@ namespace Grace.Parsing
             set { _comment = value; }
         }
 
-        internal Token Token { get; set; }
+        /// <summary>
+        /// Token representing the start or identifying element
+        /// of this ParseNode.
+        /// </summary>
+        public Token Token { get; set; }
 
         /// <param name="tok">Token that gave rise to this node</param>
         internal ParseNode(Token tok)
