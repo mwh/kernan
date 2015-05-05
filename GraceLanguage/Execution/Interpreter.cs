@@ -158,6 +158,23 @@ namespace Grace.Execution
             }
         }
 
+        /// <summary>
+        /// Copy this interpreter to make a new independent one starting
+        /// with the same state, configuration, and call history.
+        /// </summary>
+        public Interpreter Copy()
+        {
+            var ret = new Interpreter();
+            ret.prelude = prelude;
+            ret.modules = modules;
+            ret.dynamics = new Stack<ScopeLink>(dynamics);
+            ret.callStack = new Stack<string>(callStack);
+            ret.scope = scope;
+            ret.majorScope = majorScope;
+            ret.sink = sink;
+            return ret;
+        }
+
         /// <summary>Gives the directory paths searched for imports</summary>
         public static List<string> GetModulePaths()
         {
