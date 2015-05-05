@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.IO;
 using Grace.Parsing;
 using Grace.Execution;
 
@@ -12,6 +13,8 @@ namespace Grace.Runtime
         {
             AddMethod("parse", new DelegateMethodNode1(
                         new NativeMethod1(mParse)));
+            AddMethod("parseFile", new DelegateMethodNode1(
+                        new NativeMethod1(mParseFile)));
             AddMethod("parseNodes", new DelegateMethodNode0(
                         new NativeMethod0(mParseNodes)));
         }
@@ -22,6 +25,17 @@ namespace Grace.Runtime
             string s = gs.Value;
             var p = new Parser(s);
             return new GraceObjectProxy(p.Parse());
+        }
+
+        private GraceObject mParseFile(GraceObject code)
+        {
+            GraceString gs = code.FindNativeParent<GraceString>();
+            string path = gs.Value;
+            using (StreamReader reader = File.OpenText(path))
+            {
+                var p= new Parser(reader.ReadToEnd());
+                return new GraceObjectProxy(p.Parse());
+            }
         }
 
         private GraceObject mParseNodes()
