@@ -622,7 +622,7 @@ namespace Grace.Parsing
             int sub = 0;
             int blen = bracket.Length;
             int graphemeOffset = indices.Length - 1;
-            while (l == ")")
+            while (l == ")" || l == ".")
             {
                 sub++;
                 graphemeOffset--;
