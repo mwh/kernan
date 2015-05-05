@@ -526,7 +526,7 @@ namespace Grace.Execution
         {
             var meth = new MethodDeclarationParseNode(tspn.Token);
             PartParameters pp = meth.AddPart(tspn.BaseName);
-            pp.Generics.AddRange(tspn.genericParameters);
+            pp.Generics.AddRange(tspn.GenericParameters);
             var tpn = tspn.Body as TypeParseNode;
             if (tpn != null)
             {

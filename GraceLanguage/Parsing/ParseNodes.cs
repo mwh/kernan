@@ -422,7 +422,14 @@ namespace Grace.Parsing
         }
 
         /// <summary>Generic parameters of this type</summary>
-        public List<ParseNode> genericParameters;
+        private List<ParseNode> genericParameters;
+
+        /// <summary>Generic parameters of this type</summary>
+        public List<ParseNode> GenericParameters {
+            get {
+                return genericParameters;
+            }
+        }
 
         internal TypeStatementParseNode(Token tok, ParseNode baseName,
                 ParseNode body, List<ParseNode> generics)
