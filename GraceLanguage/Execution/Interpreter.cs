@@ -63,7 +63,9 @@ namespace Grace.Execution
 
         private GraceObject prelude;
         private Stack<ScopeLink> dynamics = new Stack<ScopeLink>();
-        private Stack<string> callStack = new Stack<string>();
+        private Stack<string> callStackMethod = new Stack<string>();
+        private Stack<string> callStackModule = new Stack<string>();
+        private Stack<int> callStackLine = new Stack<int>();
         private ScopeLink scope = new ScopeLink();
         private GraceObject majorScope;
         private OutputSink sink;
@@ -168,7 +170,9 @@ namespace Grace.Execution
             ret.prelude = prelude;
             ret.modules = modules;
             ret.dynamics = new Stack<ScopeLink>(dynamics);
-            ret.callStack = new Stack<string>(callStack);
+            ret.callStackMethod = new Stack<string>(callStackMethod);
+            ret.callStackModule = new Stack<string>(callStackModule);
+            ret.callStackLine = new Stack<int>(callStackLine);
             ret.scope = scope;
             ret.majorScope = majorScope;
             ret.sink = sink;
@@ -269,7 +273,11 @@ namespace Grace.Execution
         /// <inheritdoc />
         public List<string> GetStackTrace()
         {
-            return new List<string>(callStack);
+            var tmp = callStackMethod.Zip(callStackLine,
+                    (name, line) =>
+                        "«" + name + "», at line " + line + " of ");
+            return new List<string>(tmp.Zip(callStackModule,
+                        (start, module) => start + module));
         }
 
         /// <summary>The built-in Grace "print" method</summary>
@@ -368,15 +376,21 @@ namespace Grace.Execution
         /// <inheritdoc />
         public int NestRequest(string module, int line, string name)
         {
-            callStack.Push("«" + name + "», at line " + line + " of " + module);
-            return callStack.Count - 1;
+            callStackMethod.Push(name);
+            callStackModule.Push(module);
+            callStackLine.Push(line);
+            return callStackMethod.Count - 1;
         }
 
         /// <inheritdoc />
         public void PopCallStackTo(int depth)
         {
-            while (callStack.Count > depth)
-                callStack.Pop();
+            while (callStackMethod.Count > depth)
+            {
+                callStackMethod.Pop();
+                callStackModule.Pop();
+                callStackLine.Pop();
+            }
         }
 
         /// <inheritdoc />

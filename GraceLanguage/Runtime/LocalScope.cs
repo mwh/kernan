@@ -35,7 +35,7 @@ namespace Grace.Runtime
         /// <summary>Empty named scope</summary>
         /// <param name="name">Name of this scope for debugging</param>
         public LocalScope(string name)
-            : base("LocalScope[" + name + "]", true)
+            : base(getName(name), true)
         {
             this.name = name;
         }
@@ -98,6 +98,15 @@ namespace Grace.Runtime
             {
                 locals[s] = value;
             }
+        }
+
+        private static Dictionary<string, string> names
+            = new Dictionary<string, string>();
+        private static string getName(string name)
+        {
+            if (!names.ContainsKey(name))
+                names[name] = "LocalScope[" + name + "]";
+            return names[name];
         }
     }
 
