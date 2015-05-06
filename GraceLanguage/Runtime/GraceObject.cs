@@ -278,10 +278,29 @@ namespace Grace.Runtime
             return false;
         }
 
+        /// <summary>
+        /// Get a method by a given name on an object that was
+        /// not allocated in advance.
+        /// </summary>
+        /// <remarks>
+        /// A method can be added with a name, but a null MethodNode.
+        /// Such a method is "lazy" and will be computed (and cached)
+        /// when first accessed, if ever.
+        /// </remarks>
+        /// <param name="name">Name of method to create</param>
+        protected virtual MethodNode getLazyMethod(string name)
+        {
+            return null;
+        }
+
         private MethodNode findMethod(string name)
         {
             if (methods.ContainsKey(name))
+            {
+                if (methods[name] == null)
+                    methods[name] = getLazyMethod(name);
                 return methods[name];
+            }
             foreach (var o in parents)
             {
                 var m = o.findMethod(name);
