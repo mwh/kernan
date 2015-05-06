@@ -17,11 +17,27 @@ namespace Grace.Runtime
         public static EvaluationContext ExtensionInterpreter { get ; set; }
 
         /// <summary>This string in normalization form C</summary>
-        private string nfc;
+        private string nfc {
+            get {
+                if (_nfc == null)
+                    _nfc = Value.Normalize();
+                return _nfc;
+            }
+        }
+        private string _nfc;
 
         /// <summary>Indices of the start of each grapheme cluster
         /// in this string</summary>
-        private int[] graphemeIndices;
+        private int[] graphemeIndices {
+            get {
+                if (_graphemeIndices == null)
+                    _graphemeIndices = (Value.Length > 0)
+                        ? StringInfo.ParseCombiningCharacters(Value)
+                        : emptyIntArray;
+                return _graphemeIndices;
+            }
+        }
+        private int[] _graphemeIndices;
 
         /// <summary>Value of this string</summary>
         public string Value
@@ -29,15 +45,12 @@ namespace Grace.Runtime
             get;
             set;
         }
+
+        private static int[] emptyIntArray = new int[0];
         private GraceString(string val)
             : base(true)
         {
-            Interpreter.Debug("made new string " + val);
             Value = val;
-            nfc = val.Normalize();
-            graphemeIndices = (val.Length > 0)
-                ? StringInfo.ParseCombiningCharacters(val)
-                : new int[0];
             AddMethod("++", new DelegateMethodNode1Ctx(new NativeMethod1Ctx(this.Concatenate)));
             AddMethod("==", new DelegateMethodNode1(new NativeMethod1(this.EqualsEquals)));
             AddMethod("!=", new DelegateMethodNode1(new NativeMethod1(this.NotEquals)));
