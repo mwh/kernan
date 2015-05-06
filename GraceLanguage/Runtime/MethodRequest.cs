@@ -98,7 +98,6 @@ namespace Grace.Runtime
                 name += " ";
             name += part.Name;
             parts.Add(part);
-            Interpreter.Debug("Added part to name. Name now " + name);
         }
 
         /// <summary>Get a particular part of the request</summary>

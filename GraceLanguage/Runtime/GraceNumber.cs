@@ -33,7 +33,6 @@ namespace Grace.Runtime
         private GraceNumber(double val)
             : base(true)
         {
-            Interpreter.Debug("made new number " + val);
             Double = val;
             AddMethod("==", new DelegateMethodNode1(new NativeMethod1(this.EqualsEquals)));
             AddMethod("!=", new DelegateMethodNode1(new NativeMethod1(this.NotEquals)));
@@ -105,7 +104,6 @@ namespace Grace.Runtime
         /// <param name="other">Argument to the method</param>
         public GraceObject Add(GraceObject other)
         {
-            Interpreter.Debug("called +");
             var oth = other.FindNativeParent<GraceNumber>();
             return GraceNumber.Create(this.Double + oth.Double);
         }
@@ -114,7 +112,6 @@ namespace Grace.Runtime
         /// <param name="other">Argument to the method</param>
         public GraceObject Multiply(GraceObject other)
         {
-            Interpreter.Debug("called *");
             var oth = other.FindNativeParent<GraceNumber>();
             return GraceNumber.Create(this.Double * oth.Double);
         }
@@ -123,7 +120,6 @@ namespace Grace.Runtime
         /// <param name="other">Argument to the method</param>
         public GraceObject Subtract(GraceObject other)
         {
-            Interpreter.Debug("called -");
             var oth = other.FindNativeParent<GraceNumber>();
             return GraceNumber.Create(this.Double - oth.Double);
         }
@@ -132,7 +128,6 @@ namespace Grace.Runtime
         /// <param name="other">Argument to the method</param>
         public GraceObject Divide(GraceObject other)
         {
-            Interpreter.Debug("called /");
             var oth = other.FindNativeParent<GraceNumber>();
             return GraceNumber.Create(this.Double / oth.Double);
         }
@@ -141,7 +136,6 @@ namespace Grace.Runtime
         /// <param name="other">Argument to the method</param>
         public GraceObject Modulus(GraceObject other)
         {
-            Interpreter.Debug("called %");
             var oth = other.FindNativeParent<GraceNumber>();
             return GraceNumber.Create(this.Double % oth.Double);
         }
@@ -150,7 +144,6 @@ namespace Grace.Runtime
         /// <param name="other">Argument to the method</param>
         public GraceObject Exponentiate(GraceObject other)
         {
-            Interpreter.Debug("called ^");
             var oth = other.FindNativeParent<GraceNumber>();
             return GraceNumber.Create(Math.Pow(this.Double, oth.Double));
         }

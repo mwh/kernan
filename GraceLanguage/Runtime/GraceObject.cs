@@ -328,7 +328,6 @@ namespace Grace.Runtime
             }
             if (lexicalScope != null)
                 ctx.Remember(lexicalScope);
-            Interpreter.Debug("calling method " + req.Name);
             var ret = m.Respond(ctx, this, req);
             if (lexicalScope != null)
                 ctx.Forget(lexicalScope);
@@ -380,7 +379,6 @@ namespace Grace.Runtime
                     0, false,
                     req[0].Arguments.Count);
             string name = req.Name;
-            Interpreter.Debug("field '" + name + "' is " + fields[name]);
             return fields[name];
         }
     }
@@ -406,7 +404,6 @@ namespace Grace.Runtime
             checkAccessibility(ctx, req);
             string name = req[0].Name;
             fields[name] = req[1].Arguments[0];
-            Interpreter.Debug("field '" + name + "' set to " + fields[name]);
             return GraceObject.Uninitialised;
         }
     }

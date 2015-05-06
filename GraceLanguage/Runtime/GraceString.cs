@@ -53,7 +53,6 @@ namespace Grace.Runtime
         public GraceObject Concatenate(EvaluationContext ctx,
                 GraceObject other)
         {
-            Interpreter.Debug("called ++");
             var oth = other.FindNativeParent<GraceString>();
             if (oth != null)
                 return GraceString.Create(Value + oth.Value);
