@@ -98,30 +98,15 @@ namespace Grace.Runtime
         /// <summary>Initialisation code used by multiple constructors</summary>
         private void initialise(bool defaults)
         {
-            Reader = new FieldReaderMethod(fields);
-            Writer = new FieldWriterMethod(fields);
             if (defaults)
             {
                 // The default methods are found on all objects,
                 // but should not be defined on all part-objects.
                 // User objects obtain them by inheritance, but
-                // others will have them directly. These methods
-                // should be given the final object's identity as
-                // their receiver, as otherwise equality will
-                // always fail. The UseRealReceiver flag on
-                // a method node ensures this.
-                MethodNode m = new DelegateMethodNode0(
-                            new NativeMethod0(AsString));
-                m.UseRealReceiver = true;
-                AddMethod("asString", m);
-                m = new DelegateMethodNodeReceiver1Ctx(
-                            new NativeMethodReceiver1Ctx(mEqualsEquals));
-                m.UseRealReceiver = true;
-                AddMethod("==", m);
-                m = new DelegateMethodNodeReceiver1Ctx(
-                            new NativeMethodReceiver1Ctx(mNotEquals));
-                m.UseRealReceiver = true;
-                AddMethod("!=", m);
+                // others will have them directly.
+                AddMethod("asString", null);
+                AddMethod("==", null);
+                AddMethod("!=", null);
             }
         }
 
@@ -239,6 +224,10 @@ namespace Grace.Runtime
                 GraceObject val)
         {
             fields[name] = val;
+            if (Reader == null)
+                Reader = new FieldReaderMethod(fields);
+            if (Writer == null)
+                Writer = new FieldWriterMethod(fields);
             AddMethod(name, Reader);
             AddMethod(name + " :=", Writer);
             return new ReaderWriterPair { Read = Reader, Write = Writer };
@@ -252,7 +241,9 @@ namespace Grace.Runtime
         public virtual MethodNode AddLocalDef(string name, GraceObject val)
         {
             fields[name] = val;
-            var read = new FieldReaderMethod(fields);
+            if (Reader == null)
+                Reader = new FieldReaderMethod(fields);
+            var read = Reader;
             AddMethod(name, read);
             return read;
         }
@@ -290,6 +281,26 @@ namespace Grace.Runtime
         /// <param name="name">Name of method to create</param>
         protected virtual MethodNode getLazyMethod(string name)
         {
+            MethodNode m;
+            // These methods should be given the final object's
+            // identity as their receiver, as otherwise equality
+            // will always fail. The UseRealReceiver flag on a
+            // method node ensures this.
+            switch(name)
+            {
+                case "asString":
+                    m = new DelegateMethodNode0(AsString);
+                    m.UseRealReceiver = true;
+                    return m;
+                case "==":
+                    m = new DelegateMethodNodeReceiver1Ctx(mEqualsEquals);
+                    m.UseRealReceiver = true;
+                    return m;
+                case "!=":
+                    m = new DelegateMethodNodeReceiver1Ctx(mNotEquals);
+                    m.UseRealReceiver = true;
+                    return m;
+            }
             return null;
         }
 

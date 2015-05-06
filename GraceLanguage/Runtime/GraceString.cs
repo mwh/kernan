@@ -51,16 +51,30 @@ namespace Grace.Runtime
             : base(true)
         {
             Value = val;
-            AddMethod("++", new DelegateMethodNode1Ctx(new NativeMethod1Ctx(this.Concatenate)));
-            AddMethod("==", new DelegateMethodNode1(new NativeMethod1(this.EqualsEquals)));
-            AddMethod("!=", new DelegateMethodNode1(new NativeMethod1(this.NotEquals)));
-            AddMethod("at", new DelegateMethodNode1(new NativeMethod1(this.At)));
-            AddMethod("size", new DelegateMethodNode0(new NativeMethod0(this.Size)));
-            AddMethod("match", new DelegateMethodNode1Ctx(
-                        new NativeMethod1Ctx(this.Match)));
-            AddMethod("asString", new DelegateMethodNode0(new NativeMethod0(this.AsString)));
+            AddMethod("++", null);
+            AddMethod("==", null);
+            AddMethod("!=", null);
+            AddMethod("at", null);
+            AddMethod("size", null);
+            AddMethod("match", null);
+            AddMethod("asString", null);
             AddMethod("|", Matching.OrMethod);
             AddMethod("&", Matching.AndMethod);
+        }
+
+        protected override MethodNode getLazyMethod(string name)
+        {
+            switch(name) {
+                case "++":
+                    return new DelegateMethodNode1Ctx(Concatenate);
+                case "==": return new DelegateMethodNode1(EqualsEquals);
+                case "!=": return new DelegateMethodNode1(NotEquals);
+                case "at": return new DelegateMethodNode1(At);
+                case "size": return new DelegateMethodNode0(Size);
+                case "match": return new DelegateMethodNode1Ctx(Match);
+                case "asString": return new DelegateMethodNode0(AsString);
+            }
+            return base.getLazyMethod(name);
         }
 
         public GraceObject Concatenate(EvaluationContext ctx,

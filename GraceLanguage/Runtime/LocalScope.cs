@@ -122,7 +122,6 @@ namespace Grace.Runtime
                     req[0].Arguments.Count);
             LocalScope s = self as LocalScope;
             string name = req.Name;
-            Interpreter.Debug("local '" + name + "' is " + s[name]);
             return s[name];
         }
     }
@@ -146,7 +145,6 @@ namespace Grace.Runtime
             LocalScope s = self as LocalScope;
             string name = req[0].Name;
             s[name] = req[1].Arguments[0];
-            Interpreter.Debug("local '" + name + "' set to " + s[name]);
             return GraceObject.Uninitialised;
         }
     }

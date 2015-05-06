@@ -34,25 +34,48 @@ namespace Grace.Runtime
             : base(true)
         {
             Double = val;
-            AddMethod("==", new DelegateMethodNode1(new NativeMethod1(this.EqualsEquals)));
-            AddMethod("!=", new DelegateMethodNode1(new NativeMethod1(this.NotEquals)));
-            AddMethod("+", new DelegateMethodNode1(new NativeMethod1(this.Add)));
-            AddMethod("*", new DelegateMethodNode1(new NativeMethod1(this.Multiply)));
-            AddMethod("-", new DelegateMethodNode1(new NativeMethod1(this.Subtract)));
-            AddMethod("/", new DelegateMethodNode1(new NativeMethod1(this.Divide)));
-            AddMethod("%", new DelegateMethodNode1(new NativeMethod1(this.Modulus)));
-            AddMethod("^", new DelegateMethodNode1(new NativeMethod1(this.Exponentiate)));
-            AddMethod(">", new DelegateMethodNode1(new NativeMethod1(this.GreaterThan)));
-            AddMethod(">=", new DelegateMethodNode1(new NativeMethod1(this.GreaterEqual)));
-            AddMethod("<", new DelegateMethodNode1(new NativeMethod1(this.LessThan)));
-            AddMethod("<=", new DelegateMethodNode1(new NativeMethod1(this.LessEqual)));
-            AddMethod("asString", new DelegateMethodNode0(new NativeMethod0(this.AsString)));
-            AddMethod("prefix-", new DelegateMethodNode0(new NativeMethod0(this.Negate)));
-            AddMethod("..", new DelegateMethodNode1Ctx(new NativeMethod1Ctx(this.DotDot)));
-            AddMethod("match", new DelegateMethodNode1Ctx(
-                        new NativeMethod1Ctx(this.Match)));
+            AddMethod("==", null);
+            AddMethod("!=", null);
+            AddMethod("+", null);
+            AddMethod("*", null);
+            AddMethod("-", null);
+            AddMethod("/", null);
+            AddMethod("%", null);
+            AddMethod("^", null);
+            AddMethod(">", null);
+            AddMethod(">=", null);
+            AddMethod("<", null);
+            AddMethod("<=", null);
+            AddMethod("asString", null);
+            AddMethod("prefix-", null);
+            AddMethod("..", null);
+            AddMethod("match", null);
             AddMethod("|", Matching.OrMethod);
             AddMethod("&", Matching.AndMethod);
+        }
+
+        protected override MethodNode getLazyMethod(string name)
+        {
+            switch(name)
+            {
+                case "==": return new DelegateMethodNode1(EqualsEquals);
+                case "!=": return new DelegateMethodNode1(NotEquals);
+                case "+": return new DelegateMethodNode1(Add);
+                case "*": return new DelegateMethodNode1(Multiply);
+                case "-": return new DelegateMethodNode1(Subtract);
+                case "/": return new DelegateMethodNode1(Divide);
+                case "%": return new DelegateMethodNode1(Modulus);
+                case "^": return new DelegateMethodNode1(Exponentiate);
+                case ">": return new DelegateMethodNode1(GreaterThan);
+                case ">=": return new DelegateMethodNode1(GreaterEqual);
+                case "<": return new DelegateMethodNode1(LessThan);
+                case "<=": return new DelegateMethodNode1(LessEqual);
+                case "asString": return new DelegateMethodNode0(AsString);
+                case "prefix-": return new DelegateMethodNode0(Negate);
+                case "..": return new DelegateMethodNode1Ctx(DotDot);
+                case "match": return new DelegateMethodNode1Ctx(Match);
+            }
+            return base.getLazyMethod(name);
         }
 
         /// <summary>Get the value of this number as an int</summary>

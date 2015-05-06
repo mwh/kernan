@@ -25,14 +25,11 @@ namespace Grace.Runtime
             this.parameters = parameters;
             this.body = body;
             lexicalScope = ctx.Memorise();
-            AddMethod("apply",
-                    new DelegateMethodNodeReq(new NativeMethodReq(this.Apply)));
-            AddMethod("spawn", new DelegateMethodNode0Ctx(mSpawn));
+            AddMethod("apply", null);
+            AddMethod("spawn", null);
             if (parameters.Count == 1)
             {
-                AddMethod("match",
-                    new DelegateMethodNodeReq(
-                        new NativeMethodReq(this.Match)));
+                AddMethod("match", null);
                 AddMethod("|", Matching.OrMethod);
                 AddMethod("&", Matching.AndMethod);
                 var par = parameters[0];
@@ -49,6 +46,17 @@ namespace Grace.Runtime
                     this.parameters = new List<Node>(parameters.Skip<Node>(1));
                 }
             }
+        }
+
+        /// <inheritdoc />
+        protected override MethodNode getLazyMethod(string name)
+        {
+            switch(name) {
+                case "apply": return new DelegateMethodNodeReq(Apply);
+                case "match": return new DelegateMethodNodeReq(Match);
+                case "spawn": return new DelegateMethodNode0Ctx(mSpawn);
+            }
+            return base.getLazyMethod(name);
         }
 
         /// <summary>
