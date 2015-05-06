@@ -754,6 +754,7 @@ namespace Grace.Parsing
                 takeLineComments();
                 TypeMethodParseNode tmn = new TypeMethodParseNode(lexer.current);
                 parseMethodHeader(lexer.current, tmn);
+                takeSemicolon();
                 ret.Add(tmn);
                 attachComments(tmn, comments);
                 restoreComments(origComments);
