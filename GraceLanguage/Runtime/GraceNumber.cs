@@ -115,12 +115,18 @@ namespace Grace.Runtime
         /// <param name="other">Argument to the method</param>
         public GraceObject DotDot(EvaluationContext ctx, GraceObject other)
         {
-            MethodRequest req = new MethodRequest();
-            RequestPart rpn = new RequestPart("_range", new List<GraceObject>(),
-                    new List<GraceObject>() { this, other });
-            req.AddPart(rpn);
-            GraceObject rec = ctx.FindReceiver(req);
-            return rec.Request(ctx, req);
+            var n = other.FindNativeParent<GraceNumber>();
+            if (n == null)
+                ErrorReporting.RaiseError(ctx, "R2001",
+                        new Dictionary<string, string> {
+                            { "method", ".." },
+                            { "index", "1" },
+                            { "part", ".." },
+                            { "required", "Number" }
+                        },
+                        "ArgumentTypeError: .. requires a Number argument"
+                );
+            return new GraceRange(Double, n.Double, 1);
         }
 
         /// <summary>Native method for Grace +</summary>
@@ -239,5 +245,97 @@ namespace Grace.Runtime
             return o;
         }
 
+    }
+
+    class GraceRange : GraceObject
+    {
+        private readonly double _low;
+        private readonly double _high;
+        private readonly double _step;
+
+        public double Start {
+            get {
+                return _low;
+            }
+        }
+
+        public double End
+        {
+            get {
+                return _high;
+            }
+        }
+
+        public double Step
+        {
+            get {
+                return _step;
+            }
+        }
+
+        public GraceRange(double start, double end, double step)
+        {
+            _low = start;
+            _high = end;
+            _step = step;
+            AddMethod("..", null);
+            AddMethod("asString", null);
+            AddMethod("do", new DelegateMethodNode1Ctx(mDo));
+        }
+
+        protected override MethodNode getLazyMethod(string name)
+        {
+            switch(name)
+            {
+                case "..": return new DelegateMethodNode1Ctx(mDotDot);
+                case "asString": return new DelegateMethodNode0Ctx(mAsString);
+            }
+            return base.getLazyMethod(name);
+        }
+
+        private GraceObject mAsString(EvaluationContext ctx)
+        {
+            return GraceString.Create("Range[" + _low + " .. " + _high
+                    + (_step != 1 ? " .. " + _step : "") + "]");
+        }
+
+        private GraceObject mDotDot(EvaluationContext ctx, GraceObject step)
+        {
+            var n = step.FindNativeParent<GraceNumber>();
+            if (n == null)
+                ErrorReporting.RaiseError(ctx, "R2001",
+                        new Dictionary<string, string> {
+                            { "method", ".." },
+                            { "index", "1" },
+                            { "part", ".." },
+                            { "required", "Number" }
+                        },
+                        "ArgumentTypeError: .. requires a Number argument"
+                );
+            return new GraceRange(_low, _high, _step * n.Double);
+        }
+
+        private GraceObject mDo(EvaluationContext ctx, GraceObject block)
+        {
+            var apply = MethodRequest.Single("apply", null);
+            double v = _low;
+            if (_step < 0)
+            {
+                while (v >= _high)
+                {
+                    apply[0].Arguments[0] = GraceNumber.Create(v);
+                    block.Request(ctx, apply);
+                    v += _step;
+                }
+                return GraceObject.Done;
+            }
+            while (v <= _high)
+            {
+                apply[0].Arguments[0] = GraceNumber.Create(v);
+                block.Request(ctx, apply);
+                v += _step;
+            }
+            return GraceObject.Done;
+        }
     }
 }
