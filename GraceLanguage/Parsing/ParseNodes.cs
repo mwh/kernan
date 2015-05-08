@@ -1357,6 +1357,13 @@ namespace Grace.Parsing
     public class ImplicitReceiverRequestParseNode : ParseNode
     {
         private List<ParseNode> _nameParts;
+        private string _name;
+
+        /// <summary>Name of this method</summary>
+        public string Name
+        {
+            get { return _name; }
+        }
 
         /// <summary>Parts of this method</summary>
         public List<ParseNode> NameParts
@@ -1398,6 +1405,11 @@ namespace Grace.Parsing
             _nameParts.Add(id);
             _arguments.Add(new List<ParseNode>());
             _genericArguments.Add(new List<ParseNode>());
+            var partname = ((IdentifierParseNode)id).Name;
+            if (_name == null)
+                _name = partname;
+            else
+                _name += " " + partname;
         }
 
         /// <inheritdoc/>

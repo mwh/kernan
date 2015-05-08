@@ -416,7 +416,11 @@ namespace Grace.Execution
         protected abstract GraceObject GetReceiver(EvaluationContext ctx,
                 MethodRequest req);
 
-        private MethodRequest createRequest(EvaluationContext ctx)
+        /// <summary>
+        /// Make a MethodRequest representing this request.
+        /// </summary>
+        /// <param name="ctx">Current interpreter</param>
+        protected MethodRequest createRequest(EvaluationContext ctx)
         {
             MethodRequest req = new MethodRequest(name);
             foreach (RequestPartNode rpn in this)
@@ -463,7 +467,13 @@ namespace Grace.Execution
             return ctx.NestRequest(m, l, req.Name);
         }
 
-        private GraceObject performRequest(EvaluationContext ctx,
+        /// <summary>
+        /// Perform the request described by the parameters.
+        /// </summary>
+        /// <param name="ctx">Current interpreter</param>
+        /// <param name="rec">Receiver of the method request</param>
+        /// <param name="req">Request being made</param>
+        protected GraceObject performRequest(EvaluationContext ctx,
                 GraceObject rec, MethodRequest req)
         {
             int start = NestRequest(ctx, req);
@@ -495,6 +505,107 @@ namespace Grace.Execution
             req.InheritingSelf = self;
             var rec = GetReceiver(ctx, req);
             return performRequest(ctx, rec, req);
+        }
+
+    }
+
+    /// <summary>Specialisation for if-then requests</summary>
+    public class IfThenRequestNode : ImplicitReceiverRequestNode
+    {
+        private bool defer;
+        private bool found;
+        private bool needsScope;
+
+        /// <inheritdoc />
+        internal IfThenRequestNode(Token location, ParseNode source)
+            : base(location, source) {}
+
+        /// <inheritdoc />
+        public override GraceObject Evaluate(EvaluationContext ctx)
+        {
+            if (defer)
+                return base.Evaluate(ctx);
+            var block = parts[1].Arguments[0] as BlockNode;
+            if (block == null)
+            {
+                defer = true;
+                return base.Evaluate(ctx);
+            }
+            if (!found)
+            {
+                var req = createRequest(ctx);
+                var r = GetReceiver(ctx, req);
+                if (r == ctx.Prelude)
+                {
+                    found = true;
+                    foreach (var n in block.Body)
+                    {
+                        if (n is VarDeclarationNode
+                                || n is DefDeclarationNode)
+                        {
+                            needsScope = true;
+                        }
+                    }
+                }
+                else
+                    defer = true;
+                return base.performRequest(ctx, r, req);
+            }
+            var test = parts[0].Arguments[0].Evaluate(ctx);
+            var b = test as GraceBoolean;
+            if (b == null)
+            {
+                defer = true;
+                // FIXME This will reevaluate the condition!
+                return base.Evaluate(ctx);
+            }
+            if (b == GraceBoolean.True)
+            {
+                if (needsScope)
+                {
+                    var myScope = new LocalScope();
+                    ctx.Extend(myScope);
+                    foreach (var n in block.Body)
+                        n.Evaluate(ctx);
+                    ctx.Unextend(myScope);
+                    return GraceObject.Done;
+                }
+                foreach (var n in block.Body)
+                    n.Evaluate(ctx);
+            }
+            return GraceObject.Done;
+        }
+
+        public override void DebugPrint(System.IO.TextWriter tw, string prefix)
+        {
+            tw.WriteLine(prefix + "IfThenRequest: " + Name);
+            if (parts.Count == 1)
+            {
+                if (parts[0].Arguments.Count == 0
+                    && parts[0].GenericArguments.Count == 0)
+                    return;
+            }
+            tw.WriteLine(prefix + "  Parts:");
+            int i = 1;
+            foreach (RequestPartNode p in parts)
+            {
+                string partName = p.Name;
+                tw.WriteLine(prefix + "    Part " + i + ": ");
+                tw.WriteLine(prefix + "      Name: " + p.Name);
+                if (p.GenericArguments.Count != 0)
+                {
+                    tw.WriteLine(prefix + "      Generic arguments:");
+                    foreach (Node arg in p.GenericArguments)
+                        arg.DebugPrint(tw, prefix + "        ");
+                }
+                if (p.Arguments.Count != 0)
+                {
+                    tw.WriteLine(prefix + "      Arguments:");
+                    foreach (Node arg in p.Arguments)
+                        arg.DebugPrint(tw, prefix + "        ");
+                }
+                i++;
+            }
         }
 
     }

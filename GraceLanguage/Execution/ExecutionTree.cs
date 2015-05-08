@@ -181,7 +181,15 @@ namespace Grace.Execution
         /// <inheritdoc />
         public Node Visit(ImplicitReceiverRequestParseNode irrpn)
         {
-            var ret = new ImplicitReceiverRequestNode(irrpn.Token, irrpn);
+            ImplicitReceiverRequestNode ret = null;
+            if (irrpn.Name == "if then")
+            {
+                ret = new IfThenRequestNode(irrpn.Token, irrpn);
+            }
+            else
+            {
+                ret = new ImplicitReceiverRequestNode(irrpn.Token, irrpn);
+            }
             for (int i = 0; i < irrpn.Arguments.Count; i++)
             {
                 var rpn = new RequestPartNode(
