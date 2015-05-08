@@ -80,6 +80,7 @@ namespace Grace.Runtime
     public class MethodRequest : IEnumerable<RequestPart>
     {
         private string name = "";
+        private bool nameComplete;
         private List<RequestPart> parts = new List<RequestPart>();
 
         /// <summary>Creates an empty method request</summary>
@@ -88,15 +89,28 @@ namespace Grace.Runtime
 
         }
 
+        /// <summary>
+        /// Creates a method request with the full name preset.
+        /// </summary>
+        /// <param name="n">Full name of method</param>
+        public MethodRequest(string n)
+        {
+            name = n;
+            nameComplete = true;
+        }
+
         /// <summary>Add a part to this request</summary>
         /// <param name="part">Request part to add to the request</param>
         /// <remarks>This method also updates the internal store of the
         /// overall method name.</remarks>
         public void AddPart(RequestPart part)
         {
-            if (name != "")
-                name += " ";
-            name += part.Name;
+            if (!nameComplete)
+            {
+                if (name != "")
+                    name += " ";
+                name += part.Name;
+            }
             parts.Add(part);
         }
 

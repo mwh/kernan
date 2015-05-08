@@ -418,7 +418,7 @@ namespace Grace.Execution
 
         private MethodRequest createRequest(EvaluationContext ctx)
         {
-            MethodRequest req = new MethodRequest();
+            MethodRequest req = new MethodRequest(name);
             foreach (RequestPartNode rpn in this)
             {
                 List<GraceObject> generics = new List<GraceObject>();
