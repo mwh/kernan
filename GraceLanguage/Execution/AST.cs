@@ -576,9 +576,106 @@ namespace Grace.Execution
             return GraceObject.Done;
         }
 
+        /// <inheritdoc />
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
             tw.WriteLine(prefix + "IfThenRequest: " + Name);
+            if (parts.Count == 1)
+            {
+                if (parts[0].Arguments.Count == 0
+                    && parts[0].GenericArguments.Count == 0)
+                    return;
+            }
+            tw.WriteLine(prefix + "  Parts:");
+            int i = 1;
+            foreach (RequestPartNode p in parts)
+            {
+                string partName = p.Name;
+                tw.WriteLine(prefix + "    Part " + i + ": ");
+                tw.WriteLine(prefix + "      Name: " + p.Name);
+                if (p.GenericArguments.Count != 0)
+                {
+                    tw.WriteLine(prefix + "      Generic arguments:");
+                    foreach (Node arg in p.GenericArguments)
+                        arg.DebugPrint(tw, prefix + "        ");
+                }
+                if (p.Arguments.Count != 0)
+                {
+                    tw.WriteLine(prefix + "      Arguments:");
+                    foreach (Node arg in p.Arguments)
+                        arg.DebugPrint(tw, prefix + "        ");
+                }
+                i++;
+            }
+        }
+
+    }
+
+    /// <summary>Specialisation for for-do requests</summary>
+    public class ForDoRequestNode : ImplicitReceiverRequestNode
+    {
+        private bool defer;
+        private bool found;
+
+        /// <inheritdoc />
+        internal ForDoRequestNode(Token location, ParseNode source)
+            : base(location, source) {}
+
+        /// <inheritdoc />
+        public override GraceObject Evaluate(EvaluationContext ctx)
+        {
+            if (defer)
+                return base.Evaluate(ctx);
+            var block = parts[1].Arguments[0] as BlockNode;
+            if (block == null || block.Parameters.Count != 1)
+            {
+                defer = true;
+                return base.Evaluate(ctx);
+            }
+            if (!found)
+            {
+                var req = createRequest(ctx);
+                var r = GetReceiver(ctx, req);
+                if (r == ctx.Prelude)
+                {
+                    found = true;
+                }
+                else
+                    defer = true;
+                return base.performRequest(ctx, r, req);
+            }
+            var iterable = parts[0].Arguments[0].Evaluate(ctx);
+            var gr = iterable as GraceRange;
+            if (gr != null)
+            {
+                var p = block.Parameters[0];
+                var i = p as IdentifierNode;
+                if (i == null)
+                    goto end;
+                if (gr.Step < 0)
+                    goto end;
+                string name = i.Name;
+                for (double v = gr.Start; v <= gr.End; v += gr.Step)
+                {
+                    LocalScope l = new LocalScope();
+                    l.AddLocalDef(name, GraceNumber.Create(v));
+                    ctx.Extend(l);
+                    foreach (var n in block.Body)
+                        n.Evaluate(ctx);
+                    ctx.Unextend(l);
+                }
+                return GraceObject.Done;
+            }
+end:
+            var doReq = MethodRequest.Single("do", block.Evaluate(ctx));
+            iterable.Request(ctx, doReq);
+            return GraceObject.Done;
+        }
+
+        /// <inheritdoc />
+        public override void DebugPrint(System.IO.TextWriter tw, string prefix)
+        {
+            tw.WriteLine(prefix + "ForDoRequest: " + Name);
             if (parts.Count == 1)
             {
                 if (parts[0].Arguments.Count == 0

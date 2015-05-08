@@ -186,6 +186,10 @@ namespace Grace.Execution
             {
                 ret = new IfThenRequestNode(irrpn.Token, irrpn);
             }
+            else if (irrpn.Name == "for do")
+            {
+                ret = new ForDoRequestNode(irrpn.Token, irrpn);
+            }
             else
             {
                 ret = new ImplicitReceiverRequestNode(irrpn.Token, irrpn);
