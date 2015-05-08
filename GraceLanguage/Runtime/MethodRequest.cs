@@ -13,9 +13,12 @@ namespace Grace.Runtime
     /// arguments.</summary>
     public class RequestPart
     {
+        /// <summary>Empty immutable list for unspecified arguments.</summary>
+        public static readonly IList<GraceObject> EmptyList = new GraceObject[0];
+
         private string name;
-        private List<GraceObject> generics;
-        private List<GraceObject> arguments;
+        private IList<GraceObject> generics;
+        private IList<GraceObject> arguments;
 
         /// <summary>Create a new part with empty arguments</summary>
         /// <param name="name">Name of this part</param>
@@ -30,15 +33,15 @@ namespace Grace.Runtime
         /// <param name="arg">Value of the lone argument</param>
         internal static RequestPart Single(string name, GraceObject arg)
         {
-            return new RequestPart(name, new List<GraceObject>(),
+            return new RequestPart(name, EmptyList,
                     new List<GraceObject>() { arg });
         }
 
         /// <param name="name">Name of this part</param>
         /// <param name="generics">List of generic (type) arguments</param>
         /// <param name="arguments">List of ordinary arguments</param>
-        internal RequestPart(string name, List<GraceObject> generics,
-                List<GraceObject> arguments)
+        internal RequestPart(string name, IList<GraceObject> generics,
+                IList<GraceObject> arguments)
         {
             this.name = name;
             this.generics = generics;
@@ -57,7 +60,7 @@ namespace Grace.Runtime
 
         /// <summary>The generic arguments to this part</summary>
         /// <value>This property gets the value of the field generics</value>
-        public List<GraceObject> GenericArguments
+        public IList<GraceObject> GenericArguments
         {
             get
             {
@@ -67,7 +70,7 @@ namespace Grace.Runtime
 
         /// <summary>The ordinary arguments to this part</summary>
         /// <value>This property gets the value of the field arguments</value>
-        public List<GraceObject> Arguments
+        public IList<GraceObject> Arguments
         {
             get
             {

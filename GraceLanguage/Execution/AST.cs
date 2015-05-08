@@ -421,8 +421,12 @@ namespace Grace.Execution
             MethodRequest req = new MethodRequest(name);
             foreach (RequestPartNode rpn in this)
             {
-                List<GraceObject> generics = new List<GraceObject>();
-                List<GraceObject> arguments = new List<GraceObject>();
+                var generics = rpn.GenericArguments.Count > 0
+                    ? new List<GraceObject>()
+                    : RequestPart.EmptyList;
+                var arguments = rpn.Arguments.Count > 0
+                    ? new List<GraceObject>()
+                    : RequestPart.EmptyList;
                 foreach (Node n in rpn.GenericArguments)
                     generics.Add(n.Evaluate(ctx));
                 foreach (Node n in rpn.Arguments)
