@@ -152,6 +152,164 @@ namespace Grace.Parsing
         }
     }
 
+    /// <summary>
+    /// A component of a method name.
+    /// </summary>
+    public abstract class SignaturePartParseNode : ParseNode
+    {
+        /// <summary>Whether this must be the last part of the name</summary>
+        public bool Final { get; set; }
+
+        /// <summary>The name of this part</summary>
+        public abstract string Name { get; }
+
+        /// <param name="name">Name of this part</param>
+        public SignaturePartParseNode(IdentifierParseNode name)
+            : base(name.Token)
+        {
+        }
+
+        /// <param name="t">Representative token for this part</param>
+        public SignaturePartParseNode(Token t) : base(t) {}
+
+        /// <inheritdoc/>
+        public override void DebugPrint(System.IO.TextWriter tw, string prefix)
+        {
+            tw.WriteLine(prefix + "SignaturePart:");
+            writeComment(tw, prefix);
+        }
+        /// <inheritdoc/>
+        public override T Visit<T>(ParseNodeVisitor<T> visitor)
+        {
+            return visitor.Visit(this);
+        }
+    }
+
+    /// <summary>
+    /// An ordinary literal part of a method signature.
+    /// </summary>
+    public class OrdinarySignaturePartParseNode : SignaturePartParseNode
+    {
+        /// <summary>
+        /// Ordinary parameters of this part
+        /// </summary>
+        public IList<ParseNode> Parameters { get; set; }
+
+        /// <summary>
+        /// Generic parameters of this part
+        /// </summary>
+        public IList<ParseNode> GenericParameters { get; set; }
+
+        private string _name;
+
+        /// <inheritdoc />
+        /// <value>
+        /// This property gets the value of the string field _name
+        /// </value>
+        public override string Name {
+            get { return _name; }
+        }
+
+        /// <param name="name">Name of this part</param>
+        public OrdinarySignaturePartParseNode(IdentifierParseNode name)
+            : base(name)
+        {
+            _name = name.Name;
+            Parameters = new List<ParseNode>();
+            GenericParameters = new List<ParseNode>();
+        }
+
+        /// <inheritdoc/>
+        public override void DebugPrint(System.IO.TextWriter tw, string prefix)
+        {
+            tw.WriteLine(prefix + "Part: " + Name);
+            if (GenericParameters.Count > 0)
+            {
+                tw.WriteLine(prefix + "  Generic Parameters:");
+                foreach (var p in GenericParameters)
+                    p.DebugPrint(tw, prefix + "    ");
+            }
+            if (Parameters.Count > 0)
+            {
+                tw.WriteLine(prefix + "  Parameters:");
+                foreach (var p in Parameters)
+                    p.DebugPrint(tw, prefix + "    ");
+            }
+            writeComment(tw, prefix);
+        }
+
+        /// <inheritdoc/>
+        public override T Visit<T>(ParseNodeVisitor<T> visitor)
+        {
+            return visitor.Visit(this);
+        }
+    }
+
+    /// <summary>
+    /// Declared signature of a method
+    /// </summary>
+    public class SignatureParseNode : ParseNode
+    {
+        private IList<SignaturePartParseNode> _parts =
+            new List<SignaturePartParseNode>();
+
+        /// <summary>Parts in this signature</summary>
+        /// <value>
+        /// This property gets the value of the string field _parts
+        /// </value>
+        public IList<SignaturePartParseNode> Parts {
+            get { return _parts; }
+        }
+
+        /// <summary>
+        /// Given return type of this method signature
+        /// </summary>
+        public ParseNode ReturnType { get; set; }
+
+        private string _name;
+
+        /// <summary>
+        /// Name of the method described by this signature
+        /// </summary>
+        /// <remarks>This value is computed on demand and cached.</remarks>
+        public string Name {
+            get {
+                if (_name == null)
+                {
+                    _name = String.Join(" ", from p in _parts select p.Name);
+                }
+                return _name;
+            }
+        }
+
+        /// <param name="t">Representative token of this signature</param>
+        public SignatureParseNode(Token t) : base(t) {}
+
+        /// <summary>
+        /// Add an additional part to this signature
+        /// </summary>
+        /// <param name="part">Part to add</param>
+        public void AddPart(SignaturePartParseNode part)
+        {
+            _parts.Add(part);
+        }
+
+        /// <inheritdoc/>
+        public override void DebugPrint(System.IO.TextWriter tw, string prefix)
+        {
+            tw.WriteLine(prefix + "Signature: " + Name);
+            foreach (var p in _parts)
+                p.DebugPrint(tw, prefix + "    ");
+            writeComment(tw, prefix);
+        }
+
+        /// <inheritdoc/>
+        public override T Visit<T>(ParseNodeVisitor<T> visitor)
+        {
+            return visitor.Visit(this);
+        }
+    }
+
     /// <summary>Shared interface of classes with the behaviour of
     /// method headers</summary>
     public interface MethodHeader
@@ -168,34 +326,10 @@ namespace Grace.Parsing
     }
 
     /// <summary>Parse node for a method declaration</summary>
-    public class MethodDeclarationParseNode : ParseNode, MethodHeader
+    public class MethodDeclarationParseNode : ParseNode
     {
-        private List<ParseNode> _nameParts;
-
-        /// <summary>Parts of this method</summary>
-        public List<ParseNode> NameParts
-        {
-            get { return _nameParts; }
-            set { _nameParts = value; }
-        }
-
-        private List<List<ParseNode>> _parameters;
-
-        /// <summary>Parameter lists of each part</summary>
-        public List<List<ParseNode>> Parameters
-        {
-            get { return _parameters; }
-            set { _parameters = value; }
-        }
-
-        private List<List<ParseNode>> _generics;
-
-        /// <summary>Generic parameter lists of each part</summary>
-        public List<List<ParseNode>> Generics
-        {
-            get { return _generics; }
-            set { _generics = value; }
-        }
+        /// <summary>Signature of this method</summary>
+        public SignatureParseNode Signature { get; set; }
 
         private List<ParseNode> _body;
 
@@ -215,54 +349,20 @@ namespace Grace.Parsing
         internal MethodDeclarationParseNode(Token tok)
             : base(tok)
         {
-            _nameParts = new List<ParseNode>();
-            _parameters = new List<List<ParseNode>>();
-            _generics = new List<List<ParseNode>>();
             _body = new List<ParseNode>();
-        }
-
-        /// <inheritdoc/>
-        public PartParameters AddPart(ParseNode id)
-        {
-            _nameParts.Add(id);
-            List<ParseNode> ordinaries = new List<ParseNode>();
-            List<ParseNode> gens = new List<ParseNode>();
-            _parameters.Add(ordinaries);
-            _generics.Add(gens);
-            return new PartParameters(gens, ordinaries);
         }
 
         /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
-            string name = "";
-            foreach (ParseNode n in _nameParts)
-            {
-                name += (n as IdentifierParseNode).Name + " ";
-            }
-            tw.WriteLine(prefix + "MethodDeclaration: " + name);
-            if (ReturnType != null)
-            {
-                tw.WriteLine(prefix + "  Returns:");
-                ReturnType.DebugPrint(tw, prefix + "    ");
-            }
+            tw.WriteLine(prefix + "MethodDeclaration: " + Signature.Name);
             if (Annotations != null)
             {
                 tw.WriteLine(prefix + "  Annotations:");
                 Annotations.DebugPrint(tw, prefix + "    ");
             }
-            tw.WriteLine(prefix + "  Parts:");
-            for (int i = 0; i < _nameParts.Count; i++)
-            {
-                ParseNode partName = _nameParts[i];
-                List<ParseNode> ps = _parameters[i];
-                tw.WriteLine(prefix + "    Part " + (i + 1) + ": ");
-                tw.WriteLine(prefix + "      Name:");
-                partName.DebugPrint(tw, prefix + "        ");
-                tw.WriteLine(prefix + "      Parameters:");
-                foreach (ParseNode arg in ps)
-                    arg.DebugPrint(tw, prefix + "        ");
-            }
+            tw.WriteLine(prefix + "  Signature:");
+            Signature.DebugPrint(tw, prefix + "    ");
             tw.WriteLine(prefix + "  Body:");
             foreach (ParseNode n in _body)
             {
@@ -282,6 +382,9 @@ namespace Grace.Parsing
     public class ClassDeclarationParseNode : ParseNode, MethodHeader
     {
         private ParseNode _baseName;
+
+        /// <summary>Signature of this class's constructor</summary>
+        public SignatureParseNode Signature { get; set; }
 
         /// <summary>Name of this class</summary>
         public ParseNode BaseName
@@ -502,97 +605,6 @@ namespace Grace.Parsing
         {
             return visitor.Visit(this);
         }
-    }
-
-    /// <summary>Parse node for a type method</summary>
-    public class TypeMethodParseNode : ParseNode, MethodHeader
-    {
-        private List<ParseNode> _nameParts;
-
-        /// <summary>Parts of the method</summary>
-        public List<ParseNode> NameParts
-        {
-            get { return _nameParts; }
-            set { _nameParts = value; }
-        }
-
-        private List<List<ParseNode>> _parameters;
-
-        /// <summary>Parameter lists of each part</summary>
-        public List<List<ParseNode>> Parameters
-        {
-            get { return _parameters; }
-            set { _parameters = value; }
-        }
-
-        private List<List<ParseNode>> _generics;
-
-        /// <summary>Generic parameter lists of each part</summary>
-        public List<List<ParseNode>> Generics
-        {
-            get { return _generics; }
-            set { _generics = value; }
-        }
-
-        /// <inheritdoc/>
-        public ParseNode ReturnType { get; set; }
-
-        /// <inheritdoc/>
-        public AnnotationsParseNode Annotations { get; set; }
-
-        internal TypeMethodParseNode(Token tok)
-            : base(tok)
-        {
-            _nameParts = new List<ParseNode>();
-            _parameters = new List<List<ParseNode>>();
-            _generics = new List<List<ParseNode>>();
-        }
-
-        /// <inheritdoc/>
-        public PartParameters AddPart(ParseNode id)
-        {
-            _nameParts.Add(id);
-            List<ParseNode> ordinaries = new List<ParseNode>();
-            List<ParseNode> gens = new List<ParseNode>();
-            _parameters.Add(ordinaries);
-            _generics.Add(gens);
-            return new PartParameters(gens, ordinaries);
-        }
-
-        /// <inheritdoc/>
-        public override void DebugPrint(System.IO.TextWriter tw, string prefix)
-        {
-            string name = "";
-            foreach (ParseNode n in _nameParts)
-            {
-                name += (n as IdentifierParseNode).Name + " ";
-            }
-            tw.WriteLine(prefix + "TypeMethod: " + name);
-            if (ReturnType != null)
-            {
-                tw.WriteLine(prefix + "  Returns:");
-                ReturnType.DebugPrint(tw, prefix + "    ");
-            }
-            tw.WriteLine(prefix + "  Parts:");
-            for (int i = 0; i < _nameParts.Count; i++)
-            {
-                ParseNode partName = _nameParts[i];
-                List<ParseNode> ps = _parameters[i];
-                tw.WriteLine(prefix + "    Part " + (i + 1) + ": ");
-                tw.WriteLine(prefix + "      Name:");
-                partName.DebugPrint(tw, prefix + "        ");
-                tw.WriteLine(prefix + "      Parameters:");
-                foreach (ParseNode arg in ps)
-                    arg.DebugPrint(tw, prefix + "        ");
-            }
-            writeComment(tw, prefix);
-        }
-        /// <inheritdoc/>
-        public override T Visit<T>(ParseNodeVisitor<T> visitor)
-        {
-            return visitor.Visit(this);
-        }
-
     }
 
     /// <summary>Parse node for a block</summary>
@@ -1161,6 +1173,12 @@ namespace Grace.Parsing
         {
             IdentifierToken it = tok as IdentifierToken;
             _name = it.Name;
+        }
+
+        internal IdentifierParseNode(Token tok, string name)
+            : base(tok)
+        {
+            _name = name;
         }
 
         internal IdentifierParseNode(OperatorToken tok)

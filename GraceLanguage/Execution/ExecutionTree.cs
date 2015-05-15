@@ -96,68 +96,82 @@ namespace Grace.Execution
         }
 
         /// <inheritdoc />
+        public Node Visit(SignatureParseNode spn)
+        {
+            var ret = new SignatureNode(spn.Token, spn);
+            string name = ret.Name;
+            foreach (var part in spn.Parts)
+            {
+                ret.AddPart((SignaturePartNode)part.Visit(this));
+            }
+            return ret;
+        }
+
+        /// <inheritdoc />
+        public Node Visit(OrdinarySignaturePartParseNode osppn)
+        {
+            var parameters = new List<Node>();
+            foreach (var p in osppn.Parameters)
+            {
+                // f
+                var id = p as IdentifierParseNode;
+                var tppn = p as TypedParameterParseNode;
+                var vappn = p as VarArgsParameterParseNode;
+                if (id != null)
+                    parameters.Add(new ParameterNode(id.Token, id));
+                else if (tppn != null)
+                {
+                    parameters.Add(new ParameterNode(tppn.Token,
+                                tppn.Name as IdentifierParseNode,
+                                tppn.Type.Visit(this)));
+                }
+                else if (vappn != null)
+                {
+                    // Inside could be either an identifier or a
+                    // TypedParameterParseNode - check for both.
+                    var inIPN = vappn.Name as IdentifierParseNode;
+                    var inTPPN = vappn.Name as TypedParameterParseNode;
+                    if (inIPN != null)
+                        parameters.Add(new ParameterNode(inIPN.Token,
+                                    inIPN,
+                                    true // Variadic
+                                    ));
+                    else if (inTPPN != null)
+                        parameters.Add(new ParameterNode(inTPPN.Token,
+                                    inTPPN.Name as IdentifierParseNode,
+                                    true, // Variadic
+                                    inTPPN.Type.Visit(this)
+                                    ));
+                }
+                else
+                {
+                    throw new Exception("unimplemented - unusual parameters");
+                }
+            }
+            var generics = new List<Node>();
+            foreach (var p in osppn.GenericParameters)
+            {
+                var id = p as IdentifierParseNode;
+                if (id != null)
+                {
+                    generics.Add(new IdentifierNode(id.Token, id));
+                }
+                else
+                {
+                    throw new Exception("unimplemented - bad generic parameters");
+                }
+            }
+            return new OrdinarySignaturePartNode(osppn.Token, osppn,
+                    parameters, generics);
+        }
+
+        /// <inheritdoc />
         public Node Visit(MethodDeclarationParseNode d)
         {
             var ret = new MethodNode(d.Token, d);
-            string name = "";
-            for (int i = 0; i < d.NameParts.Count; i++)
-            {
-                if (name != "")
-                    name += " ";
-                string partName = ((IdentifierParseNode)d.NameParts[i]).Name;
-                name += partName;
-                List<ParseNode> partParams = d.Parameters[i];
-                var parameters = new List<Node>();
-                foreach (var p in partParams)
-                {
-                    var id = p as IdentifierParseNode;
-                    var tppn = p as TypedParameterParseNode;
-                    var vappn = p as VarArgsParameterParseNode;
-                    if (id != null)
-                        parameters.Add(new ParameterNode(id.Token, id));
-                    else if (tppn != null)
-                    {
-                        parameters.Add(new ParameterNode(tppn.Token, tppn.Name as IdentifierParseNode, tppn.Type.Visit(this)));
-                    }
-                    else if (vappn != null)
-                    {
-                        // Inside could be either an identifier or a
-                        // TypedParameterParseNode - check for both.
-                        var inIPN = vappn.Name as IdentifierParseNode;
-                        var inTPPN = vappn.Name as TypedParameterParseNode;
-                        if (inIPN != null)
-                            parameters.Add(new ParameterNode(inIPN.Token,
-                                        inIPN,
-                                        true // Variadic
-                                        ));
-                        else if (inTPPN != null)
-                            parameters.Add(new ParameterNode(inTPPN.Token,
-                                        inTPPN.Name as IdentifierParseNode,
-                                        true, // Variadic
-                                        inTPPN.Type.Visit(this)
-                                        ));
-                    }
-                    else
-                    {
-                        throw new Exception("unimplemented - unusual parameters");
-                    }
-                }
-                var generics = new List<Node>();
-                foreach (ParseNode p in d.Generics[i])
-                {
-                    var id = p as IdentifierParseNode;
-                    if (id != null)
-                    {
-                        generics.Add(new IdentifierNode(id.Token, id));
-                    }
-                    else
-                    {
-                        throw new Exception("unimplemented - bad generic parameters");
-                    }
-                }
-                var rpn = new RequestPartNode(partName, generics, parameters);
-                ret.AddPart(rpn);
-            }
+            var sig = (SignatureNode)d.Signature.Visit(this);
+            ret.Signature = sig;
+            string name = sig.Name;
             ret.Confidential = (d.Annotations != null
                     && d.Annotations.HasAnnotation("confidential"));
             foreach (ParseNode p in d.Body)
@@ -500,10 +514,7 @@ namespace Grace.Execution
         {
             var clsObj = new ObjectParseNode(d.Token);
             var constructor = new MethodDeclarationParseNode(d.Token);
-            constructor.NameParts = d.NameParts;
-            constructor.Parameters = d.Parameters;
-            constructor.Generics = d.Generics;
-            constructor.ReturnType = d.ReturnType;
+            constructor.Signature = d.Signature;
             constructor.Annotations = d.Annotations;
             var instanceObj = new ObjectParseNode(d.Token);
             instanceObj.Body = d.Body;
@@ -537,8 +548,11 @@ namespace Grace.Execution
         public Node Visit(TypeStatementParseNode tspn)
         {
             var meth = new MethodDeclarationParseNode(tspn.Token);
-            PartParameters pp = meth.AddPart(tspn.BaseName);
-            pp.Generics.AddRange(tspn.GenericParameters);
+            var spn = new SignatureParseNode(tspn.Token);
+            var spp = new OrdinarySignaturePartParseNode((IdentifierParseNode)tspn.BaseName);
+            spp.GenericParameters = tspn.GenericParameters;
+            spn.AddPart(spp);
+            meth.Signature = spn;
             var tpn = tspn.Body as TypeParseNode;
             if (tpn != null)
             {
@@ -555,77 +569,7 @@ namespace Grace.Execution
             if (tpn.Name != null)
                 ret.Name = tpn.Name;
             foreach (var p in tpn.Body)
-                ret.Body.Add((MethodTypeNode)p.Visit(this));
-            return ret;
-        }
-
-        /// <inheritdoc />
-        public Node Visit(TypeMethodParseNode d)
-        {
-            var ret = new MethodTypeNode(d.Token, d);
-            if (d.ReturnType != null)
-            {
-                ret.Returns = d.ReturnType.Visit(this);
-            }
-            string name = "";
-            for (int i = 0; i < d.NameParts.Count; i++)
-            {
-                if (name != "")
-                    name += " ";
-                string partName = ((IdentifierParseNode)d.NameParts[i]).Name;
-                name += partName;
-                var partParams = d.Parameters[i];
-                var parameters = new List<Node>();
-                foreach (ParseNode p in partParams)
-                {
-                    var id = p as IdentifierParseNode;
-                    var tppn = p as TypedParameterParseNode;
-                    var vappn = p as VarArgsParameterParseNode;
-                    if (id != null)
-                        parameters.Add(new IdentifierNode(id.Token, id));
-                    else if (tppn != null)
-                    {
-                        parameters.Add(new ParameterNode(tppn.Token, tppn.Name as IdentifierParseNode, tppn.Type.Visit(this)));
-                    }
-                    else if (vappn != null)
-                    {
-                        // Inside could be either an identifier or a
-                        // TypedParameterParseNode - check for both.
-                        var inIPN = vappn.Name as IdentifierParseNode;
-                        var inTPPN = vappn.Name as TypedParameterParseNode;
-                        if (inIPN != null)
-                            parameters.Add(new ParameterNode(inIPN.Token,
-                                        inIPN,
-                                        true // Variadic
-                                        ));
-                        else if (inTPPN != null)
-                            parameters.Add(new ParameterNode(inTPPN.Token,
-                                        inTPPN.Name as IdentifierParseNode,
-                                        true, // Variadic
-                                        inTPPN.Type.Visit(this)
-                                        ));
-                    }
-                    else
-                    {
-                        throw new Exception("unimplemented - unusual parameters");
-                    }
-                }
-                var generics = new List<Node>();
-                foreach (var p in d.Generics[i])
-                {
-                    var id = p as IdentifierParseNode;
-                    if (id != null)
-                    {
-                        generics.Add(new IdentifierNode(id.Token, id));
-                    }
-                    else
-                    {
-                        throw new Exception("unimplemented - bad generic parameters");
-                    }
-                }
-                var rpn = new RequestPartNode(partName, generics, parameters);
-                ret.AddPart(rpn);
-            }
+                ret.Body.Add((SignatureNode)p.Visit(this));
             return ret;
         }
 

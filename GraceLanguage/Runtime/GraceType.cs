@@ -7,7 +7,7 @@ namespace Grace.Runtime
     public class GraceType : GraceObject
     {
         private readonly string name;
-        private List<MethodTypeNode> methods = new List<MethodTypeNode>();
+        private List<SignatureNode> methods = new List<SignatureNode>();
         private List<MethodRequest> requests;
 
         /// <param name="name">Name of this type for debugging
@@ -23,7 +23,7 @@ namespace Grace.Runtime
 
         /// <summary>Add a method type entry to this type</summary>
         /// <param name="n">Method entry to add</param>
-        public void Add(MethodTypeNode n)
+        public void Add(SignatureNode n)
         {
             methods.Add(n);
         }

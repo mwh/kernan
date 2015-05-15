@@ -423,197 +423,208 @@ namespace Grace.Parsing
             return ret;
         }
 
-        private void parseMethodHeader(Token start, MethodHeader ret)
+        private SignaturePartParseNode parseOperatorSignaturePart(Token start,
+                OperatorToken op)
+        {
+            var partName = new IdentifierParseNode(op);
+            nextToken();
+            var ret = new OrdinarySignaturePartParseNode(partName);
+            IList<ParseNode> theseParameters = ret.Parameters;
+            if (lexer.current is LParenToken)
+            {
+                Token lp = lexer.current;
+                nextToken();
+                parseParameterList<RParenToken>(lp, theseParameters);
+                expect<RParenToken>();
+                nextToken();
+            }
+            ret.Final = true;
+            return ret;
+        }
+
+        private SignaturePartParseNode parsePrefixOperatorSignaturePart(Token start,
+                IdentifierToken prefix)
+        {
+            nextToken();
+            expect<OperatorToken>();
+            var op = (OperatorToken)lexer.current;
+            nextToken();
+            var partName = new IdentifierParseNode(prefix, "prefix" + op.Name);
+            var ret = new OrdinarySignaturePartParseNode(partName);
+            ret.Final = true;
+            return ret;
+        }
+
+        private SignaturePartParseNode parseCircumfixSignaturePart(Token start,
+                IdentifierToken circumfix)
+        {
+            nextToken();
+            expect<OpenBracketToken>();
+            var ob = (OpenBracketToken)lexer.current;
+            nextToken();
+            var partName = new IdentifierParseNode(circumfix, "circumfix"
+                    + ob.Name + ob.Other);
+            var ret = new OrdinarySignaturePartParseNode(partName);
+            nextToken();
+            parseParameterList<CloseBracketToken>(ob, ret.Parameters);
+            expectWithError<CloseBracketToken>("P1033",
+                    ob.Name + " ... " + ob.Other);
+            var cb = (CloseBracketToken)lexer.current;
+            if (cb.Name != ob.Other)
+            {
+                ErrorReporting.ReportStaticError(moduleName, cb.line,
+                        "P1033",
+                        new Dictionary<string, string> {
+                            { "expected", ob.Name + " ... " + ob.Other},
+                            { "found", cb.Name }
+                        },
+                        "Expected bracket name ${expected}, "
+                            + "got ${found}.");
+            }
+            nextToken();
+            ret.Final = true;
+            return ret;
+        }
+
+        private SignaturePartParseNode parsePostfixBracketSignaturePart(
+                Token start,
+                OpenBracketToken ob)
+        {
+            nextToken();
+            var partName = new IdentifierParseNode(ob, ob.Name + ob.Other);
+            var ret = new OrdinarySignaturePartParseNode(partName);
+            parseParameterList<CloseBracketToken>(ob, ret.Parameters);
+            expectWithError<CloseBracketToken>("P1033",
+                    ob.Name + " ... " + ob.Other);
+            var cb = (CloseBracketToken)lexer.current;
+            if (cb.Name != ob.Other)
+            {
+                ErrorReporting.ReportStaticError(moduleName, cb.line,
+                        "P1033",
+                        new Dictionary<string, string> {
+                            { "expected", ob.Name + " ... " + ob.Other},
+                            { "found", cb.Name }
+                        },
+                        "Expected bracket name ${expected}, "
+                            + "got ${found}.");
+            }
+            nextToken();
+            ret.Final = true;
+            return ret;
+        }
+
+        private SignaturePartParseNode parseFirstSignaturePart(Token start)
         {
             var op = lexer.current as OperatorToken;
             var ob = lexer.current as OpenBracketToken;
+            var id = lexer.current as IdentifierToken;
             if (op != null)
+                return parseOperatorSignaturePart(start, op);
+            if (ob != null)
+                return parsePostfixBracketSignaturePart(start, ob);
+            if (id != null)
             {
-                ParseNode partName = new IdentifierParseNode(op);
+                if (id.Name == "prefix")
+                    return parsePrefixOperatorSignaturePart(start, id);
+                if (id.Name == "circumfix")
+                    return parseCircumfixSignaturePart(start, id);
                 nextToken();
-                PartParameters pp = ret.AddPart(partName);
-                List<ParseNode> theseParameters = pp.Ordinary;
+                var ret = new OrdinarySignaturePartParseNode(
+                        new IdentifierParseNode(id));
+                if (lexer.current is LGenericToken)
+                {
+                    Token l = lexer.current;
+                    nextToken();
+                    parseParameterList<RGenericToken>(l, ret.GenericParameters);
+                    expect<RGenericToken>();
+                    nextToken();
+                }
                 if (lexer.current is LParenToken)
                 {
-                    Token lp = lexer.current;
+                    Token l = lexer.current;
                     nextToken();
-                    parseParameterList<RParenToken>(lp, theseParameters);
+                    parseParameterList<RParenToken>(l, ret.Parameters);
                     expect<RParenToken>();
                     nextToken();
                 }
-            }
-            else if (ob != null)
-            {
-                ParseNode partName = new IdentifierParseNode(ob);
-                nextToken();
-                var cb = lexer.current as CloseBracketToken;
-                // There are currently two possibilities in question:
-                // parameters are given either between the brackets,
-                // or in parentheses after the complete bracket pair.
-                if (cb != null)
-                {
-                    // Bracket pair, optional parentheses after.
-                    if (cb.Name != ob.Other)
-                    {
-                        ErrorReporting.ReportStaticError(moduleName, cb.line,
-                                "P1033",
-                                new Dictionary<string, string> {
-                                    { "expected", ob.Name + ob.Other },
-                                    { "found", cb.Name }
-                                },
-                                "Expected bracket name ${expected}, "
-                                    + "got ${found}.");
-                    }
-                    nextToken();
-                    PartParameters pp = ret.AddPart(partName);
-                    // Nullary bracket methods are currently OK.
-                    if (lexer.current is LParenToken)
-                    {
-                        var theseParameters = pp.Ordinary;
-                        Token lp = lexer.current;
-                        nextToken();
-                        parseParameterList<RParenToken>(lp, theseParameters);
-                        expect<RParenToken>();
-                        nextToken();
-                    }
-                }
                 else
                 {
-                    // Something other than a closing bracket, so
-                    // expect a non-empty parameter list in between.
-                    PartParameters pp = ret.AddPart(partName);
-                    var theseParameters = pp.Ordinary;
-                    parseParameterList<CloseBracketToken>(ob,
-                            theseParameters);
-                    expectWithError<CloseBracketToken>("P1033",
-                            ob.Name + " ... " + ob.Other);
-                    cb = (CloseBracketToken)lexer.current;
-                    if (cb.Name != ob.Other)
-                    {
-                        ErrorReporting.ReportStaticError(moduleName, cb.line,
-                                "P1033",
-                                new Dictionary<string, string> {
-                                    { "expected", ob.Name + " ... " + ob.Other},
-                                    { "found", cb.Name }
-                                },
-                                "Expected bracket name ${expected}, "
-                                    + "got ${found}.");
-                    }
-                    nextToken();
-                    var bind = lexer.current as BindToken;
-                    if (bind != null)
-                    {
-                        partName = new IdentifierParseNode(bind);
-                        pp = ret.AddPart(partName);
-                        nextToken();
-                        var lp = lexer.current;
-                        expect<LParenToken>();
-                        nextToken();
-                        parseParameterList<RParenToken>(lp,
-                                pp.Ordinary);
-                        expect<RParenToken>();
-                        nextToken();
-                    }
+                    ret.Final = true;
                 }
+                return ret;
             }
-            else
+            expectWithError<IdentifierToken>("P1032", "method name");
+            return null;
+        }
+
+        private SignaturePartParseNode parseOrdinarySignaturePart(Token start)
+        {
+            var id = (IdentifierToken)lexer.current;
+            var ret = new OrdinarySignaturePartParseNode(
+                    new IdentifierParseNode(id));
+            nextToken();
+            if (lexer.current is LGenericToken)
             {
-                expectWithError<IdentifierToken>("P1032");
-                IdentifierParseNode partName;
-                bool first = true;
-                bool noMore = false;
-                while (lexer.current is IdentifierToken && !noMore)
+                Token l = lexer.current;
+                nextToken();
+                parseParameterList<RGenericToken>(l, ret.GenericParameters);
+                expect<RGenericToken>();
+                nextToken();
+            }
+            expect<LParenToken>("parameter list");
+            Token lp = lexer.current;
+            nextToken();
+            parseParameterList<RParenToken>(lp, ret.Parameters);
+            expect<RParenToken>();
+            nextToken();
+            return ret;
+        }
+
+        private SignaturePartParseNode parseSignaturePart(Token start)
+        {
+            if (lexer.current is IdentifierToken)
+                return parseOrdinarySignaturePart(start);
+            return null;
+        }
+
+        private SignaturePartParseNode parseBindSignaturePart(Token start)
+        {
+            var id = new IdentifierParseNode((BindToken)lexer.current);
+            nextToken();
+            var ret = new OrdinarySignaturePartParseNode(id);
+            expect<LParenToken>("parameter list");
+            Token lp = lexer.current;
+            nextToken();
+            parseParameterList<RParenToken>(lp, ret.Parameters);
+            expect<RParenToken>();
+            nextToken();
+            ret.Final = true;
+            return ret;
+        }
+
+        private SignatureParseNode parseSignature(Token start)
+        {
+            var ret = new SignatureParseNode(start);
+            var first = lexer.current;
+            var part = parseFirstSignaturePart(start);
+            ret.AddPart(part);
+            if (lexer.current is BindToken)
+            {
+                if (first is IdentifierToken
+                        || first is OpenBracketToken)
                 {
-                    partName = parseIdentifier();
-                    var bind = lexer.current as BindToken;
-                    if (bind != null)
-                    {
-                        ret.AddPart(partName);
-                        partName = new IdentifierParseNode(bind);
-                        nextToken();
-                        noMore = true;
-                    }
-                    else if ("prefix" == partName.Name && first
-                          && lexer.current is OperatorToken)
-                    {
-                        op = lexer.current as OperatorToken;
-                        partName.Name += op.Name;
-                        nextToken();
-                    }
-                    else if ("circumfix" == partName.Name && first
-                          && lexer.current is OpenBracketToken)
-                    {
-                        // As above:
-                        // There are currently two possibilities in question:
-                        // parameters are given either between the brackets,
-                        // or in parentheses after the complete bracket pair.
-                        ob = (OpenBracketToken)lexer.current;
-                        partName.Name += ob.Name + ob.Other;
-                        nextToken();
-                        var cb = lexer.current as CloseBracketToken;
-                        if (cb != null)
-                        {
-                            if (cb.Name != ob.Other)
-                                ErrorReporting.ReportStaticError(moduleName,
-                                        cb.line,
-                                        "P1033",
-                                        new Dictionary<string, string> {
-                                            { "expected", ob.Name + ob.Other},
-                                            { "found", cb.Name }
-                                        },
-                                        "Expected bracket name ${expected}, "
-                                            + "got ${found}.");
-                            nextToken();
-                        }
-                        else
-                        {
-                            var ppb = ret.AddPart(partName);
-                            parseParameterList<CloseBracketToken>(ob,
-                                    ppb.Ordinary);
-                            expectWithError<CloseBracketToken>("P1033",
-                                    ob.Name + " ... " + ob.Other);
-                            cb = (CloseBracketToken)lexer.current;
-                            nextToken();
-                            if (cb.Name != ob.Other)
-                                ErrorReporting.ReportStaticError(moduleName,
-                                        cb.line,
-                                        "P1033",
-                                        new Dictionary<string, string> {
-                                            { "expected", ob.Name + ob.Other},
-                                            { "found", cb.Name }
-                                        },
-                                        "Expected bracket name ${expected}, "
-                                            + "got ${found}.");
-                            // This must be the last (sole) part of the
-                            // method name.
-                            break;
-                        }
-                    }
-                    PartParameters pp = ret.AddPart(partName);
-                    List<ParseNode> theseParameters = pp.Ordinary;
-                    List<ParseNode> theseGenerics = pp.Generics;
-                    if (lexer.current is LGenericToken)
-                    {
-                        Token lp = lexer.current;
-                        nextToken();
-                        parseParameterList<RGenericToken>(lp, theseGenerics);
-                        expect<RGenericToken>();
-                        nextToken();
-                    }
-                    if (!first)
-                        expect<LParenToken>();
-                    if (lexer.current is LParenToken)
-                    {
-                        Token lp = lexer.current;
-                        nextToken();
-                        parseParameterList<RParenToken>(lp, theseParameters);
-                        expect<RParenToken>();
-                        nextToken();
-                    } else {
-                        noMore = true;
-                    }
-                    first = false;
+                    part = parseBindSignaturePart(start);
+                    ret.AddPart(part);
                 }
+                else
+                    expect<LParenToken>("return type");
+            }
+            while (!part.Final)
+            {
+                part = parseSignaturePart(start);
+                if (part == null)
+                    break;
+                ret.AddPart(part);
             }
             if (lexer.current is ArrowToken)
             {
@@ -622,16 +633,16 @@ namespace Grace.Parsing
                 ret.ReturnType = parseExpression();
                 doNotAcceptDelimitedBlock = false;
             }
-            ret.Annotations = parseAnnotations();
+            return ret;
         }
-
 
         private ParseNode parseMethodDeclaration()
         {
             Token start = lexer.current;
             nextToken();
             MethodDeclarationParseNode ret = new MethodDeclarationParseNode(start);
-            parseMethodHeader(start, ret);
+            ret.Signature = parseSignature(start);
+            ret.Annotations = parseAnnotations();
             expect<LBraceToken>();
             List<ParseNode> origComments = prepareComments();
             parseBraceDelimitedBlock(ret.Body);
@@ -649,7 +660,8 @@ namespace Grace.Parsing
             expect<DotToken>();
             nextToken();
             ClassDeclarationParseNode ret = new ClassDeclarationParseNode(start, baseName);
-            parseMethodHeader(start, ret);
+            ret.Signature = parseSignature(start);
+            ret.Annotations = parseAnnotations();
             expect<LBraceToken>();
             List<ParseNode> origComments = prepareComments();
             parseBraceDelimitedBlock(ret.Body);
@@ -752,14 +764,13 @@ namespace Grace.Parsing
             {
                 List<ParseNode> origComments = prepareComments();
                 takeLineComments();
-                TypeMethodParseNode tmn = new TypeMethodParseNode(lexer.current);
-                parseMethodHeader(lexer.current, tmn);
+                var sig = parseSignature(lexer.current);
                 takeSemicolon();
-                ret.Add(tmn);
-                attachComments(tmn, comments);
+                ret.Add(sig);
+                attachComments(sig, comments);
                 restoreComments(origComments);
                 consumeBlankLines();
-                if (tmn.Token.line == lexer.current.line
+                if (sig.Token.line == lexer.current.line
                         && lexer.current.line != start.line)
                     reportError("P1004", lexer.current,
                             "Unexpected token after statement.");
@@ -770,7 +781,7 @@ namespace Grace.Parsing
         }
 
         private void parseParameterList<Terminator>(Token start,
-                List<ParseNode> parameters)
+                IList<ParseNode> parameters)
             where Terminator : Token
         {
             while (awaiting<Terminator>(start))

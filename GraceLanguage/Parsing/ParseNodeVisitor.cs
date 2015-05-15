@@ -70,9 +70,6 @@ namespace Grace.Parsing
         /// <summary>Visit a TypeParseNode</summary>
         /// <param name="tpn">TypeParseNode to visit</param>
         T Visit(TypeParseNode tpn);
-        /// <summary>Visit a TypeMethodParseNode</summary>
-        /// <param name="tpn">TypeMethodParseNode to visit</param>
-        T Visit(TypeMethodParseNode tpn);
         /// <summary>Visit a ImportParseNode</summary>
         /// <param name="ipn">ImportParseNode to visit</param>
         T Visit(ImportParseNode ipn);
@@ -91,5 +88,11 @@ namespace Grace.Parsing
         /// <summary>Visit an ExplicitBracketRequestParseNode</summary>
         /// <param name="ebrpn">ExplicitBracketRequestParseNode to visit</param>
         T Visit(ExplicitBracketRequestParseNode ebrpn);
+        /// <summary>Visit a SignatureParseNode</summary>
+        /// <param name="spn">SignatureParseNode to visit</param>
+        T Visit(SignatureParseNode spn);
+        /// <summary>Visit an OrdinarySignaturePartParseNode</summary>
+        /// <param name="osppn">OrdinarySignaturePartParseNode to visit</param>
+        T Visit(OrdinarySignaturePartParseNode osppn);
     }
 }

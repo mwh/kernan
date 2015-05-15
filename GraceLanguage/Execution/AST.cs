@@ -897,12 +897,12 @@ end:
     }
 
     /// <summary>A method declaration</summary>
-    public class MethodNode : Node, IEnumerable<RequestPartNode>
+    public class MethodNode : Node
     {
-        private List<RequestPartNode> parts = new List<RequestPartNode>();
         private List<Node> body = new List<Node>();
-        private string name = "";
-        private Node returnType;
+
+        /// <summary>Signature of this method</summary>
+        public SignatureNode Signature { get; set; }
 
         /// <summary>Whether this method is confidential or not</summary>
         public bool Confidential { get; set; }
@@ -923,41 +923,14 @@ end:
 
         }
 
-        /// <summary>Add a part to this declaration</summary>
-        /// <param name="part">Part to add</param>
-        public void AddPart(RequestPartNode part)
-        {
-            parts.Add(part);
-            if (name.Length > 0)
-                name += " ";
-            name += part.Name;
-        }
-
         /// <summary>The name of this method</summary>
         /// <value>This property gets the value of the field name</value>
         public string Name
         {
             get
             {
-                return name;
+                return Signature.Name;
             }
-        }
-
-        /// <summary>Get an enumerator giving each part of this method
-        /// in turn</summary>
-        public IEnumerator<RequestPartNode> GetEnumerator()
-        {
-            foreach (RequestPartNode p in parts)
-            {
-                yield return p;
-            }
-        }
-
-        /// <summary>Get an enumerator giving each part of this method
-        /// in turn</summary>
-        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
         }
 
         /// <summary>Add a node to the body of this method</summary>
@@ -981,11 +954,8 @@ end:
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
             tw.WriteLine(prefix + "Method: " + Name);
-            if (returnType != null)
-            {
-                tw.WriteLine(prefix + "  Returns:");
-                returnType.DebugPrint(tw, prefix + "    ");
-            }
+            tw.WriteLine(prefix + "  Signature:");
+            Signature.DebugPrint(tw, prefix + "    ");
             if (Confidential)
             {
                 tw.WriteLine(prefix + "  Is: Confidential");
@@ -1001,21 +971,6 @@ end:
             else
             {
                 tw.WriteLine(prefix + "  Fresh: No");
-            }
-            tw.WriteLine(prefix + "  Parts:");
-            int i = 1;
-            foreach (RequestPartNode p in parts)
-            {
-                string partName = p.Name;
-                tw.WriteLine(prefix + "    Part " + i + ": ");
-                tw.WriteLine(prefix + "      Name: " + partName);
-                tw.WriteLine(prefix + "      Generic parameters:");
-                foreach (Node arg in p.GenericArguments)
-                    arg.DebugPrint(tw, prefix + "        ");
-                tw.WriteLine(prefix + "      Parameters:");
-                foreach (Node arg in p.Arguments)
-                    arg.DebugPrint(tw, prefix + "        ");
-                i++;
             }
             tw.WriteLine(prefix + "  Body:");
             foreach (Node n in body)
@@ -1103,10 +1058,13 @@ end:
             GraceObject ret = null;
             Interpreter.ScopeMemo memo = ctx.Memorise();
             var myScope = new MethodScope(req.Name);
-            foreach (var pp in parts.Zip(req, (dp, rp) => new { mine = dp, req = rp }))
+            foreach (var pp in Signature.Zip(req, (dp, rp) => new { mine = dp, req = rp }))
             {
+                if (!(pp.mine is OrdinarySignaturePartNode))
+                    throw new Exception("unimplemented - non-ordinary parts");
+                var sigPart = (OrdinarySignaturePartNode)pp.mine;
                 bool hadVariadic = false;
-                foreach (var arg in pp.mine.Arguments.Zip(pp.req.Arguments, (a, b) => new { name = a, val = b }))
+                foreach (var arg in sigPart.Parameters.Zip(pp.req.Arguments, (a, b) => new { name = a, val = b }))
                 {
                     var idNode = (ParameterNode)arg.name;
                     string name = idNode.Name;
@@ -1114,7 +1072,7 @@ end:
                     {
                         hadVariadic = true;
                         var gvl = new GraceVariadicList();
-                        for (var i = pp.mine.Arguments.Count - 1;
+                        for (var i = sigPart.Parameters.Count - 1;
                                 i < pp.req.Arguments.Count;
                                 i++)
                         {
@@ -1127,20 +1085,20 @@ end:
                         myScope.AddLocalDef(name, arg.val);
                     }
                 }
-                if (!hadVariadic && pp.mine.Arguments.Count > 0)
+                if (!hadVariadic && sigPart.Parameters.Count > 0)
                 {
-                    var p = pp.mine.Arguments.Last() as ParameterNode;
+                    var p = sigPart.Parameters.Last() as ParameterNode;
                     if (p != null)
                         hadVariadic |= p.Variadic;
                 }
-                CheckArgCount(ctx, req.Name, pp.mine.Name,
-                        pp.mine.Arguments.Count, hadVariadic,
+                CheckArgCount(ctx, req.Name, sigPart.Name,
+                        sigPart.Parameters.Count, hadVariadic,
                         pp.req.Arguments.Count);
-                if (pp.mine.Arguments.Count > pp.req.Arguments.Count)
+                if (sigPart.Parameters.Count > pp.req.Arguments.Count)
                 {
                     // Variadic parameter with no arguments provided
                     // for it - fill with an empty list.
-                    var arg = pp.mine.Arguments[pp.mine.Arguments.Count - 1];
+                    var arg = sigPart.Parameters[sigPart.Parameters.Count - 1];
                     var idNode = arg as ParameterNode;
                     string name = idNode.Name;
                     if (idNode.Variadic)
@@ -1149,9 +1107,9 @@ end:
                         myScope.AddLocalDef(name, gvl);
                     }
                 }
-                for (var i = 0; i < pp.mine.GenericArguments.Count; i++)
+                for (var i = 0; i < sigPart.GenericParameters.Count; i++)
                 {
-                    var g = pp.mine.GenericArguments[i];
+                    var g = sigPart.GenericParameters[i];
                     GraceObject val;
                     if (i < pp.req.GenericArguments.Count)
                     {
@@ -1165,7 +1123,7 @@ end:
                     string name = ((IdentifierNode)g).Name;
                     myScope.AddLocalDef(name, val);
                 }
-                foreach (var arg in pp.mine.GenericArguments.Zip(pp.req.GenericArguments, (a, b) => new { name = a, val = b }))
+                foreach (var arg in sigPart.GenericParameters.Zip(pp.req.GenericArguments, (a, b) => new { name = a, val = b }))
                 {
                     string name = (arg.name as IdentifierNode).Name;
                     myScope.AddLocalDef(name, arg.val);
@@ -1653,7 +1611,7 @@ end:
     /// <summary>A type literal</summary>
     public class TypeNode : Node
     {
-        private List<MethodTypeNode> body = new List<MethodTypeNode>();
+        private List<SignatureNode> body = new List<SignatureNode>();
 
         /// <summary>The name of this type literal for debugging</summary>
         public string Name { get; set; }
@@ -1666,7 +1624,7 @@ end:
 
         /// <summary>The body of this type literal</summary>
         /// <value>This property gets the value of the field body</value>
-        public List<MethodTypeNode> Body
+        public List<SignatureNode> Body
         {
             get
             {
@@ -1692,91 +1650,6 @@ end:
             foreach (var n in body)
                 ret.Add(n);
             return ret;
-        }
-    }
-
-    /// <summary>A method type given in a type literal</summary>
-    public class MethodTypeNode : Node, IEnumerable<RequestPartNode>
-    {
-        private List<RequestPartNode> parts = new List<RequestPartNode>();
-
-        /// <summary>Declared return type of this method</summary>
-        public Node Returns { get; set; }
-
-        private string name = "";
-
-        internal MethodTypeNode(Token token, ParseNode source)
-            : base(token, source)
-        {
-        }
-
-        /// <inheritdoc/>
-        public override void DebugPrint(System.IO.TextWriter tw, string prefix)
-        {
-            tw.WriteLine(prefix + "MethodType: " + name);
-            tw.WriteLine(prefix + "  Parts:");
-            int i = 1;
-            foreach (RequestPartNode p in parts)
-            {
-                string partName = p.Name;
-                tw.WriteLine(prefix + "    Part " + i + ": ");
-                tw.WriteLine(prefix + "      Name: " + partName);
-                tw.WriteLine(prefix + "      Generic parameters:");
-                foreach (Node arg in p.GenericArguments)
-                    arg.DebugPrint(tw, prefix + "        ");
-                tw.WriteLine(prefix + "      Parameters:");
-                foreach (Node arg in p.Arguments)
-                    arg.DebugPrint(tw, prefix + "        ");
-                i++;
-            }
-            if (Returns != null)
-            {
-                tw.WriteLine(prefix + "  Returns:");
-                Returns.DebugPrint(tw, prefix + "    ");
-            }
-        }
-
-        /// <summary>Add a part to this method name</summary>
-        /// <param name="part">Part to add</param>
-        public void AddPart(RequestPartNode part)
-        {
-            parts.Add(part);
-            if (name.Length > 0)
-                name += " ";
-            name += part.Name;
-        }
-
-        /// <summary>Name of this method</summary>
-        /// <value>This property gets the value of the field name</value>
-        public string Name
-        {
-            get
-            {
-                return name;
-            }
-        }
-
-        /// <summary>Get an enumerator giving each part of this method
-        /// in turn</summary>
-        public IEnumerator<RequestPartNode> GetEnumerator()
-        {
-            foreach (RequestPartNode p in parts)
-            {
-                yield return p;
-            }
-        }
-
-        /// <summary>Get an enumerator giving each part of this method
-        /// in turn</summary>
-        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
-
-        /// <inheritdoc/>
-        public override GraceObject Evaluate(EvaluationContext ctx)
-        {
-            return GraceObject.Done;
         }
     }
 
@@ -1873,6 +1746,140 @@ end:
         {
             tw.WriteLine(prefix + "Inherits: ");
             From.DebugPrint(tw, prefix + "    ");
+        }
+
+        /// <inheritdoc/>
+        public override GraceObject Evaluate(EvaluationContext ctx)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>A method signature</summary>
+    public class SignatureNode : Node, IEnumerable<SignaturePartNode>
+    {
+
+        /// <summary>Name of the method</summary>
+        public string Name { get; private set; }
+
+        /// <summary>Parts of the method name</summary>
+        public IList<SignaturePartNode> Parts { get; private set; }
+
+        /// <summary>
+        /// True if this signature is an exact list of literal parts.
+        /// </summary>
+        public bool Linear = true;
+
+        internal SignatureNode(Token location, SignatureParseNode source)
+            : base(location, source)
+        {
+            Name = source.Name;
+            Parts = new List<SignaturePartNode>();
+        }
+
+        /// <inheritdoc/>
+        public override void DebugPrint(System.IO.TextWriter tw, string prefix)
+        {
+            tw.WriteLine(prefix + "Signature: " + Name);
+            foreach (var p in Parts)
+                p.DebugPrint(tw, prefix + "    ");
+        }
+
+        /// <inheritdoc/>
+        public override GraceObject Evaluate(EvaluationContext ctx)
+        {
+            return null;
+        }
+
+        /// <summary>Add a part to this method name</summary>
+        public void AddPart(SignaturePartNode spn)
+        {
+            Parts.Add(spn);
+            if (!(spn is OrdinarySignaturePartNode))
+                Linear = false;
+        }
+
+        /// <summary>
+        /// Get an enumerator giving each part of this signature in turn.
+        /// </summary>
+        public IEnumerator<SignaturePartNode> GetEnumerator()
+        {
+            foreach (var p in Parts)
+            {
+                yield return p;
+            }
+        }
+
+        /// <summary>
+        /// Get an enumerator giving each part of this signature in turn.
+        /// </summary>
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
+
+    }
+
+
+    /// <summary>
+    /// A component of a method signature.
+    /// </summary>
+    public abstract class SignaturePartNode : Node
+    {
+        /// <summary>Name of the part</summary>
+        public abstract string Name { get; }
+
+        internal SignaturePartNode(Token location,
+                SignaturePartParseNode source)
+            : base(location, source)
+        {
+        }
+
+        /// <inheritdoc/>
+        public override void DebugPrint(System.IO.TextWriter tw, string prefix)
+        {
+            tw.WriteLine(prefix + "SignaturePart: " + Name);
+        }
+
+        /// <inheritdoc/>
+        public override GraceObject Evaluate(EvaluationContext ctx)
+        {
+            return null;
+        }
+    }
+    /// <summary>A literal method signature part</summary>
+    public class OrdinarySignaturePartNode : SignaturePartNode
+    {
+
+        private string _name;
+        /// <summary>Name of the part</summary>
+        public override string Name {
+            get { return _name; }
+        }
+
+        /// <summary>Generic parameters of this part</summary>
+        public IList<Node> GenericParameters { get; private set; }
+
+        /// <summary>Ordinary parameters of this part</summary>
+        public IList<Node> Parameters { get; private set; }
+
+        internal OrdinarySignaturePartNode(Token location,
+                OrdinarySignaturePartParseNode source,
+                IList<Node> parameters,
+                IList<Node> genericParameters)
+            : base(location, source)
+        {
+            _name = source.Name;
+            Parameters = parameters;
+            GenericParameters = genericParameters;
+        }
+
+        /// <inheritdoc/>
+        public override void DebugPrint(System.IO.TextWriter tw, string prefix)
+        {
+            tw.WriteLine(prefix + "Part: " + Name);
+            foreach (var p in Parameters)
+                p.DebugPrint(tw, prefix + "    ");
         }
 
         /// <inheritdoc/>
