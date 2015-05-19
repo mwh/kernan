@@ -172,8 +172,8 @@ namespace Grace.Execution
             var sig = (SignatureNode)d.Signature.Visit(this);
             ret.Signature = sig;
             string name = sig.Name;
-            ret.Confidential = (d.Annotations != null
-                    && d.Annotations.HasAnnotation("confidential"));
+            ret.Confidential = (d.Signature.Annotations != null
+                    && d.Signature.Annotations.HasAnnotation("confidential"));
             foreach (ParseNode p in d.Body)
                 if (!(p is CommentParseNode))
                     ret.Add(p.Visit(this));
@@ -515,7 +515,6 @@ namespace Grace.Execution
             var clsObj = new ObjectParseNode(d.Token);
             var constructor = new MethodDeclarationParseNode(d.Token);
             constructor.Signature = d.Signature;
-            constructor.Annotations = d.Annotations;
             var instanceObj = new ObjectParseNode(d.Token);
             instanceObj.Body = d.Body;
             constructor.Body.Add(instanceObj);

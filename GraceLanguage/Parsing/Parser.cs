@@ -633,6 +633,7 @@ namespace Grace.Parsing
                 ret.ReturnType = parseExpression();
                 doNotAcceptDelimitedBlock = false;
             }
+            ret.Annotations = parseAnnotations();
             return ret;
         }
 
@@ -642,7 +643,6 @@ namespace Grace.Parsing
             nextToken();
             MethodDeclarationParseNode ret = new MethodDeclarationParseNode(start);
             ret.Signature = parseSignature(start);
-            ret.Annotations = parseAnnotations();
             expect<LBraceToken>();
             List<ParseNode> origComments = prepareComments();
             parseBraceDelimitedBlock(ret.Body);
@@ -661,7 +661,6 @@ namespace Grace.Parsing
             nextToken();
             ClassDeclarationParseNode ret = new ClassDeclarationParseNode(start, baseName);
             ret.Signature = parseSignature(start);
-            ret.Annotations = parseAnnotations();
             expect<LBraceToken>();
             List<ParseNode> origComments = prepareComments();
             parseBraceDelimitedBlock(ret.Body);

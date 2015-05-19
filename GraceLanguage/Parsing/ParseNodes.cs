@@ -282,6 +282,11 @@ namespace Grace.Parsing
             }
         }
 
+        /// <summary>
+        /// "is" annotations on this method signature.
+        /// </summary>
+        public AnnotationsParseNode Annotations { get; set; }
+
         /// <param name="t">Representative token of this signature</param>
         public SignatureParseNode(Token t) : base(t) {}
 
@@ -300,6 +305,11 @@ namespace Grace.Parsing
             tw.WriteLine(prefix + "Signature: " + Name);
             foreach (var p in _parts)
                 p.DebugPrint(tw, prefix + "    ");
+            if (Annotations != null)
+            {
+                tw.WriteLine(prefix + "  Annotations:");
+                Annotations.DebugPrint(tw, prefix + "    ");
+            }
             writeComment(tw, prefix);
         }
 
@@ -308,21 +318,6 @@ namespace Grace.Parsing
         {
             return visitor.Visit(this);
         }
-    }
-
-    /// <summary>Shared interface of classes with the behaviour of
-    /// method headers</summary>
-    public interface MethodHeader
-    {
-        /// <summary>Add a part to this method header</summary>
-        /// <param name="id">Identifier naming the part to add</param>
-        PartParameters AddPart(ParseNode id);
-
-        /// <summary>Return type of this method</summary>
-        ParseNode ReturnType { get; set; }
-
-        /// <summary>Annotations of this method</summary>
-        AnnotationsParseNode Annotations { get; set; }
     }
 
     /// <summary>Parse node for a method declaration</summary>
@@ -343,9 +338,6 @@ namespace Grace.Parsing
         /// <inheritdoc/>
         public ParseNode ReturnType { get; set; }
 
-        /// <inheritdoc/>
-        public AnnotationsParseNode Annotations { get; set; }
-
         internal MethodDeclarationParseNode(Token tok)
             : base(tok)
         {
@@ -356,11 +348,6 @@ namespace Grace.Parsing
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
             tw.WriteLine(prefix + "MethodDeclaration: " + Signature.Name);
-            if (Annotations != null)
-            {
-                tw.WriteLine(prefix + "  Annotations:");
-                Annotations.DebugPrint(tw, prefix + "    ");
-            }
             tw.WriteLine(prefix + "  Signature:");
             Signature.DebugPrint(tw, prefix + "    ");
             tw.WriteLine(prefix + "  Body:");
@@ -379,7 +366,7 @@ namespace Grace.Parsing
     }
 
     /// <summary>Parse node for a class declaration</summary>
-    public class ClassDeclarationParseNode : ParseNode, MethodHeader
+    public class ClassDeclarationParseNode : ParseNode
     {
         private ParseNode _baseName;
 
@@ -393,33 +380,6 @@ namespace Grace.Parsing
             set { _baseName = value; }
         }
 
-        private List<ParseNode> _nameParts;
-
-        /// <summary>Parts of the constructor of this class</summary>
-        public List<ParseNode> NameParts
-        {
-            get { return _nameParts; }
-            set { _nameParts = value; }
-        }
-
-        private List<List<ParseNode>> _parameters;
-
-        /// <summary>Parameter lists of each part</summary>
-        public List<List<ParseNode>> Parameters
-        {
-            get { return _parameters; }
-            set { _parameters = value; }
-        }
-
-        private List<List<ParseNode>> _generics;
-
-        /// <summary>Generic parameter lists of each part</summary>
-        public List<List<ParseNode>> Generics
-        {
-            get { return _generics; }
-            set { _generics = value; }
-        }
-
         private List<ParseNode> _body;
 
         /// <summary>Body of this class</summary>
@@ -429,65 +389,21 @@ namespace Grace.Parsing
             set { _body = value; }
         }
 
-        /// <inheritdoc/>
-        public ParseNode ReturnType { get; set; }
-
-        /// <inheritdoc/>
-        public AnnotationsParseNode Annotations { get; set; }
-
         internal ClassDeclarationParseNode(Token tok, ParseNode baseName)
             : base(tok)
         {
             this._baseName = baseName;
-            _nameParts = new List<ParseNode>();
-            _parameters = new List<List<ParseNode>>();
-            _generics = new List<List<ParseNode>>();
             _body = new List<ParseNode>();
-        }
-
-        /// <inheritdoc/>
-        public PartParameters AddPart(ParseNode id)
-        {
-            _nameParts.Add(id);
-            List<ParseNode> ordinaries = new List<ParseNode>();
-            List<ParseNode> gens = new List<ParseNode>();
-            _parameters.Add(ordinaries);
-            _generics.Add(gens);
-            return new PartParameters(gens, ordinaries);
         }
 
         /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
             IdentifierParseNode b = _baseName as IdentifierParseNode;
-            string name = b.Name + ".";
-            foreach (ParseNode n in _nameParts)
-            {
-                name += (n as IdentifierParseNode).Name + " ";
-            }
+            string name = b.Name + "." + Signature.Name;
             tw.WriteLine(prefix + "ClassDeclaration: " + name);
-            if (ReturnType != null)
-            {
-                tw.WriteLine(prefix + "  Returns:");
-                ReturnType.DebugPrint(tw, prefix + "    ");
-            }
-            if (Annotations != null)
-            {
-                tw.WriteLine(prefix + "  Anontations:");
-                Annotations.DebugPrint(tw, prefix + "    ");
-            }
-            tw.WriteLine(prefix + "  Parts:");
-            for (int i = 0; i < _nameParts.Count; i++)
-            {
-                ParseNode partName = _nameParts[i];
-                List<ParseNode> ps = _parameters[i];
-                tw.WriteLine(prefix + "    Part " + (i + 1) + ": ");
-                tw.WriteLine(prefix + "      Name:");
-                partName.DebugPrint(tw, prefix + "        ");
-                tw.WriteLine(prefix + "      Parameters:");
-                foreach (ParseNode arg in ps)
-                    arg.DebugPrint(tw, prefix + "        ");
-            }
+            tw.WriteLine(prefix + "  Signature:");
+            Signature.DebugPrint(tw, prefix + "    ");
             tw.WriteLine(prefix + "  Body:");
             foreach (ParseNode n in _body)
             {
