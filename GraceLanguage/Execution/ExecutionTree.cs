@@ -524,7 +524,13 @@ namespace Grace.Execution
                     clsObj,
                     null, // Type
                     null);
-            return dpn.Visit(this);
+            var ret = (DefDeclarationNode)dpn.Visit(this);
+            // Classes are public by default.
+            // The next line makes them public always; it is not
+            // possible to have a confidential class. It is unclear
+            // whether that should be permitted or not.
+            ret.Public = true;
+            return ret;
         }
 
         /// <inheritdoc />
