@@ -181,7 +181,18 @@ namespace Grace.Parsing
                 return NextToken();
             }
             if (c == '#' && allowShebang && column == 1)
-                ret = lexComment();
+            {
+                // Eat the rest of the line, ignoring its
+                // contents entirely.
+                while (code[index] != '\n' && code[index] != '\u2028')
+                {
+                    index++;
+                }
+                line++;
+                lineStart = index;
+                advanceIndex();
+                return NextToken();
+            }
             else if (column == 1)
                 allowShebang = false;
             if (c == '"')
