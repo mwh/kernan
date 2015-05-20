@@ -221,6 +221,18 @@ namespace Grace.Execution
                 {
                     req.IsInterior = true;
                     rec = ctx.FindReceiver(req, 1);
+                    if (rec == null)
+                    {
+                        NestRequest(ctx, req);
+                        ErrorReporting.RaiseError(ctx, "R2002",
+                                new Dictionary<string, string> {
+                                    { "method", Name },
+                                    { "found", "" },
+                                    { "bind", "no" }
+                                },
+                                "LookupError: No receiver found for ${method}"
+                            );
+                    }
                 }
                 else
                 {

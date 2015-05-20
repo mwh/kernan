@@ -267,6 +267,8 @@ namespace Grace.Parsing
                 return new IsKeywordToken(moduleName, line, column);
             if ("where" == ident)
                 return new WhereKeywordToken(moduleName, line, column);
+            if ("outer" == ident)
+                return new OuterKeywordToken(moduleName, line, column);
             return new IdentifierToken(moduleName, line, column, ident);
         }
 

@@ -598,6 +598,18 @@ namespace Grace.Parsing
         }
     }
 
+    class OuterKeywordToken : KeywordToken
+    {
+        public OuterKeywordToken(string module, int line, int column)
+            : base(module, line, column)
+        { }
+
+        protected override string describe()
+        {
+            return "OuterKeyword";
+        }
+    }
+
     class SemicolonToken : Token
     {
         public SemicolonToken(string module, int line, int column)

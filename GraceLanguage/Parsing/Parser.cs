@@ -1039,6 +1039,14 @@ namespace Grace.Parsing
             {
                 lhs = parseImplicitBracket();
             }
+            else if (lexer.current is OuterKeywordToken)
+            {
+                lhs = new IdentifierParseNode((OuterKeywordToken)lexer.current);
+                nextToken();
+                if (!(lexer.current is DotToken
+                            || lexer.current is OperatorToken))
+                    expectWithError<DotToken>("P1042");
+            }
             else
             {
                 lhs = parseTerm();
@@ -1141,6 +1149,11 @@ namespace Grace.Parsing
             if (lexer.current is LParenToken)
             {
                 expr = parseParenthesisedExpression();
+            }
+            else if (lexer.current is OuterKeywordToken)
+            {
+                expr = new IdentifierParseNode((OuterKeywordToken)lexer.current);
+                nextToken();
             }
             else
             {
