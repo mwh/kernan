@@ -47,6 +47,17 @@ namespace Grace.Runtime
             }
         }
 
+        /// <summary>
+        /// The final self-identity of this object.
+        /// </summary>
+        /// <remarks>
+        /// In the case of inheritance, this value will be different
+        /// than "this" in the parent part-objects. Methods such as
+        /// the built-in == need to use this value to get correct
+        /// reference semantics.
+        /// </remarks>
+        public GraceObject Identity { get; set; }
+
         /// <summary>A default object</summary>
         public GraceObject()
         {
@@ -98,6 +109,7 @@ namespace Grace.Runtime
         /// <summary>Initialisation code used by multiple constructors</summary>
         private void initialise(bool defaults)
         {
+            Identity = this;
             if (defaults)
             {
                 // The default methods are found on all objects,
@@ -358,7 +370,7 @@ namespace Grace.Runtime
             }
             if (lexicalScope != null)
                 ctx.Remember(lexicalScope);
-            var ret = m.Respond(ctx, this, req);
+            var ret = m.Respond(ctx, this.Identity, req);
             if (lexicalScope != null)
                 ctx.Forget(lexicalScope);
             return ret;

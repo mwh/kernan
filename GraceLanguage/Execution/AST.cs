@@ -877,6 +877,7 @@ end:
             inheritor.AddParent(parentName, ret);
             ret.SetFlag(GraceObject.Flags.UserspaceObject);
             ctx.Extend(ret);
+            ret.Identity = self;
             local.AddLocalDef("self", self);
             local.RedirectSurrounding = self;
             return basicEvaluate(ctx, ret, local, self);
