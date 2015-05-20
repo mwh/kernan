@@ -1,3 +1,6 @@
 #!/bin/bash
 
-mono --debug "$(dirname "$(readlink -f $0)")/"bin/Debug/Grace.exe "$@"
+# Resolve a single layer of symlink and then an absolute path
+# to the directory holding this script, so that we can find the
+# executable relative to it.
+mono --debug "$(cd "$(dirname "$([ -h "$0" ]&&ls -l "$0"|sed -e 's/.*-> //'||printf '%s\n' "$0")")" ; pwd -P)"/bin/Debug/Grace.exe "$@"
