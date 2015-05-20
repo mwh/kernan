@@ -90,7 +90,25 @@ namespace Grace
             interpreter.LoadPrelude();
             var ls = new LocalScope();
             foreach (var k in data.Keys)
-                ls.AddLocalDef(k, GraceString.Create(data[k]));
+                switch(k)
+                {
+                    case "method":
+                    case "type":
+                    case "class":
+                    case "object":
+                    case "def":
+                    case "var":
+                    case "dialect":
+                    case "import":
+                    case "return":
+                    case "is":
+                    case "where":
+                        ls.AddLocalDef(k + "_", GraceString.Create(data[k]));
+                        break;
+                    default:
+                        ls.AddLocalDef(k, GraceString.Create(data[k]));
+                        break;
+                }
             interpreter.Extend(ls);
             while (l.StartsWith("|["))
             {
