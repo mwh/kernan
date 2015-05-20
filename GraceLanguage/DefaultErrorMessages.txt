@@ -55,6 +55,7 @@ L0012 Base ${base} is not supported; must be in range 2-36.
 
 R2000 LookupError: Method «${method}» not found in object «${receiver}»
 R2001 ArgumentTypeError: Method «${method}» requires ${required} as argument ${index} of part «${part}»
+R2002 |[ bind == "yes" ]| |[ found != "" ]| LookupError: ${method} is not valid; «${found}» exists but cannot be assigned to with :=.
 R2002 LookupError: No receiver found for ${method}
 R2003 AccessibilityError: Confidential method «${method}» cannot be accessed from outside the object
 R2004 InsufficientArgumentsError: Part «${part}» of method «${method}» requires ${need} arguments, but only ${have} provided

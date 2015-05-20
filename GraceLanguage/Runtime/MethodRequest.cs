@@ -140,6 +140,17 @@ namespace Grace.Runtime
             }
         }
 
+        /// <summary>
+        /// The number of parts in this request.
+        /// </summary>
+        public int Count
+        {
+            get
+            {
+                return parts.Count;
+            }
+        }
+
         /// <summary>Is this method request an interior (receiverless)
         /// request?</summary>
         public bool IsInterior { get; set; }

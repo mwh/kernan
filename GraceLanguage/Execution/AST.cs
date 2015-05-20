@@ -286,10 +286,30 @@ namespace Grace.Execution
             if (rec == null)
             {
                 NestRequest(ctx, req);
+                if (req[req.Count - 1].Name == ":=")
+                {
+                    var req2 = new MethodRequest();
+                    for (int i = 0; i < req.Count() - 1; i++)
+                        req2.AddPart(req[i]);
+                    var rec2 = ctx.FindReceiver(req2);
+                    if (rec2 != null)
+                    {
+                        ErrorReporting.RaiseError(ctx, "R2002",
+                                new Dictionary<string, string> {
+                                    { "method", Name },
+                                    { "found", req2.Name },
+                                    { "bind", "yes" }
+                                },
+                                "LookupError: No receiver found for ${method}"
+                        );
+                    }
+                }
                 ctx.DebugScopes();
                 ErrorReporting.RaiseError(ctx, "R2002",
                         new Dictionary<string, string> {
-                            { "method", Name }
+                            { "method", Name },
+                            { "found", "" },
+                            { "bind", "no" }
                         },
                         "LookupError: No receiver found for ${method}"
                 );
