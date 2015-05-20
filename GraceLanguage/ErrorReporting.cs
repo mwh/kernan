@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using Grace.Execution;
 using Grace.Runtime;
+using Grace.Parsing;
 
 namespace Grace
 {
@@ -13,34 +14,46 @@ namespace Grace
         private static HashSet<string> SilencedErrors = new HashSet<string>();
 
         /// <summary>
-        /// Retrieve the error message for a given code from the
-        /// highest-priority error message source.
+        /// Retrieve the matching error message for a given code
+        /// from the highest-priority error message source.
         /// </summary>
         /// <param name="code">Error code</param>
-        /// <returns>The error string corresponding to the code,
-        /// or null</returns>
-        public static string GetMessage(string code)
+        /// <param name="data">Data to be used for matching messages</param>
+        /// <returns>
+        /// The error string corresponding to the code and conditions,
+        /// or null
+        /// </returns>
+        public static string GetMessage(string code,
+                Dictionary<string, string> data)
         {
             string localGrace = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
                 "grace");
-            var msg = GetMessageFromFile(code, localGrace);
+            var msg = GetMessageFromFile(code, localGrace, data);
             if (msg != null)
                 return msg;
             string dir = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
-            return GetMessageFromFile(code, dir);
+            return GetMessageFromFile(code, dir, data);
         }
 
         /// <summary>
         /// Retrieve the error message for a given code from the
-        /// message database in a given directory.
+        /// message database in a given directory, using the
+        /// provided data to select from multiple options.
         /// </summary>
         /// <param name="code">Error code</param>
-        /// <param name="dir">Path to directory containing messages
-        /// file to use</param>
-        /// <returns>The error string corresponding to the code,
-        /// or null</returns>
+        /// <param name="dir">
+        /// Path to directory containing messages file to use
+        /// </param>
+        /// <param name="data">
+        /// Dictionary of proposed substitute values to be used
+        /// for winnowing
+        /// </param>
+        /// <returns>
+        /// The error string corresponding to the code, or null
+        /// </returns>
         /// <seealso cref="ErrorReporting.GetMessage" />
-        public static string GetMessageFromFile(string code, string dir)
+        public static string GetMessageFromFile(string code, string dir,
+                Dictionary<string, string> data)
         {
             string fp = Path.Combine(dir, "DefaultErrorMessages.txt");
             if (!File.Exists(fp))
@@ -54,11 +67,53 @@ namespace Grace
                     if (line.StartsWith(codeSpace,
                                 StringComparison.InvariantCulture))
                     {
+                        var l = line.Substring(codeSpace.Length).Trim();
+                        if (l.StartsWith("|["))
+                        {
+                            if (conditionsMet(l, data))
+                                return l.Substring(l.LastIndexOf("]|") + 3);
+                            continue;
+                        }
                         return line.Substring(codeSpace.Length).Trim();
                     }
                 }
             }
             return null;
+        }
+
+        private static bool conditionsMet(
+                string l,
+                Dictionary<string, string> data
+                )
+        {
+            var interpreter = new Interpreter();
+            interpreter.LoadPrelude();
+            var ls = new LocalScope();
+            foreach (var k in data.Keys)
+                ls.AddLocalDef(k, GraceString.Create(data[k]));
+            interpreter.Extend(ls);
+            while (l.StartsWith("|["))
+            {
+                int end = l.IndexOf("]|");
+                var condition = l.Substring(2, end - 2);
+                if (!conditionMet(condition, data, interpreter))
+                    return false;
+                l = l.Substring(end + 2);
+            }
+            return true;
+        }
+
+        private static bool conditionMet(
+                string condition,
+                Dictionary<string, string> data,
+                Interpreter interpreter
+                )
+        {
+            var p = (ObjectParseNode)new Parser(condition).Parse();
+            var e = new ExecutionTreeTranslator();
+            var t = p.Body[0].Visit(e);
+            var b = t.Evaluate(interpreter);
+            return GraceBoolean.IsTrue(interpreter, b);
         }
 
         /// <summary>
@@ -109,7 +164,7 @@ namespace Grace
         /// <seealso cref="ErrorReporting.GetMessage" />
         public static void ReportStaticError(string module, int line, string code, Dictionary<string, string> vars, string localDescription)
         {
-            string baseMessage = GetMessage(code) ?? localDescription;
+            string baseMessage = GetMessage(code, vars) ?? localDescription;
             string formattedMessage = FormatMessage(baseMessage, vars);
             if (!SilencedErrors.Contains(code))
                 WriteError(module, line, code, formattedMessage);
@@ -137,7 +192,8 @@ namespace Grace
         /// <seealso cref="ErrorReporting.GetMessage" />
         public static void ReportStaticError(string module, int line, string code, string localDescription)
         {
-            string baseMessage = GetMessage(code) ?? localDescription;
+            string baseMessage = GetMessage(code,
+                    new Dictionary<string, string>()) ?? localDescription;
             WriteError(module, line, code, baseMessage);
         }
 
@@ -215,7 +271,7 @@ namespace Grace
                 string code, Dictionary<string, string> vars,
                 string localDescription)
         {
-            string baseMessage = GetMessage(code) ?? localDescription;
+            string baseMessage = GetMessage(code, vars) ?? localDescription;
             var parts = baseMessage.Split(new[] { ": " }, 2,
                     StringSplitOptions.None);
             var kind = parts[0];
