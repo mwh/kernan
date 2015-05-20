@@ -250,5 +250,44 @@ namespace Grace.Runtime
             return GraceBoolean.False;
         }
 
+        private static GraceObject _trueBlock
+            = GraceRequestBlock.Create(null, False,
+                    MethodRequest.Nullary("prefix!"));
+        private static GraceObject _falseBlock
+            = GraceRequestBlock.Create(null, True,
+                    MethodRequest.Nullary("prefix!"));
+
+        /// <summary>
+        /// Determine whether a Grace object is truthy or not.
+        /// </summary>
+        /// <param name="ctx">Current interpreter</param>
+        /// <param name="val">Grace object to test for truthiness</param>
+        /// <remarks>
+        /// If the value is the true or false boolean literal, this
+        /// method returns the appropriate value immediately. If it is
+        /// an object conforming to the boolean type, this method requests
+        /// ifTrue ifFalse on the object with suitable blocks and returns
+        /// the result. If it is neither, an error will be reported.
+        /// </remarks>
+        public static bool IsTrue(EvaluationContext ctx, GraceObject val)
+        {
+            if (val == True)
+                return true;
+            if (val == False)
+                return false;
+            var req = new MethodRequest();
+            req.AddPart(new RequestPart("ifTrue",
+                        new List<GraceObject> { _trueBlock },
+                        RequestPart.EmptyList
+                        )
+                    );
+            req.AddPart(new RequestPart("ifFalse",
+                        new List<GraceObject> { _falseBlock },
+                        RequestPart.EmptyList
+                        )
+                    );
+            return (val.Request(ctx, req) == True);
+        }
+
     }
 }
