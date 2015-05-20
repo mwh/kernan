@@ -1109,6 +1109,12 @@ namespace Grace.Parsing
             _name = tok.Name + tok.Other;
         }
 
+        internal IdentifierParseNode(SelfKeywordToken tok)
+            : base(tok)
+        {
+            _name = "self";
+        }
+
         internal IdentifierParseNode(OuterKeywordToken tok)
             : base(tok)
         {

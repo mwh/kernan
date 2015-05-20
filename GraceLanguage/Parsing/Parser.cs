@@ -1134,6 +1134,11 @@ namespace Grace.Parsing
             {
                 ret = parsePrefixOperator();
             }
+            else if (lexer.current is SelfKeywordToken)
+            {
+                ret = new IdentifierParseNode((SelfKeywordToken)lexer.current);
+                nextToken();
+            }
             if (ret == null)
             {
                 reportError("P1018", lexer.current, "Expected term.");

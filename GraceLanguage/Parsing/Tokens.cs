@@ -610,6 +610,18 @@ namespace Grace.Parsing
         }
     }
 
+    class SelfKeywordToken : KeywordToken
+    {
+        public SelfKeywordToken(string module, int line, int column)
+            : base(module, line, column)
+        { }
+
+        protected override string describe()
+        {
+            return "SelfKeyword";
+        }
+    }
+
     class SemicolonToken : Token
     {
         public SemicolonToken(string module, int line, int column)
