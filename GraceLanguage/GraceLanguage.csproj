@@ -47,6 +47,7 @@
     <Compile Include="Parsing\Lexer.cs" />
     <Compile Include="Parsing\ParseNodes.cs" />
     <Compile Include="Parsing\ParseNodeVisitor.cs" />
+    <Compile Include="Parsing\ParseTreeCheckers.cs" />
     <Compile Include="Parsing\Parser.cs" />
     <Compile Include="Parsing\Tokens.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
