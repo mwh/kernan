@@ -366,6 +366,14 @@ namespace Grace.Parsing
                 return new LGenericToken(moduleName, line, column);
             if (">" == op && !spaceBefore)
                 return new RGenericToken(moduleName, line, column);
+            if (">." == op && !spaceBefore)
+            {
+                // This is a closing generic followed by a dot,
+                // rather than a single operator, so we need to
+                // "un-lex" a codepoint.
+                index--;
+                return new RGenericToken(moduleName, line, column);
+            }
             OperatorToken ret = new OperatorToken(moduleName, line, column, op);
             ret.SetSpacing(spaceBefore, spaceAfter);
             return ret;
