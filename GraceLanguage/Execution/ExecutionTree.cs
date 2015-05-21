@@ -28,6 +28,7 @@ namespace Grace.Execution
         {
             var ret = new ObjectConstructorNode(obj.Token, obj);
             InheritsNode parent = null;
+            var parentNames = new HashSet<string>();
             var singleParent = true;
             foreach (ParseNode p in obj.Body)
             {
@@ -39,10 +40,24 @@ namespace Grace.Execution
                 {
                     singleParent = (parent == null);
                     parent = i;
+                    if (i.As != null)
+                    {
+                        parentNames.Add(i.As);
+                    }
                 }
             }
             if (singleParent && parent != null)
+            {
                 parent.As = "super";
+                parentNames.Add("super");
+            }
+            if (parentNames.Count > 0)
+            {
+                var checker =
+                    new NonReceiverNameCheckingParseNodeVisitor(parentNames);
+                foreach (var n in obj.Body)
+                    n.Visit(checker);
+            }
             return ret;
         }
 
