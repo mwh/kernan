@@ -341,7 +341,7 @@ namespace Grace.Parsing
                 cat = validateChar();
             }
             string op = code.Substring(start, index - start);
-            if ("//".Equals(op))
+            if (op.StartsWith("//"))
             {
                 index = start;
                 return lexComment();
