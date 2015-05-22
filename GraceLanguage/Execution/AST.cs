@@ -214,11 +214,15 @@ namespace Grace.Execution
             {
                 if (rirq.Name == "self")
                 {
+                    if (req == null)
+                        return null;
                     req.IsInterior = true;
                     rec = receiver.Evaluate(ctx);
                 }
                 else if (rirq.Name == "outer")
                 {
+                    if (req == null)
+                        return null;
                     req.IsInterior = true;
                     rec = ctx.FindReceiver(req, 1);
                     if (rec == null)
@@ -294,6 +298,8 @@ namespace Grace.Execution
         protected override GraceObject GetReceiver(EvaluationContext ctx,
                 MethodRequest req)
         {
+            if (req == null)
+                return null;
             GraceObject rec = ctx.FindReceiver(req);
             if (rec == null)
             {
@@ -476,8 +482,10 @@ namespace Grace.Execution
         /// <inheritdoc/>
         public override GraceObject Evaluate(EvaluationContext ctx)
         {
+            GraceObject rec = GetReceiver(ctx, null);
             var req = createRequest(ctx);
-            GraceObject rec = GetReceiver(ctx, req);
+            if (rec == null)
+                rec = GetReceiver(ctx, req);
             return performRequest(ctx, rec, req);
         }
 
