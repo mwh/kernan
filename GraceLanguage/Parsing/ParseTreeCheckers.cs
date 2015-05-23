@@ -344,7 +344,7 @@ namespace Grace.Parsing
             // and we just return successfully.
             if (popn.Receiver is IdentifierParseNode)
                 return popn;
-            return popn.Visit(this);
+            return popn.Receiver.Visit(this);
         }
     }
 }

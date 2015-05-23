@@ -1162,8 +1162,7 @@ namespace Grace.Parsing
             }
             else
             {
-                expr = parseTerm();
-                expr = expressionRestNoOp(expr);
+                expr = parseExpressionNoOp();
             }
             return new PrefixOperatorParseNode(op, expr);
         }
