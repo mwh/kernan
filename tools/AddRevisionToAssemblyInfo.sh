@@ -3,7 +3,7 @@
 # containing the Git revision, which will be available in the
 # final assembly.
 
-REV=$(git describe --long --dirty='++')
+REV=$(git describe --long --dirty='++' --always)
 if grep -q AssemblyInformationalVersion Properties/AssemblyInfo.cs
 then
     "$(dirname "$0")/RemoveRevisionFromAssemblyInfo.sh"
