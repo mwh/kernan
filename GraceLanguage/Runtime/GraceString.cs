@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Collections.Generic;
 using Grace.Execution;
 
 namespace Grace.Runtime
@@ -58,6 +59,7 @@ namespace Grace.Runtime
             AddMethod("size", null);
             AddMethod("match", null);
             AddMethod("asString", null);
+            AddMethod("substringFrom to", null);
             AddMethod("|", Matching.OrMethod);
             AddMethod("&", Matching.AndMethod);
         }
@@ -73,6 +75,9 @@ namespace Grace.Runtime
                 case "size": return new DelegateMethodNode0(Size);
                 case "match": return new DelegateMethodNode1Ctx(Match);
                 case "asString": return new DelegateMethodNode0(AsString);
+                case "substringFrom to":
+                                 return new DelegateMethodNodeReq(
+                                         substringFromTo);
             }
             return base.getLazyMethod(name);
         }
@@ -119,6 +124,50 @@ namespace Grace.Runtime
             int idx = oth.GetInt() - 1;
             int start = graphemeIndices[idx];
             return GraceString.Create(StringInfo.GetNextTextElement(Value, start));
+        }
+
+        /// <summary>Native method for Grace substringFrom To</summary>
+        /// <param name="ctx">Current interpreter</param>
+        /// <param name="req">Request arriving at this method</param>
+        private GraceObject substringFromTo(EvaluationContext ctx,
+                MethodRequest req)
+        {
+            // Index of first grapheme to include.
+            var start = req[0].Arguments[0];
+            // Index of last grapheme to include.
+            var end = req[1].Arguments[0];
+            var st = start.FindNativeParent<GraceNumber>();
+            if (st == null)
+                ErrorReporting.RaiseError(ctx, "R2001",
+                        new Dictionary<string, string> {
+                            { "method", req.Name },
+                            { "index", "1" },
+                            { "part", "substringFrom" }
+                        }, "Start must be a number");
+            var en = end.FindNativeParent<GraceNumber>();
+            if (en == null)
+                ErrorReporting.RaiseError(ctx, "R2001",
+                        new Dictionary<string, string> {
+                            { "method", req.Name },
+                            { "index", "1" },
+                            { "part", "to" }
+                        }, "End must be a number");
+            // Because, e.g., substringFrom(1) to(1) should return the
+            // first grapheme, the start value must be adjusted for
+            // base-one indexing, but the end value must not be.
+            int stInd = st.GetInt() - 1;
+            int enInd = en.GetInt();
+            if (stInd < 0)
+                stInd = 0;
+            if (enInd < 0)
+                enInd = 0;
+            if (enInd >= graphemeIndices.Length)
+                enInd = graphemeIndices.Length;
+            int endIndex = enInd < graphemeIndices.Length
+                ? graphemeIndices[enInd]
+                : Value.Length;
+            return GraceString.Create(Value.Substring(stInd,
+                        endIndex - stInd));
         }
 
         /// <summary>Native method for Grace size</summary>
