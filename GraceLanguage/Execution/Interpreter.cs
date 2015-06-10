@@ -213,6 +213,13 @@ namespace Grace.Execution
                     modules[path] = mod;
                     return mod;
                 }
+                filePath = Path.Combine(Path.Combine(p, "modules"), path + ".dll");
+                mod = tryLoadNativeModule(filePath);
+                if (mod != null)
+                {
+                    modules[path] = mod;
+                    return mod;
+                }
             }
             ErrorReporting.RaiseError(this, "R2005",
                 new Dictionary<string, string> { { "path", path } },
@@ -225,6 +232,14 @@ namespace Grace.Execution
         {
             return (File.Exists(path))
                 ? loadModuleFile(path)
+                : null;
+        }
+
+        /// <summary>Load a native module file if it exists</summary>
+        private GraceObject tryLoadNativeModule(string path)
+        {
+            return (File.Exists(path))
+                ? loadNativeModule(path)
                 : null;
         }
 
@@ -241,6 +256,28 @@ namespace Grace.Execution
                 Interpreter.Debug("========== END " + path + " ==========");
                 return ret;
             }
+        }
+
+        /// <summary>Load a module file</summary>
+        private GraceObject loadNativeModule(string path)
+        {
+            Interpreter.Debug("========== LOAD " + path + " ==========");
+            var dll = Assembly.LoadFile(path);
+            foreach (var t in dll.GetExportedTypes())
+            {
+                foreach (var a in t.GetCustomAttributes(false))
+                {
+                    if (a is ModuleEntryPoint)
+                    {
+                        var m = t.GetMethod("Instantiate");
+                        return (GraceObject)m.Invoke(null, new Object[1]{this});
+                    }
+                }
+            }
+            ErrorReporting.RaiseError(this, "R2005",
+                new Dictionary<string, string> { { "path", path } },
+                "LookupError: Could not find module ${path}");
+            return null;
         }
 
         /// <inheritdoc />
@@ -740,5 +777,15 @@ namespace Grace.Execution
         {
             writer.WriteLine(s);
         }
+    }
+
+    /// <summary>
+    /// Attribute to be applied to the single entry point class of
+    /// a native module DLL.
+    /// </summary>
+    public class ModuleEntryPoint : System.Attribute
+    {
+        /// <summary>Default entry point</summary>
+        public ModuleEntryPoint() {}
     }
 }
