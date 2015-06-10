@@ -11,7 +11,7 @@ using Grace.Execution;
 namespace Grace.Runtime
 {
     /// <summary>A Grace number object</summary>
-    class GraceNumber : GraceObject
+    public class GraceNumber : GraceObject
     {
         /// <summary>Value of this number as a double</summary>
         public double Double
@@ -54,6 +54,7 @@ namespace Grace.Runtime
             AddMethod("&", Matching.AndMethod);
         }
 
+        /// <inheritdoc />
         protected override MethodNode getLazyMethod(string name)
         {
             switch(name)

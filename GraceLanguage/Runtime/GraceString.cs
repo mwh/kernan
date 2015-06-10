@@ -5,7 +5,7 @@ using Grace.Execution;
 namespace Grace.Runtime
 {
     /// <summary>A Grace string object</summary>
-    class GraceString : GraceObject
+    public class GraceString : GraceObject
     {
         /// <summary>
         /// User code to extend all builtin numbers.
@@ -64,11 +64,12 @@ namespace Grace.Runtime
             AddMethod("&", Matching.AndMethod);
         }
 
+        /// <inheritdoc />
         protected override MethodNode getLazyMethod(string name)
         {
             switch(name) {
                 case "++":
-                    return new DelegateMethodNode1Ctx(Concatenate);
+                    return new DelegateMethodNode1Ctx(mConcatenate);
                 case "==": return new DelegateMethodNode1(EqualsEquals);
                 case "!=": return new DelegateMethodNode1(NotEquals);
                 case "at": return new DelegateMethodNode1(At);
@@ -82,7 +83,7 @@ namespace Grace.Runtime
             return base.getLazyMethod(name);
         }
 
-        public GraceObject Concatenate(EvaluationContext ctx,
+        private GraceObject mConcatenate(EvaluationContext ctx,
                 GraceObject other)
         {
             var oth = other.FindNativeParent<GraceString>();
