@@ -112,10 +112,14 @@ namespace Grace.Runtime
                 return viewAsNative(((GraceObjectProxy)obj).Object);
             if (obj is GraceNumber)
             {
-                var d = (obj as GraceNumber).Double;
+                var d = ((GraceNumber)obj).Double;
                 if (d == (int)d)
                     return (int)d;
                 return d;
+            }
+            if (obj is GraceString)
+            {
+                return ((GraceString)obj).Value;
             }
             return obj;
         }
