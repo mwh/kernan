@@ -1609,7 +1609,10 @@ end:
         public override GraceObject Evaluate(EvaluationContext ctx)
         {
             MethodScope ms = ctx.FindNearestMethod();
-            ms.Return(Value.Evaluate(ctx));
+            if (Value != null)
+                ms.Return(Value.Evaluate(ctx));
+            else
+                ms.Return(GraceObject.Done);
             return GraceObject.Done;
         }
 
