@@ -64,3 +64,4 @@ R2003 AccessibilityError: Confidential method «${method}» cannot be accessed f
 R2004 InsufficientArgumentsError: Part «${part}» of method «${method}» requires ${need} arguments, but only ${have} provided
 R2005 LookupError: Could not find module "${path}" to import
 R2006 SurplusArgumentsError: Part «${part}» of method «${method}» can only accept ${need} arguments, but ${have} provided
+R2008 UninitialisedReadError: Cannot read from «${name}» because it has never been initialised.

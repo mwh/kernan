@@ -131,6 +131,17 @@ namespace Grace.Runtime
                     req[0].Arguments.Count);
             LocalScope s = self as LocalScope;
             string name = req.Name;
+            if (s[name] == GraceObject.Uninitialised
+                    || s[name] == null)
+            {
+                ErrorReporting.RaiseError(ctx, "R2008",
+                    new Dictionary<string, string> {
+                        { "name", name },
+                        { "receiver", ToString() }
+                    },
+                    "UninitialisedReadError: Cannot read from «" + name + "»"
+                );
+            }
             return s[name];
         }
     }
@@ -154,7 +165,7 @@ namespace Grace.Runtime
             LocalScope s = self as LocalScope;
             string name = req[0].Name;
             s[name] = req[1].Arguments[0];
-            return GraceObject.Uninitialised;
+            return GraceObject.Done;
         }
     }
 

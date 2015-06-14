@@ -235,7 +235,7 @@ namespace Grace.Runtime
         public virtual ReaderWriterPair AddLocalVar(string name,
                 GraceObject val)
         {
-            fields[name] = val;
+            fields[name] = val == null ? GraceObject.Uninitialised : val;
             if (Reader == null)
                 Reader = new FieldReaderMethod(fields);
             if (Writer == null)
@@ -421,6 +421,17 @@ namespace Grace.Runtime
                     0, false,
                     req[0].Arguments.Count);
             string name = req.Name;
+            if (fields[name] == GraceObject.Uninitialised
+                    || fields[name] == null)
+            {
+                ErrorReporting.RaiseError(ctx, "R2008",
+                    new Dictionary<string, string> {
+                        { "name", name },
+                        { "receiver", ToString() }
+                    },
+                    "UninitialisedReadError: Cannot read from «" + name + "»"
+                );
+            }
             return fields[name];
         }
     }
@@ -446,7 +457,7 @@ namespace Grace.Runtime
             checkAccessibility(ctx, req);
             string name = req[0].Name;
             fields[name] = req[1].Arguments[0];
-            return GraceObject.Uninitialised;
+            return GraceObject.Done;
         }
     }
 
