@@ -825,10 +825,6 @@ end:
             else
             {
                 methods[meth.Name] = meth;
-                if (meth.Fresh)
-                {
-                    methods[meth.Name + " object"] = meth;
-                }
             }
         }
 
