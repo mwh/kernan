@@ -346,5 +346,14 @@ namespace Grace.Parsing
                 return popn;
             return popn.Receiver.Visit(this);
         }
+
+        /// <inheritdoc/>
+        public override ParseNode Visit(
+                InheritsParseNode ipn
+                )
+        {
+            // Only the request part should be scanned.
+            return ipn.From.Visit(this);
+        }
     }
 }
