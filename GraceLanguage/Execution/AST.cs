@@ -807,6 +807,8 @@ end:
         private bool containsInheritance;
         private List<InheritsNode> inheritsStatements =
             new List<InheritsNode>();
+        private List<DefDeclarationNode> defs = new List<DefDeclarationNode>();
+        private List<VarDeclarationNode> vars = new List<VarDeclarationNode>();
 
         internal ObjectConstructorNode(Token token, ParseNode source)
             : base(token, source)
@@ -821,11 +823,17 @@ end:
         {
             MethodNode meth = node as MethodNode;
             var i = node as InheritsNode;
+            var d = node as DefDeclarationNode;
+            var v = node as VarDeclarationNode;
             if (i != null)
             {
                 containsInheritance = true;
                 inheritsStatements.Add(i);
             }
+            if (d != null)
+                defs.Add(d);
+            if (v != null)
+                vars.Add(v);
             if (meth == null)
                 body.Add(node);
             else
@@ -916,6 +924,10 @@ end:
                     if (i.As != null)
                         local.AddLocalDef(i.As, GraceObject.UninheritedParent);
             }
+            foreach (var d in defs)
+                ret.AddLocalDef(d.Name, GraceObject.Uninitialised);
+            foreach (var v in vars)
+                ret.AddLocalVar(v.Name, GraceObject.Uninitialised);
             ctx.ExtendMinor(local);
             ret.RememberScope(ctx);
             foreach (MethodNode m in methods.Values)
