@@ -805,6 +805,8 @@ end:
         private List<Node> body = new List<Node>();
         private Dictionary<string, MethodNode> methods = new Dictionary<string, MethodNode>();
         private bool containsInheritance;
+        private List<InheritsNode> inheritsStatements =
+            new List<InheritsNode>();
 
         internal ObjectConstructorNode(Token token, ParseNode source)
             : base(token, source)
@@ -818,8 +820,12 @@ end:
         public void Add(Node node)
         {
             MethodNode meth = node as MethodNode;
-            if (node is InheritsNode)
+            var i = node as InheritsNode;
+            if (i != null)
+            {
                 containsInheritance = true;
+                inheritsStatements.Add(i);
+            }
             if (meth == null)
                 body.Add(node);
             else
@@ -904,6 +910,12 @@ end:
         {
             if (!containsInheritance)
                 ret.AddParent("super", GraceObject.DefaultMethods);
+            else
+            {
+                foreach (InheritsNode i in inheritsStatements)
+                    if (i.As != null)
+                        local.AddLocalDef(i.As, GraceObject.UninheritedParent);
+            }
             ctx.ExtendMinor(local);
             ret.RememberScope(ctx);
             foreach (MethodNode m in methods.Values)

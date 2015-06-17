@@ -46,7 +46,7 @@ namespace Grace.Execution
                     }
                 }
             }
-            if (singleParent && parent != null)
+            if (singleParent && parent != null && parent.As == null)
             {
                 parent.As = "super";
                 parentNames.Add("super");

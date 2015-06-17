@@ -395,6 +395,10 @@ namespace Grace.Runtime
 
         /// <summary>The singleton done object</summary>
         public static readonly GraceObject Done = new GraceObject("Done");
+
+        /// <summary>The singleton uninherited parent object</summary>
+        public static readonly GraceObject UninheritedParent =
+            new GraceObject("ParentNotInheritedYet", true);
     }
 
     /// <summary>Reusable method reading a field of an object</summary>
