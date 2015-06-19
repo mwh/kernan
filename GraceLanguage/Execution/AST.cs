@@ -1216,10 +1216,12 @@ end:
             {
                 if (!re.IsFromScope(myScope))
                     throw;
+                myScope.Complete();
                 ctx.Unextend(myScope);
                 ctx.RestoreExactly(memo);
                 return re.Value;
             }
+            myScope.Complete();
             ctx.Unextend(myScope);
             ctx.RestoreExactly(memo);
             return ret;
@@ -1630,9 +1632,9 @@ end:
         {
             MethodScope ms = ctx.FindNearestMethod();
             if (Value != null)
-                ms.Return(Value.Evaluate(ctx));
+                ms.Return(ctx, Value.Evaluate(ctx), this);
             else
-                ms.Return(GraceObject.Done);
+                ms.Return(ctx, GraceObject.Done, this);
             return GraceObject.Done;
         }
 

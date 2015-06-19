@@ -181,16 +181,44 @@ namespace Grace.Runtime
     public class MethodScope : LocalScope
     {
 
+        private bool completed;
+
         /// <param name="name">The name of this method for debugging</param>
         public MethodScope(string name) : base(name) { }
 
         /// <summary>Return a value from this method</summary>
+        /// <param name="ctx">Current interpreter</param>
         /// <param name="val">Return value</param>
+        /// <param name="ret">Return statement</param>
         /// <exception cref="ReturnException">Always thrown to indicate a
         /// return from a Grace method</exception>
-        public void Return(GraceObject val)
+        public void Return(EvaluationContext ctx, GraceObject val,
+                Node ret)
         {
+            if (completed)
+            {
+                // Put the return statement into the call stack
+                // so that its location is shown to the user, even
+                // though it isn't actually a method request.
+                ctx.NestRequest(ret.Location.Module,
+                        ret.Location.line, "return");
+                ErrorReporting.RaiseError(ctx, "R2009",
+                    new Dictionary<string, string> {
+                        { "method", Name }
+                    },
+                    "IllegalReturnError: Method «" + Name
+                        + "» already returned");
+            }
             throw new ReturnException(this, val);
+        }
+
+        /// <summary>
+        /// Signal that this method has completed, and may no
+        /// longer be returned from.
+        /// </summary>
+        public void Complete()
+        {
+            completed = true;
         }
     }
 

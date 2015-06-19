@@ -26,6 +26,13 @@ namespace Grace.Runtime
 
         private string name = "<anon>";
 
+        /// <summary>The name of this scope</summary>
+        public string Name {
+            get {
+                return name;
+            }
+        }
+
         /// <summary>Empty anonymous scope</summary>
         public LocalScope()
             : base("LocalScope", true)
