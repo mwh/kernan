@@ -21,9 +21,6 @@ namespace Grace.Runtime
 
         private Stack<GraceObject> parents = new Stack<GraceObject>();
 
-        private FieldReaderMethod Reader;
-        private FieldWriterMethod Writer;
-
         private Interpreter.ScopeMemo lexicalScope;
         private Flags flags;
 
@@ -236,13 +233,11 @@ namespace Grace.Runtime
                 GraceObject val)
         {
             fields[name] = val == null ? GraceObject.Uninitialised : val;
-            if (Reader == null)
-                Reader = new FieldReaderMethod(fields);
-            if (Writer == null)
-                Writer = new FieldWriterMethod(fields);
-            AddMethod(name, Reader);
-            AddMethod(name + " :=", Writer);
-            return new ReaderWriterPair { Read = Reader, Write = Writer };
+            var reader = new FieldReaderMethod(fields);
+            var writer = new FieldWriterMethod(fields);
+            AddMethod(name, reader);
+            AddMethod(name + " :=", writer);
+            return new ReaderWriterPair { Read = reader, Write = writer };
         }
 
         /// <summary>Add method to this object representing a def
@@ -253,9 +248,7 @@ namespace Grace.Runtime
         public virtual MethodNode AddLocalDef(string name, GraceObject val)
         {
             fields[name] = val;
-            if (Reader == null)
-                Reader = new FieldReaderMethod(fields);
-            var read = Reader;
+            var read = new FieldReaderMethod(fields);
             AddMethod(name, read);
             return read;
         }
