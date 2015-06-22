@@ -232,6 +232,16 @@ namespace Grace.Runtime
         public virtual ReaderWriterPair AddLocalVar(string name,
                 GraceObject val)
         {
+            if (fields.ContainsKey(name))
+            {
+                if (val != GraceObject.Uninitialised)
+                    fields[name] = val;
+                return new ReaderWriterPair
+                {
+                    Read = methods[name],
+                    Write = methods[name + " :="]
+                };
+            }
             fields[name] = val == null ? GraceObject.Uninitialised : val;
             var reader = new FieldReaderMethod(fields);
             var writer = new FieldWriterMethod(fields);
