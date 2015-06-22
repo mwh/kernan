@@ -925,9 +925,9 @@ end:
                         local.AddLocalDef(i.As, GraceObject.UninheritedParent);
             }
             foreach (var d in defs)
-                ret.AddLocalDef(d.Name, GraceObject.Uninitialised);
+                d.Create(ctx);
             foreach (var v in vars)
-                ret.AddLocalVar(v.Name, GraceObject.Uninitialised);
+                v.Create(ctx);
             ctx.ExtendMinor(local);
             ret.RememberScope(ctx);
             foreach (MethodNode m in methods.Values)
@@ -1522,6 +1522,21 @@ end:
             return GraceObject.Done;
         }
 
+        /// <summary>
+        /// Create this var on the object in the current context,
+        /// evaluating and applying its annotations correctly. The
+        /// var will be uninitialised.
+        /// </summary>
+        /// <param name="ctx">Current interpreter context</param>
+        public void Create(EvaluationContext ctx)
+        {
+            var pair = ctx.AddVar(Name, GraceObject.Uninitialised);
+            if (Readable)
+                pair.Read.Confidential = false;
+            if (Writable)
+                pair.Write.Confidential = false;
+        }
+
         /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
@@ -1587,6 +1602,19 @@ end:
             if (Public)
                 meth.Confidential = false;
             return GraceObject.Done;
+        }
+
+        /// <summary>
+        /// Create this def on the object in the current context,
+        /// evaluating and applying its annotations correctly. The
+        /// def will be uninitialised.
+        /// </summary>
+        /// <param name="ctx">Current interpreter context</param>
+        public void Create(EvaluationContext ctx)
+        {
+            var meth = ctx.AddDef(Name, GraceObject.Uninitialised);
+            if (Public)
+                meth.Confidential = false;
         }
 
         /// <inheritdoc/>
