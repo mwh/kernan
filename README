@@ -1,0 +1,31 @@
+Kernan is an interpreter for the Grace language
+
+Kernan aims to implement the language correctly and without proprietary
+extensions. It is written in C# and functions on all platforms, either
+natively on Windows or under Mono elsewhere.
+
+Building
+========
+Windows
+-------
+This repository can be imported directly into Visual Studio, and builds
+and runs directly. `Grace.exe` can be run directly to access the
+command-line interface.
+
+Linux and OS X
+--------------
+Mono is available from <http://www.mono-project.com> and includes both a
+runtime and C# compiler. After obtaining and installing Mono, the
+repository or an individual subproject can be compiled by running
+`xbuild` in its directory. `Grace/grace` is a shell script wrapping the
+command-line interface to Kernan.
+
+Usage
+=====
+To run an individual Grace file, use:
+    grace file.grace
+with either `Grace.exe` or `Grace/grace` in your path, depending on your
+platform.
+
+There is a read-eval-print loop available with the --repl option:
+    grace --repl

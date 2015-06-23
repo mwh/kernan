@@ -1,0 +1,111 @@
+This file contains guidance on making modifications to Kernan, an
+interpreter for the Grace language, including the structure of the code
+and contribution guidelines.
+
+Structure
+=========
+Kernan has three modules:
+* GraceLanguage contains the language runtime, and builds a shared
+  library to be used elsewhere. It also contains the prelude file and
+  other data files needed at run time.
+* Grace contains the command-line entry point, which embeds the language
+  runtime. It also contains a shell wrapper script and the test suite.
+* GraceWindow contains a minimal Windows Forms application embedding the
+  language runtime.
+
+Making changes
+==============
+Kernan uses the Git version control system (<http://git-scm.com>). To
+have your changes incorporated upstream you should work against the
+latest master branch of <https://mwh.nz/git/kernan>.
+
+Coding style
+============
+C# code should conform to the standard layout and formatting rules of
+the language, including brace placement. Where feasible, lines should be
+wrapped before 80 characters. All public methods, properties, and
+classes must have documentation comments preceding their declarations,
+and their names should begin with a capital letter. Unrelated classes
+should be defined in separate files. Code should be compatible with mcs
+3.4.0 and the newest version of Visual Studio.
+
+Grace code should be indented consistently. Only the minimal prelude,
+any required tools, and test cases should be included in this
+repository; other Grace code, including "standard" libraries, should be
+maintained as libraries.
+
+All shell scripts used as part of the build or release process must have
+equivalent PowerShell versions. Both scripts should begin with comments
+describing the purpose of the script, followed by a blank line. Scripts
+must function in Bash 3.2 and PowerShell 4.0.
+
+Git
+===
+The remainder of this document covers the use of Git and the
+requirements placed on commits and branches for integration.
+
+Configuring Git
+---------------
+Git should be configured with your name and email address. Use
+  git config --global user.name "Your Name"
+  git config --global user.email "you@example.com"
+to set these before making any commits.
+
+Additional documentation for Git can be found on the Git website:
+<http://git-scm.com/documentation>. <https://help.github.com/> also
+includes some helpful "getting started" documentation.
+
+Preparing a branch for integration
+----------------------------------
+Commits should be logical and self-contained. The subject (first line)
+of the commit message should be no longer than 50 characters. Further
+explanation should follow a blank line and be wrapped at no more than 72
+characters. The subject should be an imperative statement summarising
+the content and purpose of the commit, and should not end with
+punctuation. Unrelated changes should be in separate commits.
+
+Eventually you will have a completed discrete change to the compiler you
+want to integrate. At this point please ensure that the branch is
+fast-forward from the upstream master (that is, the tip of upstream
+master is a direct ancestor of the tip of the branch to be merged). You
+may find the rebase command to be useful here: see `git help rebase`. Do
+not include merge commits in this branch.
+
+The system should build and pass the entire test suite at every commit.
+
+Integration requests that do not meet these requirements will be
+summarily and mechanically rejected.
+
+Submitting changes
+------------------
+To submit changes for inclusion, publish the branch containing them
+somewhere publicly accessible and inform the maintainer of its location,
+the branch you want to merge, and what it is you want to integrate. You
+may place this branch anywhere that is generally accessible; a number of
+special-purpose Git hosting services exist, which are listed on
+<https://git.wiki.kernel.org/index.php/GitHosting>. Any of these
+services are suitable for hosting your repository. Documentation on how
+to use each service is provided on their websites.
+
+Alternatively, you can also publish the branch into any HTTP-accessible
+webspace. In that case, run `git update-server-info` inside the
+repository directory to generate files required to let Git find what it
+needs. You can either copy the repository using an ordinary filesystem
+copy or publish it using `git push` and a configured remote (see `git
+help remote`).
+
+If none of the above options are available to you for some reason, `git
+format-patch name-of-upstream/master` will generate patch files from the
+commits, including their metadata, which can then be sent in for
+inclusion. `git send-email`, when configured correctly, will
+automatically generate and email these patches. Instructions for using
+these commands are included in the Git documentation.
+
+Revising changes
+----------------
+If your commits do not meet these requirements or there are design
+issues, merge conflicts, or bugs found during the integration process
+you may be asked to correct them and resubmit. In this case, `git rebase
+--interactive` is likely to be a useful tool. See `git help rebase` for
+details on how to use this tool. After making the requested changes you
+can follow the above steps again to publish the new branch.
