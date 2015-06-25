@@ -209,6 +209,7 @@ namespace Grace.Runtime
                     "IllegalReturnError: Method «" + Name
                         + "» already returned");
             }
+            completed = true;
             throw new ReturnException(this, val);
         }
 
