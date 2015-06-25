@@ -29,3 +29,8 @@ platform.
 
 There is a read-eval-print loop available with the --repl option:
     grace --repl
+
+Source code
+===========
+The mainline source code of Kernan is available via git from:
+    https://mwh.nz/git/kernan
