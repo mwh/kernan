@@ -23,16 +23,30 @@ namespace Grace
         /// The error string corresponding to the code and conditions,
         /// or null
         /// </returns>
+        /// <remarks>
+        /// The search order is first user messages, from the
+        /// "UserErrorMessages.txt" file in the user import root,
+        /// then "OverlayErrorMessages.txt" next to the executable,
+        /// then "DefaultErrorMessages.txt" next to the executable.
+        /// Only the last of these is shipped with the default
+        /// distribution. The first matching entry will be used.
+        /// </remarks>
         public static string GetMessage(string code,
                 Dictionary<string, string> data)
         {
             string localGrace = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
                 "grace");
-            var msg = GetMessageFromFile(code, localGrace, data);
+            var msg = GetMessageFromFile(code, localGrace,
+                    "UserErrorMessages.txt", data);
             if (msg != null)
                 return msg;
             string dir = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
-            return GetMessageFromFile(code, dir, data);
+            msg = GetMessageFromFile(code, dir, "OverlayErrorMessages.txt",
+                    data);
+            if (msg != null)
+                return msg;
+            return GetMessageFromFile(code, dir, "DefaultErrorMessages.txt",
+                    data);
         }
 
         /// <summary>
@@ -44,6 +58,9 @@ namespace Grace
         /// <param name="dir">
         /// Path to directory containing messages file to use
         /// </param>
+        /// <param name="filename">
+        /// Name of file to search within given directory
+        /// </param>
         /// <param name="data">
         /// Dictionary of proposed substitute values to be used
         /// for winnowing
@@ -53,9 +70,10 @@ namespace Grace
         /// </returns>
         /// <seealso cref="ErrorReporting.GetMessage" />
         public static string GetMessageFromFile(string code, string dir,
+                string filename,
                 Dictionary<string, string> data)
         {
-            string fp = Path.Combine(dir, "DefaultErrorMessages.txt");
+            string fp = Path.Combine(dir, filename);
             if (!File.Exists(fp))
                 return null;
             using (StreamReader reader = File.OpenText(fp))

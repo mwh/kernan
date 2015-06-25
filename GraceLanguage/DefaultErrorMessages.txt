@@ -1,3 +1,7 @@
+# To provide distribution-specific error messages, create a file
+# in this format called "OverlayErrorMessages.txt". To add
+# per-user overrides, create UserErrorMessages.txt and place it
+# in the per-user import root.
 P1000 Unable to consume input: stuck at token ${token}
 P1001 Unexpected end of file, expecting '${expected}'
 P1002 Unexpected ${found}, expected ${expected}
