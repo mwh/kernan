@@ -62,7 +62,6 @@
     <Compile Include="Runtime\GraceNumber.cs" />
     <Compile Include="Runtime\GraceObject.cs" />
     <Compile Include="Runtime\GraceObjectProxy.cs" />
-    <Compile Include="Runtime\ExposedCompiler.cs" />
     <Compile Include="Runtime\GraceString.cs" />
     <Compile Include="Runtime\Methods.cs" />
     <Compile Include="ErrorReporting.cs" />

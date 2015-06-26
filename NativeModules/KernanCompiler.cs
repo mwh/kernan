@@ -2,14 +2,22 @@ using System.Collections.Generic;
 using System.IO;
 using Grace.Parsing;
 using Grace.Execution;
+using Grace.Runtime;
 
-namespace Grace.Runtime
+namespace KernanCompiler
 {
-    class ExposedCompiler : GraceObject
+    [ModuleEntryPoint]
+    public class ExposedCompiler : GraceObject
     {
         private DictionaryDataObject parseNodes;
 
-        public ExposedCompiler() : base("!compiler")
+        public static GraceObject Instantiate(
+            EvaluationContext ctx)
+        {
+            return new ExposedCompiler();
+        }
+
+        public ExposedCompiler() : base("mwh.nz/kernan/compiler")
         {
             AddMethod("parse", new DelegateMethodNode1(
                         new NativeMethod1(mParse)));
