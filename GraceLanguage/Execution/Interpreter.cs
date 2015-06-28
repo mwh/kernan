@@ -70,6 +70,18 @@ namespace Grace.Execution
         private GraceObject majorScope;
         private OutputSink sink;
 
+        /// <summary>
+        /// Hook function called when an import fails
+        /// </summary>
+        /// <returns>
+        /// True if the import should be retried.
+        /// </returns>
+        public Func<string, Interpreter, bool> FailedImportHook
+        {
+            get;
+            set;
+        }
+
         /// <summary>A default interpreter</summary>
         public Interpreter()
         {
@@ -216,6 +228,13 @@ namespace Grace.Execution
                     modules[path] = mod;
                     return mod;
                 }
+            }
+            if (FailedImportHook != null)
+            {
+                // Optionally, the host program can try to satisfy a module
+                // and indicate that we should retry the import.
+                if (FailedImportHook(path, this))
+                    return LoadModule(path);
             }
             ErrorReporting.RaiseError(this, "R2005",
                 new Dictionary<string, string> { { "path", path } },
