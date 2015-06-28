@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.IO;
+using System.Net;
 using Grace.Execution;
 using Grace.Parsing;
 using Grace.Runtime;
@@ -54,6 +55,7 @@ namespace Grace
                 return 1;
             }
             var interp = new Interpreter();
+            interp.FailedImportHook = promptInstallModule;
             interp.LoadPrelude();
             if (builtinsFile != null)
                 interp.LoadBuiltins(builtinsFile);
@@ -128,6 +130,87 @@ namespace Grace
                 }
             }
             return 0;
+        }
+
+        private static bool promptInstallModule(string path,
+            Interpreter interp)
+        {
+            // If it doesn't look like it can be mapped to a URL,
+            // don't bother trying.
+            var parts = path.Split('/');
+            if (!parts[0].Contains('.'))
+                return false;
+            // Ask the user what to do. Any input other than
+            // those listed is treated as a no.
+            System.Console.WriteLine("Imported module `" + path
+                + "` is not installed on this system.");
+            System.Console.WriteLine("Would you like to install it?");
+            System.Console.WriteLine("[I]nstall [T]erminate");
+            var k = System.Console.ReadKey();
+            System.Console.WriteLine();
+            if (k.KeyChar == 'i' || k.KeyChar == 'I' || k.KeyChar == 'y'
+                || k.KeyChar == 'Y')
+            {
+                // The first fetch must be a Grace file, so we can always
+                // treat it as a string. If it delegates to another (native)
+                // module, we will make a second request to get that file.
+                System.Console.WriteLine("Fetching " + "https://" + path
+                    + ".grace");
+                var request = WebRequest.Create("https://" + path + ".grace");
+                var response = request.GetResponse();
+                var http = (HttpWebResponse)response;
+                var stream = http.GetResponseStream();
+                var readStream = new StreamReader(stream,
+                    System.Text.Encoding.UTF8);
+                var code = readStream.ReadToEnd();
+                var dest = Path.Combine(Interpreter.GetModulePaths()[0],
+                    "modules");
+                // Build up the directory path, ignoring the extension
+                // for the moment.
+                foreach (var p in parts)
+                {
+                    dest = Path.Combine(dest, p);
+                }
+                Directory.CreateDirectory(Path.GetDirectoryName(dest));
+                if (code.StartsWith("#kernan:"))
+                {
+                    // This is a placeholder redirecting to a native module
+                    response.Close();
+                    var lines = code.Split('\n');
+                    var native = lines[0].Trim().Substring(8);
+                    System.Console.WriteLine("Fetching " + "https://"
+                        + path.Substring(0, path.LastIndexOf('/')) + "/"
+                        + native);
+                    request = WebRequest.Create("https://"
+                        + path.Substring(0, path.LastIndexOf('/')) + "/"
+                        + native);
+                    response = request.GetResponse();
+                    http = (HttpWebResponse)response;
+                    stream = http.GetResponseStream();
+                    var array = new byte[2048];
+                    dest += ".dll";
+                    var fpn = File.OpenWrite(dest);
+                    var len = 0;
+                    while ((len = stream.Read(array, 0, array.Length)) > 0)
+                    {
+                        fpn.Write(array, 0, len);
+                    }
+                    fpn.Close();
+                }
+                else
+                {
+                    // Ordinary code, to be saved to a grace file as text.
+                    dest += ".grace";
+                    var fp = File.OpenWrite(dest);
+                    var bytes = System.Text.Encoding.UTF8.GetBytes(code);
+                    fp.Write(bytes, 0, bytes.Length);
+                    fp.Close();
+                }
+                response.Close();
+                System.Console.WriteLine("Saved module to " + dest);
+                return true;
+            }
+            return false;
         }
 
         private static int repl(string filename)
