@@ -132,24 +132,11 @@ namespace Grace
             return 0;
         }
 
-        private static bool promptInstallModule(string path,
-            Interpreter interp)
+        private static bool doInstallModule(string path,
+                Interpreter interp)
         {
-            // If it doesn't look like it can be mapped to a URL,
-            // don't bother trying.
             var parts = path.Split('/');
-            if (!parts[0].Contains('.'))
-                return false;
-            // Ask the user what to do. Any input other than
-            // those listed is treated as a no.
-            System.Console.WriteLine("Imported module `" + path
-                + "` is not installed on this system.");
-            System.Console.WriteLine("Would you like to install it?");
-            System.Console.WriteLine("[I]nstall [T]erminate");
-            var k = System.Console.ReadKey();
-            System.Console.WriteLine();
-            if (k.KeyChar == 'i' || k.KeyChar == 'I' || k.KeyChar == 'y'
-                || k.KeyChar == 'Y')
+            try
             {
                 // The first fetch must be a Grace file, so we can always
                 // treat it as a string. If it delegates to another (native)
@@ -208,7 +195,66 @@ namespace Grace
                 }
                 response.Close();
                 System.Console.WriteLine("Saved module to " + dest);
-                return true;
+            }
+            catch (WebException ex)
+            {
+                if (ex.Status == WebExceptionStatus.SendFailure
+                        || ex.Status == WebExceptionStatus.ConnectFailure)
+                {
+                    System.Console.WriteLine(
+                            "There was an error making the HTTPS connection;"
+                            + " this may be because the remote\nserver is "
+                            + "currently inaccessible.");
+                    if (System.Environment.OSVersion.Platform
+                            == System.PlatformID.Unix)
+                    {
+                        System.Console.WriteLine();
+                        System.Console.WriteLine(
+                                "Alternatively, it may mean that your system "
+                                + "is not set up to trust certificates.\nIf "
+                                + "the location is generally reachable, you "
+                                + "can probably install the\ncertificates "
+                                + "accepted by Mozilla using the mozroots "
+                                + "tool:\n");
+                        System.Console.WriteLine(
+                                "        mozroots --import --ask-remove");
+                        System.Console.WriteLine(
+                                "\nThis tool is included with Mono.");
+                        System.Console.WriteLine(
+                                "\nIf this was the cause of the problem, "
+                                + "it will not occur again after importing"
+                                + "\nthe certificates.");
+                    }
+                    return false;
+                }
+                else
+                {
+                    throw;
+                }
+            }
+            return true;
+        }
+
+        private static bool promptInstallModule(string path,
+            Interpreter interp)
+        {
+            // If it doesn't look like it can be mapped to a URL,
+            // don't bother trying.
+            var parts = path.Split('/');
+            if (!parts[0].Contains('.'))
+                return false;
+            // Ask the user what to do. Any input other than
+            // those listed is treated as a no.
+            System.Console.WriteLine("Imported module `" + path
+                + "` is not installed on this system.");
+            System.Console.WriteLine("Would you like to install it?");
+            System.Console.WriteLine("[I]nstall [T]erminate");
+            var k = System.Console.ReadKey();
+            System.Console.WriteLine();
+            if (k.KeyChar == 'i' || k.KeyChar == 'I' || k.KeyChar == 'y'
+                || k.KeyChar == 'Y')
+            {
+                return doInstallModule(path, interp);
             }
             return false;
         }
