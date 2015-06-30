@@ -1116,7 +1116,7 @@ end:
                 GraceObject self, MethodRequest req)
         {
             checkAccessibility(ctx, req);
-            GraceObject ret = null;
+            GraceObject ret = GraceObject.Done;
             Interpreter.ScopeMemo memo = ctx.Memorise();
             var myScope = new MethodScope(req.Name);
             foreach (var pp in Signature.Zip(req, (dp, rp) => new { mine = dp, req = rp }))
