@@ -54,7 +54,9 @@ namespace Grace
                 System.Console.Error.WriteLine("Required filename argument missing.");
                 return 1;
             }
+            var dir = Path.GetDirectoryName(Path.GetFullPath(filename));
             var interp = new Interpreter();
+            interp.AddModuleRoot(dir);
             interp.FailedImportHook = promptInstallModule;
             interp.LoadPrelude();
             if (builtinsFile != null)
@@ -150,8 +152,7 @@ namespace Grace
                 var readStream = new StreamReader(stream,
                     System.Text.Encoding.UTF8);
                 var code = readStream.ReadToEnd();
-                var dest = Path.Combine(Interpreter.GetModulePaths()[0],
-                    "modules");
+                var dest = Interpreter.GetStaticModulePaths()[0];
                 // Build up the directory path, ignoring the extension
                 // for the moment.
                 foreach (var p in parts)
@@ -271,6 +272,8 @@ namespace Grace
             var obj = new GraceObject();
             if (filename != null)
             {
+                var dir = Path.GetDirectoryName(Path.GetFullPath(filename));
+                interp.AddModuleRoot(dir);
                 Console.WriteLine("* Loading " + filename + "...");
                 using (StreamReader reader = File.OpenText(filename))
                 {
@@ -300,6 +303,11 @@ namespace Grace
                     }
                 }
                 Console.WriteLine("* Loaded.");
+            }
+            else
+            {
+                var dir = Path.GetFullPath(".");
+                interp.AddModuleRoot(dir);
             }
             Console.WriteLine("* Enter code at the prompt.\n");
             ErrorReporting.SilenceError("P1001");

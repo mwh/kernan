@@ -70,6 +70,9 @@ namespace Grace.Execution
         private GraceObject majorScope;
         private OutputSink sink;
 
+        private List<string> additionalModuleRoots =
+            new List<string>();
+
         /// <summary>
         /// Hook function called when an import fails
         /// </summary>
@@ -188,17 +191,40 @@ namespace Grace.Execution
             ret.scope = scope;
             ret.majorScope = majorScope;
             ret.sink = sink;
+            foreach (var r in additionalModuleRoots)
+                ret.AddModuleRoot(r);
             return ret;
         }
 
-        /// <summary>Gives the directory paths searched for imports</summary>
-        public static List<string> GetModulePaths()
+        /// <summary>
+        /// Gives the directory paths searched for imports independently
+        /// of the executing program
+        /// </summary>
+        public static List<string> GetStaticModulePaths()
         {
             string execDir = Path.GetDirectoryName(typeof(Interpreter).Assembly.Location);
             string localGrace = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
                 "grace");
-            var bases = new List<string> { localGrace, execDir };
+            var bases = new List<string> {
+                Path.Combine(localGrace, "modules"),
+                Path.Combine(execDir, "modules")
+            };
             return bases;
+        }
+
+        /// <summary>Gives the directory paths searched for imports</summary>
+        public List<string> GetModulePaths()
+        {
+            return additionalModuleRoots.Concat(GetStaticModulePaths()).ToList();
+        }
+
+        /// <summary>
+        /// Add an additional path to be searched for imported modules
+        /// </summary>
+        /// <param name="path">Absolute path to search inside</param>
+        public void AddModuleRoot(string path)
+        {
+            additionalModuleRoots.Add(path);
         }
 
         /// <inheritdoc />
@@ -214,14 +240,14 @@ namespace Grace.Execution
             var bases = GetModulePaths();
             foreach (var p in bases)
             {
-                var filePath = Path.Combine(Path.Combine(p, "modules"), path + ".grace");
+                var filePath = Path.Combine(p, path + ".grace");
                 var mod = tryLoadModuleFile(filePath);
                 if (mod != null)
                 {
                     modules[path] = mod;
                     return mod;
                 }
-                filePath = Path.Combine(Path.Combine(p, "modules"), path + ".dll");
+                filePath = Path.Combine(p, path + ".dll");
                 mod = tryLoadNativeModule(filePath);
                 if (mod != null)
                 {
