@@ -205,8 +205,7 @@ namespace Grace
             }
             catch (WebException ex)
             {
-                if (ex.Status == WebExceptionStatus.SendFailure
-                        || ex.Status == WebExceptionStatus.ConnectFailure)
+                if (ex.Status == WebExceptionStatus.SendFailure)
                 {
                     System.Console.WriteLine(
                             "There was an error making the HTTPS connection;"
@@ -232,6 +231,16 @@ namespace Grace
                                 + "it will not occur again after importing"
                                 + "\nthe certificates.");
                     }
+                    return false;
+                }
+                else if (ex.Status == WebExceptionStatus.ConnectFailure)
+                {
+                    System.Console.WriteLine(
+                            "There was an error making the HTTPS connection;"
+                            + " this may be because the remote\nserver is "
+                            + "currently inaccessible, or because "
+                            + "local firewall or proxy rules do\nnot "
+                            + "permit access to it.");
                     return false;
                 }
                 else
