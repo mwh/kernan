@@ -54,6 +54,12 @@ namespace Grace
                 System.Console.Error.WriteLine("Required filename argument missing.");
                 return 1;
             }
+            if (!File.Exists(filename))
+            {
+                System.Console.Error.WriteLine(
+                        "File `" + filename + "` does not exist.");
+                return 1;
+            }
             var dir = Path.GetDirectoryName(Path.GetFullPath(filename));
             var interp = new Interpreter();
             interp.AddModuleRoot(dir);
@@ -272,6 +278,12 @@ namespace Grace
             var obj = new GraceObject();
             if (filename != null)
             {
+                if (!File.Exists(filename))
+                {
+                    System.Console.Error.WriteLine(
+                            "File `" + filename + "` does not exist.");
+                    return 1;
+                }
                 var dir = Path.GetDirectoryName(Path.GetFullPath(filename));
                 interp.AddModuleRoot(dir);
                 Console.WriteLine("* Loading " + filename + "...");
