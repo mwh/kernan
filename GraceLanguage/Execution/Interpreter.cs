@@ -237,11 +237,26 @@ namespace Grace.Execution
         {
             if (modules.ContainsKey(path))
                 return modules[path];
+            var name = Path.GetFileName(path);
+            var isResource = name.Contains('.');
             var bases = GetModulePaths();
             foreach (var p in bases)
             {
-                var filePath = Path.Combine(p, path + ".grace");
-                var mod = tryLoadModuleFile(filePath);
+                string filePath;
+                GraceObject mod;
+                if (isResource)
+                {
+                    filePath = Path.Combine(p, path);
+                    mod = tryLoadResource(filePath, path);
+                    if (mod != null)
+                    {
+                        modules[path] = mod;
+                        return mod;
+                    }
+                    continue;
+                }
+                filePath = Path.Combine(p, path + ".grace");
+                mod = tryLoadModuleFile(filePath);
                 if (mod != null)
                 {
                     modules[path] = mod;
@@ -284,6 +299,16 @@ namespace Grace.Execution
                 : null;
         }
 
+        /// <summary>Load a resource file if it exists</summary>
+        /// <param name="filePath">Filesystem path to resource</param>
+        /// <param name="importPath">Import path used to reach resource</param>
+        private GraceObject tryLoadResource(string filePath, string importPath)
+        {
+            return (File.Exists(filePath))
+                ? loadResource(filePath, importPath)
+                : null;
+        }
+
         /// <summary>Load a module file</summary>
         private GraceObject loadModuleFile(string path)
         {
@@ -318,6 +343,27 @@ namespace Grace.Execution
             ErrorReporting.RaiseError(this, "R2005",
                 new Dictionary<string, string> { { "path", path } },
                 "LookupError: Could not find module ${path}");
+            return null;
+        }
+
+        /// <summary>
+        /// Load a resource file
+        /// </summary>
+        /// <param name="filePath">Filesystem path to resource</param>
+        /// <param name="importPath">Import path used to reach resource</param>
+        private GraceObject loadResource(string filePath, string importPath)
+        {
+            var ext = Path.GetExtension(importPath);
+            if (ext == ".txt")
+            {
+                return GraceString.Create(File.OpenText(filePath).ReadToEnd());
+            }
+            ErrorReporting.RaiseError(this, "R2010",
+                new Dictionary<string, string> {
+                    { "path", importPath },
+                    { "extension", ext }
+                },
+                "LookupError: No resource handler for ${importPath}");
             return null;
         }
 

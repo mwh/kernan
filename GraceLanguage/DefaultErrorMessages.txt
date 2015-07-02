@@ -70,3 +70,4 @@ R2005 LookupError: Could not find module "${path}" to import
 R2006 SurplusArgumentsError: Part «${part}» of method «${method}» can only accept ${need} arguments, but ${have} provided
 R2008 UninitialisedReadError: Cannot read from «${name}» because it has never been initialised.
 R2009 IllegalReturnError: Cannot return from «${method}» because it has already returned.
+R2010 LookupError: No resource handler found for "${extension}" in import "${path}".
