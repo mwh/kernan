@@ -1,3 +1,3 @@
-for (1..5) do { v ->
+for (1 .. 5) do { v ->
     print(v)
 }

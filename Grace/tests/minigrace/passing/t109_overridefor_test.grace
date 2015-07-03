@@ -4,6 +4,6 @@ method for(anIterable) do(aBlock) {
     print "Not really a for loop now."
 }
 
-for (1..5) do {n->
+for (1 .. 5) do {n->
     print "Hello {n}"
 }

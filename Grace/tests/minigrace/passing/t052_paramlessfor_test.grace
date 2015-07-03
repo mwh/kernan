@@ -1,3 +1,3 @@
-for (1..5) do { _ ->
+for (1 .. 5) do { _ ->
     print "Hello!"
 }

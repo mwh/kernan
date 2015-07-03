@@ -1229,7 +1229,7 @@ namespace Grace.Parsing
         private ParseNode oldParseOperator(ParseNode lhs)
         {
             OperatorToken tok = lexer.current as OperatorToken;
-            if ((!tok.SpaceBefore || !tok.SpaceAfter) && (tok.Name != ".."))
+            if ((!tok.SpaceBefore || !tok.SpaceAfter))
                 reportError("P1020",
                         new Dictionary<string, string>()
                         {
@@ -1242,7 +1242,7 @@ namespace Grace.Parsing
             tok = lexer.current as OperatorToken;
             while (tok != null)
             {
-                if ((!tok.SpaceBefore || !tok.SpaceAfter) && (tok.Name != ".."))
+                if ((!tok.SpaceBefore || !tok.SpaceAfter))
                     reportError("P1020",
                             new Dictionary<string, string>()
                             {
@@ -1282,7 +1282,7 @@ namespace Grace.Parsing
             bool allArith = true;
             while (tok != null)
             {
-                if ((!tok.SpaceBefore || !tok.SpaceAfter) && (tok.Name != ".."))
+                if ((!tok.SpaceBefore || !tok.SpaceAfter))
                     reportError("P1020",
                             new Dictionary<string, string>()
                             {
