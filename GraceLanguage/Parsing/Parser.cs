@@ -710,7 +710,7 @@ namespace Grace.Parsing
             }
             else if (lexer.current is IdentifierToken)
             {
-                type = parseIdentifier();
+                type = parseExpression();
             }
             if (type == null)
             {
