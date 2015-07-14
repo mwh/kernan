@@ -1,4 +1,6 @@
+using System;
 using System.Globalization;
+using System.Text;
 using System.Collections.Generic;
 using Grace.Execution;
 
@@ -40,6 +42,47 @@ namespace Grace.Runtime
         }
         private int[] _graphemeIndices;
 
+        /// <summary>
+        /// An array containing one array of codepoints for each
+        /// grapheme cluster in the fully decomposed version of this
+        /// string.
+        /// </summary>
+        private int[][] decomposedGraphemeClusters
+        {
+            get {
+                if (_decomposedGraphemeClusters == null)
+                {
+                    var s = Value.Normalize(NormalizationForm.FormD);
+                    var cs = StringInfo.ParseCombiningCharacters(s);
+                    _decomposedGraphemeClusters = new int[cs.Length][];
+                    for (int i = 0; i < cs.Length; i++)
+                    {
+                        int start = cs[i];
+                        int end = i + 1 < cs.Length ? cs[i + 1] : s.Length;
+                        int len = 0;
+                        for (int j = start; j < end; j++)
+                        {
+                            if (Char.IsHighSurrogate(s[j]))
+                                j++;
+                            len++;
+                        }
+                        var a = new int[len];
+                        int offset = start;
+                        for (int j = 0; j < a.Length; j++)
+                        {
+                            a[j] = Char.ConvertToUtf32(s, offset);
+                            if (Char.IsHighSurrogate(s[offset]))
+                                offset++;
+                            offset++;
+                        }
+                        _decomposedGraphemeClusters[i] = a;
+                    }
+                }
+                return _decomposedGraphemeClusters;
+            }
+        }
+        private int[][] _decomposedGraphemeClusters;
+
         /// <summary>Value of this string</summary>
         public string Value
         {
@@ -55,6 +98,10 @@ namespace Grace.Runtime
             AddMethod("++", null);
             AddMethod("==", null);
             AddMethod("!=", null);
+            AddMethod("<", null);
+            AddMethod(">", null);
+            AddMethod("<=", null);
+            AddMethod(">=", null);
             AddMethod("at", null);
             AddMethod("size", null);
             AddMethod("match", null);
@@ -72,6 +119,10 @@ namespace Grace.Runtime
                     return new DelegateMethodNode1Ctx(mConcatenate);
                 case "==": return new DelegateMethodNode1(EqualsEquals);
                 case "!=": return new DelegateMethodNode1(NotEquals);
+                case "<": return new DelegateMethodNode1(mLessThan);
+                case ">": return new DelegateMethodNode1(mGreaterThan);
+                case "<=": return new DelegateMethodNode1(mLessThanEqual);
+                case ">=": return new DelegateMethodNode1(mGreaterThanEqual);
                 case "at": return new DelegateMethodNode1(At);
                 case "size": return new DelegateMethodNode0(Size);
                 case "match": return new DelegateMethodNode1Ctx(Match);
@@ -113,6 +164,109 @@ namespace Grace.Runtime
             var oth = other.FindNativeParent<GraceString>();
             return (oth == null) ? GraceBoolean.True
                                  : GraceBoolean.Create(nfc != oth.nfc);
+        }
+
+        /// <summary>
+        /// Compare two GraceStrings, respecting grapheme cluster
+        /// boundaries, using the fully-decomposed version of the
+        /// string.
+        /// </summary>
+        private static int compare(GraceString a, GraceString b)
+        {
+            if (a.nfc == b.nfc)
+                return 0;
+            var ad = a.decomposedGraphemeClusters;
+            var bd = b.decomposedGraphemeClusters;
+            for (int i = 0, j = 0; i < ad.Length && j < bd.Length; i++, j++)
+            {
+                var ga = ad[i];
+                var gb = bd[i];
+                var len = ga.Length < gb.Length ? ga.Length : gb.Length;
+                for (int k = 0; k < len; k++)
+                {
+                    if (ga[k] < gb[k])
+                        return -1;
+                    if (ga[k] > gb[k])
+                        return 1;
+                }
+                // If the clusters are the same as far as they go,
+                // but one is longer, it comes afterwards.
+                if (ga.Length > gb.Length)
+                    return 1;
+                if (gb.Length > ga.Length)
+                    return -1;
+            }
+            // If the strings are the same as far as they go, but
+            // one is longer, it comes afterwards.
+            if (ad.Length > bd.Length)
+                return 1;
+            if (bd.Length > ad.Length)
+                return -1;
+            return 0;
+        }
+
+        /// <summary>Native method for Grace &lt;</summary>
+        /// <param name="other">Argument to the method</param>
+        /// <remarks>
+        /// This compares strings according to the UTS #10 collation
+        /// algorithm, using the current culture taken from the
+        /// environment.
+        /// </remarks>
+        private GraceObject mLessThan(GraceObject other)
+        {
+            var oth = other.FindNativeParent<GraceString>();
+            return (oth == null) ? GraceBoolean.False
+                                 : GraceBoolean.Create(
+                                             compare(this, oth) < 0
+                                         );
+        }
+
+        /// <summary>Native method for Grace &gt;</summary>
+        /// <param name="other">Argument to the method</param>
+        /// <remarks>
+        /// This compares strings according to the UTS #10 collation
+        /// algorithm, using the current culture taken from the
+        /// environment.
+        /// </remarks>
+        private GraceObject mGreaterThan(GraceObject other)
+        {
+            var oth = other.FindNativeParent<GraceString>();
+            return (oth == null) ? GraceBoolean.False
+                                 : GraceBoolean.Create(
+                                             compare(this, oth) > 0
+                                         );
+        }
+
+        /// <summary>Native method for Grace &lt;</summary>
+        /// <param name="other">Argument to the method</param>
+        /// <remarks>
+        /// This compares strings according to the UTS #10 collation
+        /// algorithm, using the current culture taken from the
+        /// environment.
+        /// </remarks>
+        private GraceObject mLessThanEqual(GraceObject other)
+        {
+            var oth = other.FindNativeParent<GraceString>();
+            return (oth == null) ? GraceBoolean.False
+                                 : GraceBoolean.Create(
+                                             compare(this, oth) <= 0
+                                         );
+        }
+
+        /// <summary>Native method for Grace &gt;</summary>
+        /// <param name="other">Argument to the method</param>
+        /// <remarks>
+        /// This compares strings according to the UTS #10 collation
+        /// algorithm, using the current culture taken from the
+        /// environment.
+        /// </remarks>
+        private GraceObject mGreaterThanEqual(GraceObject other)
+        {
+            var oth = other.FindNativeParent<GraceString>();
+            return (oth == null) ? GraceBoolean.False
+                                 : GraceBoolean.Create(
+                                             compare(this, oth) >= 0
+                                         );
         }
 
         /// <summary>Native method for Grace at</summary>
