@@ -496,6 +496,35 @@ namespace Grace.Parsing
             return lexStringRemainder();
         }
 
+        private void appendHexEscape(StringBuilder b, string hex)
+        {
+            for (int i = 0; i < hex.Length; i++)
+            {
+                char c = hex[i];
+                if (!((c >= '0' && c <= '9')
+                        || (c >= 'a' && c <= 'f')
+                        || (c >= 'A' && c <= 'F')))
+                {
+                    var error = "" + c;
+                    // We don't want to cut a surrogate pair in half,
+                    // but also don't want to consume combining marks
+                    // here as GetNextTextElement would.
+                    if (Char.IsHighSurrogate(c))
+                        error += hex[i + 1];
+                    reportError("L0013",
+                            new Dictionary<string, string>
+                            {
+                                { "length", "" + hex.Length },
+                                { "u", hex.Length == 4 ? "u" : "U" },
+                                { "error", "" + error }
+                            },
+                            "Invalid unicode escape");
+                }
+            }
+            int cp = Convert.ToInt32(hex, 16);
+            b.Append(Char.ConvertFromUtf32(cp));
+        }
+
         private Token lexStringRemainder()
         {
             int start = index;
@@ -538,9 +567,19 @@ namespace Grace.Parsing
                     {
                         // Four-character BMP escape
                         advanceIndex();
-                        int cp = Convert.ToInt32(code.Substring(index, 4),
-                                16);
-                        b.Append(Char.ConvertFromUtf32(cp));
+                        if (index + 4 > code.Length)
+                        {
+                            reportError("L0013",
+                                    new Dictionary<string, string>
+                                    {
+                                        { "length", "4" },
+                                        { "u", "u" },
+                                        { "error", "end of file" }
+                                    },
+                                    "Invalid unicode escape");
+                        }
+                        var hex = code.Substring(index, 4);
+                        appendHexEscape(b, hex);
                         advanceIndex();
                         advanceIndex();
                         advanceIndex();
@@ -549,9 +588,20 @@ namespace Grace.Parsing
                     {
                         // Six-character Unicode escape
                         advanceIndex();
-                        int cp = Convert.ToInt32(code.Substring(index, 6),
-                                16);
-                        b.Append(Char.ConvertFromUtf32(cp));
+                        if (index + 6 > code.Length)
+                        {
+                            reportError("L0013",
+                                    new Dictionary<string, string>
+                                    {
+                                        { "length", "6" },
+                                        { "u", "U" },
+                                        { "error", "end of file" }
+
+                                    },
+                                    "Invalid unicode escape");
+                        }
+                        var hex = code.Substring(index, 6);
+                        appendHexEscape(b, hex);
                         advanceIndex();
                         advanceIndex();
                         advanceIndex();
