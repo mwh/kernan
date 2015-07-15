@@ -14,6 +14,7 @@ namespace Grace.Execution
     {
         private static bool debugMessagesActive;
         private Dictionary<string, GraceObject> modules = new Dictionary<string, GraceObject>();
+        private HashSet<string> importedPaths = new HashSet<string>();
 
         /// <summary>Linked-list node for a stack of object scopes</summary>
         internal class ScopeLink
@@ -184,6 +185,7 @@ namespace Grace.Execution
             var ret = new Interpreter();
             ret.prelude = prelude;
             ret.modules = modules;
+            ret.importedPaths = importedPaths;
             ret.dynamics = new Stack<ScopeLink>(dynamics);
             ret.callStackMethod = new Stack<string>(callStackMethod);
             ret.callStackModule = new Stack<string>(callStackModule);
@@ -237,6 +239,11 @@ namespace Grace.Execution
         {
             if (modules.ContainsKey(path))
                 return modules[path];
+            if (importedPaths.Contains(path))
+                ErrorReporting.RaiseError(this, "R2011",
+                    new Dictionary<string, string> { { "path", path } },
+                    "CyclicImportError: Module ${path} imports itself.");
+            importedPaths.Add(path);
             var name = Path.GetFileName(path);
             var isResource = name.Contains('.');
             var bases = GetModulePaths();
