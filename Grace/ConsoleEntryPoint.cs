@@ -91,8 +91,8 @@ namespace Grace
                     }
                     if (mode == "no-run")
                         return 0;
-                    //eModule.DebugPrint(Console.Out, "T>    ");
-                    //Console.WriteLine("========== EVALUATING ==========");
+                    interp.EnterModule(
+                            Path.GetFileNameWithoutExtension(filename));
                     try
                     {
                         eModule.Evaluate(interp);

@@ -15,6 +15,7 @@ namespace Grace.Execution
         private static bool debugMessagesActive;
         private Dictionary<string, GraceObject> modules = new Dictionary<string, GraceObject>();
         private HashSet<string> importedPaths = new HashSet<string>();
+        private Stack<string> importStack = new Stack<string>();
 
         /// <summary>Linked-list node for a stack of object scopes</summary>
         internal class ScopeLink
@@ -229,6 +230,17 @@ namespace Grace.Execution
             additionalModuleRoots.Add(path);
         }
 
+        /// <summary>
+        /// Register a module path in the chain of imported modules
+        /// that will be reported in any errors.
+        /// </summary>
+        /// <param name="importPath">Import path to insert</param>
+        public void EnterModule(string importPath)
+        {
+            importedPaths.Add(importPath);
+            importStack.Push(importPath);
+        }
+
         /// <inheritdoc />
         /// <remarks>The import path will be resolved according to
         /// the directories given by
@@ -239,50 +251,64 @@ namespace Grace.Execution
         {
             if (modules.ContainsKey(path))
                 return modules[path];
+            importStack.Push(path);
             if (importedPaths.Contains(path))
+            {
+                var chain = String.Join(" -> ", importStack.Reverse());
                 ErrorReporting.RaiseError(this, "R2011",
-                    new Dictionary<string, string> { { "path", path } },
+                    new Dictionary<string, string> {
+                        { "path", path },
+                        { "chain", chain }
+                    },
                     "CyclicImportError: Module ${path} imports itself.");
+            }
             importedPaths.Add(path);
             var name = Path.GetFileName(path);
             var isResource = name.Contains('.');
             var bases = GetModulePaths();
-            foreach (var p in bases)
+            try
             {
-                string filePath;
-                GraceObject mod;
-                if (isResource)
+                foreach (var p in bases)
                 {
-                    filePath = Path.Combine(p, path);
-                    mod = tryLoadResource(filePath, path);
+                    string filePath;
+                    GraceObject mod;
+                    if (isResource)
+                    {
+                        filePath = Path.Combine(p, path);
+                        mod = tryLoadResource(filePath, path);
+                        if (mod != null)
+                        {
+                            modules[path] = mod;
+                            return mod;
+                        }
+                        continue;
+                    }
+                    filePath = Path.Combine(p, path + ".grace");
+                    mod = tryLoadModuleFile(filePath);
                     if (mod != null)
                     {
                         modules[path] = mod;
                         return mod;
                     }
-                    continue;
+                    filePath = Path.Combine(p, path + ".dll");
+                    mod = tryLoadNativeModule(filePath);
+                    if (mod != null)
+                    {
+                        modules[path] = mod;
+                        return mod;
+                    }
                 }
-                filePath = Path.Combine(p, path + ".grace");
-                mod = tryLoadModuleFile(filePath);
-                if (mod != null)
+                if (FailedImportHook != null)
                 {
-                    modules[path] = mod;
-                    return mod;
-                }
-                filePath = Path.Combine(p, path + ".dll");
-                mod = tryLoadNativeModule(filePath);
-                if (mod != null)
-                {
-                    modules[path] = mod;
-                    return mod;
+                    // Optionally, the host program can try to satisfy a module
+                    // and indicate that we should retry the import.
+                    if (FailedImportHook(path, this))
+                        return LoadModule(path);
                 }
             }
-            if (FailedImportHook != null)
+            finally
             {
-                // Optionally, the host program can try to satisfy a module
-                // and indicate that we should retry the import.
-                if (FailedImportHook(path, this))
-                    return LoadModule(path);
+                importStack.Pop();
             }
             ErrorReporting.RaiseError(this, "R2005",
                 new Dictionary<string, string> { { "path", path } },
