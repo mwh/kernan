@@ -31,9 +31,9 @@ namespace Grace.Runtime
             AddMethod("not",
                     new DelegateMethodNode0(new NativeMethod0(this.Negate)));
             AddMethod("&&",
-                    new DelegateMethodNode1(new NativeMethod1(this.AndAnd)));
+                    new DelegateMethodNode1Ctx(this.AndAnd));
             AddMethod("||",
-                    new DelegateMethodNode1(new NativeMethod1(this.OrOr)));
+                    new DelegateMethodNode1Ctx(this.OrOr));
             AddMethod("ifTrue",
                     new DelegateMethodNode1Ctx(
                         new NativeMethod1Ctx(this.IfTrue)));
@@ -83,8 +83,9 @@ namespace Grace.Runtime
         }
 
         /// <summary>Native method for Grace &amp;&amp;</summary>
+        /// <param name="ctx">Current interpreter</param>
         /// <param name="other">Argument to the method</param>
-        public GraceObject AndAnd(GraceObject other)
+        public GraceObject AndAnd(EvaluationContext ctx, GraceObject other)
         {
             GraceBoolean oth = other as GraceBoolean;
             if (oth != null)
@@ -92,12 +93,22 @@ namespace Grace.Runtime
             GraceObjectProxy op = other as GraceObjectProxy;
             if (op != null)
                 return GraceBoolean.Create(this.Boolean && (dynamic)op.Object);
+            ErrorReporting.RaiseError(ctx, "R2001",
+                    new Dictionary<string, string>() {
+                        { "method", "&&" },
+                        { "index", "1" },
+                        { "part", "&&" },
+                        { "required", "Boolean" }
+                    },
+                    "ArgumentTypeError: && requires a Boolean argument"
+            );
             return GraceBoolean.False;
         }
 
         /// <summary>Native method for Grace ||</summary>
+        /// <param name="ctx">Current interpreter</param>
         /// <param name="other">Argument to the method</param>
-        public GraceObject OrOr(GraceObject other)
+        public GraceObject OrOr(EvaluationContext ctx, GraceObject other)
         {
             GraceBoolean oth = other as GraceBoolean;
             if (oth != null)
@@ -105,6 +116,15 @@ namespace Grace.Runtime
             GraceObjectProxy op = other as GraceObjectProxy;
             if (op != null)
                 return GraceBoolean.Create(this.Boolean || (dynamic)op.Object);
+            ErrorReporting.RaiseError(ctx, "R2001",
+                    new Dictionary<string, string>() {
+                        { "method", "||" },
+                        { "index", "1" },
+                        { "part", "||" },
+                        { "required", "Boolean" }
+                    },
+                    "ArgumentTypeError: || requires a Boolean argument"
+            );
             return GraceBoolean.False;
         }
 
