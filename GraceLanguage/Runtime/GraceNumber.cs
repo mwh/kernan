@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Numerics;
 using System.Globalization;
 using Grace.Execution;
+using Grace.Utility;
 
 namespace Grace.Runtime
 {
@@ -16,8 +17,19 @@ namespace Grace.Runtime
         /// <summary>Value of this number as a double</summary>
         public double Double
         {
+            get
+            {
+                return Value.AsDouble;
+            }
+        }
+
+        /// <summary>
+        /// Value of this number as a Rational
+        /// </summary>
+        public Rational Value
+        {
             get;
-            set;
+            private set;
         }
 
         /// <summary>
@@ -30,10 +42,29 @@ namespace Grace.Runtime
         /// </summary>
         public static EvaluationContext ExtensionInterpreter { get ; set; }
 
+        private GraceNumber(Rational val)
+            : base(true)
+        {
+            Value = val;
+            addMethods();
+        }
+
+        private GraceNumber(int val)
+            : base(true)
+        {
+            Value = Rational.Create(val);
+            addMethods();
+        }
+
         private GraceNumber(double val)
             : base(true)
         {
-            Double = val;
+            Value = Rational.Create(val);
+            addMethods();
+        }
+
+        private void addMethods()
+        {
             AddMethod("==", null);
             AddMethod("!=", null);
             AddMethod("+", null);
@@ -64,7 +95,7 @@ namespace Grace.Runtime
                 case "+": return new DelegateMethodNode1(Add);
                 case "*": return new DelegateMethodNode1(Multiply);
                 case "-": return new DelegateMethodNode1(Subtract);
-                case "/": return new DelegateMethodNode1(Divide);
+                case "/": return new DelegateMethodNode1Ctx(Divide);
                 case "%": return new DelegateMethodNode1(Modulus);
                 case "^": return new DelegateMethodNode1(Exponentiate);
                 case ">": return new DelegateMethodNode1(GreaterThan);
@@ -88,7 +119,7 @@ namespace Grace.Runtime
         /// <inheritdoc/>
         public override string ToString()
         {
-            return "Number[" + Double + "]";
+            return "Number[" + Value + "]";
         }
 
         /// <summary>Native method for Grace ==</summary>
@@ -98,7 +129,7 @@ namespace Grace.Runtime
             var oth = other.FindNativeParent<GraceNumber>();
             if (oth == null)
                 return GraceBoolean.False;
-            return GraceBoolean.Create(this.Double == oth.Double);
+            return GraceBoolean.Create(this.Value == oth.Value);
         }
 
         /// <summary>Native method for Grace !=</summary>
@@ -108,7 +139,7 @@ namespace Grace.Runtime
             var oth = other.FindNativeParent<GraceNumber>();
             if (oth == null)
                 return GraceBoolean.True;
-            return GraceBoolean.Create(this.Double != oth.Double);
+            return GraceBoolean.Create(this.Value != oth.Value);
         }
 
         /// <summary>Native method for Grace ..</summary>
@@ -127,7 +158,7 @@ namespace Grace.Runtime
                         },
                         "ArgumentTypeError: .. requires a Number argument"
                 );
-            return new GraceRange(Double, n.Double, 1);
+            return new GraceRange(Value, n.Value, 1);
         }
 
         /// <summary>Native method for Grace +</summary>
@@ -135,7 +166,7 @@ namespace Grace.Runtime
         public GraceObject Add(GraceObject other)
         {
             var oth = other.FindNativeParent<GraceNumber>();
-            return GraceNumber.Create(this.Double + oth.Double);
+            return GraceNumber.Create(this.Value + oth.Value);
         }
 
         /// <summary>Native method for Grace *</summary>
@@ -143,7 +174,7 @@ namespace Grace.Runtime
         public GraceObject Multiply(GraceObject other)
         {
             var oth = other.FindNativeParent<GraceNumber>();
-            return GraceNumber.Create(this.Double * oth.Double);
+            return GraceNumber.Create(this.Value * oth.Value);
         }
 
         /// <summary>Native method for Grace -</summary>
@@ -151,15 +182,24 @@ namespace Grace.Runtime
         public GraceObject Subtract(GraceObject other)
         {
             var oth = other.FindNativeParent<GraceNumber>();
-            return GraceNumber.Create(this.Double - oth.Double);
+            return GraceNumber.Create(this.Value - oth.Value);
         }
 
         /// <summary>Native method for Grace /</summary>
+        /// <param name="ctx">Current interpreter</param>
         /// <param name="other">Argument to the method</param>
-        public GraceObject Divide(GraceObject other)
+        public GraceObject Divide(EvaluationContext ctx, GraceObject other)
         {
             var oth = other.FindNativeParent<GraceNumber>();
-            return GraceNumber.Create(this.Double / oth.Double);
+            if (oth.Value == Rational.Zero)
+            {
+                ErrorReporting.RaiseError(ctx, "R2012",
+                        new Dictionary<string, string> {
+                            { "dividend", Value.ToString() },
+                        },
+                        "ZeroDivisionError: Division by zero.");
+            }
+            return GraceNumber.Create(this.Value / oth.Value);
         }
 
         /// <summary>Native method for Grace %</summary>
@@ -167,7 +207,7 @@ namespace Grace.Runtime
         public GraceObject Modulus(GraceObject other)
         {
             var oth = other.FindNativeParent<GraceNumber>();
-            return GraceNumber.Create(this.Double % oth.Double);
+            return GraceNumber.Create(this.Value % oth.Value);
         }
 
         /// <summary>Native method for Grace ^</summary>
@@ -183,7 +223,7 @@ namespace Grace.Runtime
         public GraceObject GreaterThan(GraceObject other)
         {
             var oth = other.FindNativeParent<GraceNumber>();
-            return GraceBoolean.Create(this.Double > oth.Double);
+            return GraceBoolean.Create(this.Value > oth.Value);
         }
 
         /// <summary>Native method for Grace &gt;=</summary>
@@ -191,7 +231,7 @@ namespace Grace.Runtime
         public GraceObject GreaterEqual(GraceObject other)
         {
             var oth = other.FindNativeParent<GraceNumber>();
-            return GraceBoolean.Create(this.Double >= oth.Double);
+            return GraceBoolean.Create(this.Value >= oth.Value);
         }
 
         /// <summary>Native method for Grace &lt;</summary>
@@ -199,7 +239,7 @@ namespace Grace.Runtime
         public GraceObject LessThan(GraceObject other)
         {
             var oth = other.FindNativeParent<GraceNumber>();
-            return GraceBoolean.Create(this.Double < oth.Double);
+            return GraceBoolean.Create(this.Value < oth.Value);
         }
 
         /// <summary>Native method for Grace &lt;=</summary>
@@ -207,7 +247,7 @@ namespace Grace.Runtime
         public GraceObject LessEqual(GraceObject other)
         {
             var oth = other.FindNativeParent<GraceNumber>();
-            return GraceBoolean.Create(this.Double <= oth.Double);
+            return GraceBoolean.Create(this.Value <= oth.Value);
         }
 
         /// <summary>Native method for Grace match</summary>
@@ -225,13 +265,13 @@ namespace Grace.Runtime
         /// <summary>Native method for Grace unary negation</summary>
         public GraceObject Negate()
         {
-            return GraceNumber.Create(-Double);
+            return GraceNumber.Create(-Value);
         }
 
         /// <summary>Native method for Grace asString</summary>
         public new GraceObject AsString()
         {
-            return GraceString.Create("" + Double);
+            return GraceString.Create("" + Value);
         }
 
         /// <summary>Make a Grace number</summary>
@@ -246,35 +286,59 @@ namespace Grace.Runtime
             return o;
         }
 
+        /// <summary>Make a Grace number</summary>
+        /// <param name="val">Number to create</param>
+        public static GraceObject Create(Rational val)
+        {
+            if (Extension == null)
+                return new GraceNumber(val);
+            var num = new GraceNumber(val);
+            var o = Extension.Evaluate(ExtensionInterpreter);
+            o.AddParent("builtin", num);
+            return o;
+        }
+
+        /// <summary>Make a Grace number</summary>
+        /// <param name="val">Number to create</param>
+        public static GraceObject Create(int val)
+        {
+            if (Extension == null)
+                return new GraceNumber(val);
+            var num = new GraceNumber(val);
+            var o = Extension.Evaluate(ExtensionInterpreter);
+            o.AddParent("builtin", num);
+            return o;
+        }
+
     }
 
     class GraceRange : GraceObject
     {
-        private readonly double _low;
-        private readonly double _high;
-        private readonly double _step;
+        private readonly Rational _low;
+        private readonly Rational _high;
+        private readonly Rational _step;
 
-        public double Start {
+        public Rational Start {
             get {
                 return _low;
             }
         }
 
-        public double End
+        public Rational End
         {
             get {
                 return _high;
             }
         }
 
-        public double Step
+        public Rational Step
         {
             get {
                 return _step;
             }
         }
 
-        public GraceRange(double start, double end, double step)
+        public GraceRange(Rational start, Rational end, Rational step)
         {
             _low = start;
             _high = end;
@@ -313,13 +377,13 @@ namespace Grace.Runtime
                         },
                         "ArgumentTypeError: .. requires a Number argument"
                 );
-            return new GraceRange(_low, _high, _step * n.Double);
+            return new GraceRange(_low, _high, _step * n.Value);
         }
 
         private GraceObject mDo(EvaluationContext ctx, GraceObject block)
         {
             var apply = MethodRequest.Single("apply", null);
-            double v = _low;
+            Rational v = _low;
             if (_step < 0)
             {
                 while (v >= _high)

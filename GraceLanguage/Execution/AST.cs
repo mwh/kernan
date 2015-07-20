@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Grace.Parsing;
 using Grace.Runtime;
+using Grace.Utility;
 
 namespace Grace.Execution
 {
@@ -695,7 +696,7 @@ namespace Grace.Execution
                 if (gr.Step < 0)
                     goto end;
                 string name = i.Name;
-                for (double v = gr.Start; v <= gr.End; v += gr.Step)
+                for (var v = gr.Start; v <= gr.End; v += gr.Step)
                 {
                     LocalScope l = new LocalScope();
                     l.AddLocalDef(name, GraceNumber.Create(v));
@@ -1311,62 +1312,61 @@ end:
     {
 
         private NumberParseNode origin;
-        int numbase = 10;
-        double val;
+        Rational numbase = 10;
+        Rational val;
 
         internal NumberNode(Token location, NumberParseNode source)
             : base(location, source)
         {
             origin = source;
-            numbase = origin.NumericBase;
-            if (numbase == 10)
-                val = double.Parse(origin.Digits);
-            else
+            numbase = Rational.Create(origin.NumericBase);
+            Rational integral = Rational.Zero;
+            Rational fractional = Rational.Zero;
+            Rational size = Rational.One;
+            bool frac = false;
+            foreach (char c in origin.Digits)
             {
-                int integral = 0;
-                double fractional = 0;
-                double size = 1.0;
-                bool frac = false;
-                foreach (char c in origin.Digits)
+                if (c == '.')
+                    frac = true;
+                else if (!frac)
                 {
-                    if (c == '.')
-                        frac = true;
-                    else if (!frac)
-                    {
-                        integral *= numbase;
-                        integral += digit(c);
-                    }
-                    else
-                    {
-                        size /= numbase;
-                        fractional += size * digit(c);
-                    }
+                    integral *= numbase;
+                    integral += digit(c);
                 }
-                val = integral + fractional;
+                else
+                {
+                    size /= numbase;
+                    fractional += size * digit(c);
+                }
             }
+            val = integral + fractional;
         }
 
-        private static int digit(char c)
+        private static Dictionary<char, Rational> digits
+            = new Dictionary<char, Rational>();
+        private static Rational digit(char c)
         {
-            if (c >= '0' && c <= '9')
+            if (!digits.ContainsKey(c))
             {
-                return c - '0';
+                if (c >= '0' && c <= '9')
+                {
+                    digits[c] = Rational.Create(c - '0');
+                }
+                if (c >= 'a' && c <= 'z')
+                {
+                    digits[c] = Rational.Create(10 + c - 'a');
+                }
+                if (c >= 'A' && c <= 'Z')
+                {
+                    digits[c] = Rational.Create(10 + c - 'A');
+                }
             }
-            if (c >= 'a' && c <= 'z')
-            {
-                return 10 + c - 'a';
-            }
-            if (c >= 'A' && c <= 'Z')
-            {
-                return 10 + c - 'A';
-            }
-            // Can't happen, checked in the lexer.
-            return -1;
+            return digits[c];
         }
 
-        /// <summary>The value of this literal as a double</summary>
+        /// <summary>The value of this literal as a Rational</summary>
         /// <value>This property gets the value of the field val</value>
-        public double Value
+        public Rational Value
         {
             get
             {

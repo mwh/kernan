@@ -65,6 +65,7 @@
     <Compile Include="Runtime\GraceString.cs" />
     <Compile Include="Runtime\Methods.cs" />
     <Compile Include="ErrorReporting.cs" />
+    <Compile Include="Utility\Rational.cs" />
     <Compile Include="Unicode\UnicodeLookup.cs" />
   </ItemGroup>
   <ItemGroup>

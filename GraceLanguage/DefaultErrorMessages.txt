@@ -73,3 +73,5 @@ R2008 UninitialisedReadError: Cannot read from «${name}» because it has never 
 R2009 IllegalReturnError: Cannot return from «${method}» because it has already returned.
 R2010 LookupError: No resource handler found for "${extension}" in import "${path}".
 R2011 CyclicImportError: Module "${path}" transitively imports itself. The chain of imports ${chain} cannot be satisfied as it would require accessing ${path} before it was ready.
+R2012 |[ dividend == "0" ]| ZeroDivisionError: Zero divided by zero is indeterminate.
+R2012 ZeroDivisionError: Division by zero is undefined.
