@@ -66,7 +66,7 @@
     <Compile Include="Runtime\Methods.cs" />
     <Compile Include="ErrorReporting.cs" />
     <Compile Include="Utility\Rational.cs" />
-    <Compile Include="Unicode\UnicodeLookup.cs" />
+    <Compile Include="Utility\UnicodeLookup.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="prelude.grace">

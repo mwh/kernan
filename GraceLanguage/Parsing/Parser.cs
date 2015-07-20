@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Linq;
 using System.Globalization;
-using Grace.Unicode;
+using Grace.Utility;
 
 namespace Grace.Parsing
 {

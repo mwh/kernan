@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Globalization;
-using Grace.Unicode;
+using Grace.Utility;
 
 namespace Grace.Parsing
 {

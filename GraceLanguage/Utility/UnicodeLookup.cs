@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Globalization;
 
-namespace Grace.Unicode
+namespace Grace.Utility
 {
     static class UnicodeLookup
     {
