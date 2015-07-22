@@ -603,7 +603,7 @@ namespace Grace.Utility
         {
             get
             {
-                if (integral == null)
+                if (Object.ReferenceEquals(integral, null))
                 {
                     integral = new Rational(numerator / denominator,
                             BigInteger.One);

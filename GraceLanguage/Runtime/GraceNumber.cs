@@ -86,6 +86,7 @@ namespace Grace.Runtime
             // These methods are extensions and should not be used:
             AddMethod("numerator", null);
             AddMethod("denominator", null);
+            AddMethod("integral", null);
         }
 
         /// <inheritdoc />
@@ -112,6 +113,7 @@ namespace Grace.Runtime
                 case "numerator": return new DelegateMethodNode0(mNumerator);
                 case "denominator":
                                   return new DelegateMethodNode0(mDenominator);
+                case "integral": return new DelegateMethodNode0(mIntegral);
             }
             return base.getLazyMethod(name);
         }
@@ -278,6 +280,12 @@ namespace Grace.Runtime
         public GraceObject mDenominator()
         {
             return Create(Value.Denominator);
+        }
+
+        /// <summary>Native method for Grace integral</summary>
+        public GraceObject mIntegral()
+        {
+            return Create(Value.Integral);
         }
 
         /// <summary>Native method for Grace unary negation</summary>
