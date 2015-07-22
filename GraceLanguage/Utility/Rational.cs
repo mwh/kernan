@@ -17,15 +17,26 @@ namespace Grace.Utility
     /// </remarks>
     public class Rational
     {
+        private static BigInteger maxInt = int.MaxValue;
+        private static BigInteger minInt = int.MinValue;
+
         private BigInteger numerator;
         private BigInteger denominator;
         private string stringification;
+
+        /// <summary>
+        /// True iff this Rational represents an integer.
+        /// </summary>
+        public bool IsIntegral { get ; private set; }
 
         /// <param name="i">Integer to represent</param>
         private Rational(int i)
         {
             numerator = new BigInteger(i);
             denominator = BigInteger.One;
+            IsIntegral = true;
+            integral = this;
+            fractional = Rational.Zero;
         }
 
         /// <param name="i">Long integer to represent</param>
@@ -33,6 +44,9 @@ namespace Grace.Utility
         {
             numerator = new BigInteger(i);
             denominator = BigInteger.One;
+            IsIntegral = true;
+            integral = this;
+            fractional = Rational.Zero;
         }
 
         /// <param name="n">Numerator</param>
@@ -53,6 +67,12 @@ namespace Grace.Utility
             }
             numerator = n;
             denominator = d;
+            if (denominator == BigInteger.One)
+            {
+                IsIntegral = true;
+                integral = this;
+                fractional = Rational.Zero;
+            }
         }
 
         /// <param name="i">Integer to represent</param>
@@ -141,6 +161,228 @@ namespace Grace.Utility
             var quotient = a / b;
             var frac = quotient.Fractional;
             return frac * b;
+        }
+
+        ///
+        /// <summary>
+        /// Raise this Rational to a Rational power.
+        /// </summary>
+        /// <remarks>
+        /// Returns 1 if the exponent is zero, and itself if
+        /// the exponent is one. For non-integral powers,
+        /// first raises to the numerator and then computes
+        /// the root. Root computation is an approximation,
+        /// but attempts to return integer answers for perfect
+        /// squares.
+        /// </remarks>
+        /// <param name="p">Power</param>
+        public Rational Exponentiate(Rational p)
+        {
+            if (p == Rational.Zero)
+                return Rational.One;
+            if (p == Rational.One)
+                return this;
+            // x ^ i: integer powers (chain multiplication)
+            if (p.IsIntegral)
+            {
+                return integerPower(p.numerator);
+            }
+            // 1 / n: nth root approximation
+            if (p.numerator.IsOne)
+            {
+               return nthRoot(p);
+            }
+            else
+            {
+                // For n / m, raise to nth power and then compute
+                // mth root.
+                var n = new Rational(p.numerator, 1);
+                var m = new Rational(1, p.denominator);
+                return this.Exponentiate(n).Exponentiate(m);
+            }
+        }
+
+        private Rational integerPower(BigInteger e)
+        {
+            // Small integers we can compute for directly.
+            if (e <= maxInt && e > minInt)
+            {
+                var i = (int)e;
+                if (i >= 0)
+                {
+                    return new Rational(BigInteger.Pow(numerator, i),
+                            BigInteger.Pow(denominator, i));
+                }
+                else
+                {
+                    i = -i;
+                    return new Rational(BigInteger.Pow(denominator, i),
+                            BigInteger.Pow(numerator, i));
+                }
+            }
+            else
+            {
+                return bigIntegerPower(e);
+            }
+        }
+
+        private Rational bigIntegerPower(BigInteger e)
+        {
+            // Large integers need a multi-step computation
+            // that breaks the problem up into one whose power
+            // fits in a 32-bit integer at each stage.
+            var dividend = e;
+            if (e.Sign < 0)
+            {
+                dividend = -e;
+            }
+            BigInteger remainder;
+            var times = BigInteger.DivRem(dividend, maxInt,
+                    out remainder);
+            var num = BigInteger.Pow(numerator, (int)remainder);
+            var bigNum = BigInteger.Pow(num, int.MaxValue);
+            var den = BigInteger.Pow(denominator, (int)remainder);
+            var bigDen = BigInteger.Pow(den, int.MaxValue);
+            for (var i = BigInteger.Zero; i < times; i++)
+            {
+                num *= bigNum;
+                den *= bigDen;
+            }
+            if (e.Sign < 0)
+                num = -num;
+            return new Rational(num, den);
+        }
+
+        /// <summary>
+        /// Truncate some bits from the end of a rational to keep it
+        /// within a reasonable size.
+        /// </summary>
+        /// <remarks>
+        /// For roots in particular it is common for the accumulated
+        /// result to become very long in both numerator and denominator,
+        /// which makes the exponentiation steps take a long time. This
+        /// method shifts both numerator and denominator by the same amount
+        /// to keep at least one of them within a range.
+        /// </remarks>
+        private Rational discardBits(Rational r, int threshold, int keep)
+        {
+            var bytelen = threshold / 8;
+            var b1 = r.numerator.ToByteArray();
+            var b2 = r.denominator.ToByteArray();
+            if (b1.Length > bytelen && b2.Length > bytelen)
+            {
+                int shift;
+                if (b1.Length > b2.Length)
+                    shift = b2.Length * 8 - keep;
+                else
+                    shift = b1.Length * 8 - keep;
+                return new Rational(r.numerator >> shift, r.denominator >> shift);
+            }
+            return r;
+        }
+
+        // Used as a divisor & base.
+        private static BigInteger Two = 2;
+
+        /// <summary>
+        /// Approximate the nth root, this Rational raised to the power
+        /// of (1 / n).
+        /// </summary>
+        /// <param name="p">1 / n</param>
+        /// <remarks>
+        /// This method computes an approximation of the root by
+        /// Newton-Raphson. It attempts to return an integer value
+        /// when a perfect power is involved, but otherwise will
+        /// tend to produce numbers with large numerators and
+        /// denominators. The result will be no more than one
+        /// ten-millionth part away from the true answer, and no
+        /// more than 1 away either. The computation may take some
+        /// time.
+        /// </remarks>
+        private Rational nthRoot(Rational p)
+        {
+            var e = p.denominator;
+            var n = new Rational(e, 1);
+            var oneOverN = p;
+            // "A" is the conventional name for the number in this
+            // method. We truncate "this" to a reasonable bit length
+            // to avoid blowing out the process later on.
+            var A = discardBits(this, 32768, 16384);
+            Rational xk;
+            // We need an approximation of the root to start with.
+            if (e < int.MaxValue)
+            {
+                // Compute an order-of-magnitude estimate. Pick the
+                // half-way point between the power above and below.
+                var f = (int)e;
+                // Calculate the approximate numerator.
+                var log = BigInteger.Log(numerator, 2);
+                var low = BigInteger.One << (int)Math.Floor(log / f);
+                var high = BigInteger.One << (int)Math.Ceiling(log / f);
+                var tmpN = low + (high - low) / Two;
+                // Do the same for the denominator.
+                log = BigInteger.Log(denominator, 2);
+                low = BigInteger.One << (int)Math.Floor(log / f);
+                high = BigInteger.One << (int)Math.Ceiling(log / f);
+                var tmpD = low + (high - low) / Two;
+                xk = new Rational(tmpN, tmpD);
+            }
+            else
+            {
+                // Given a very large root, the calculation will
+                // take forever anyway, so the approximation
+                // isn't really important.
+                xk = A;
+            }
+            var nMinusOne = new Rational(e - 1, 1);
+            var stopAtTen = true;
+            var i = 0;
+            // We run at least ten iterations of the converging
+            // algorithm, but won't stop until the difference
+            // between iterations is smaller than both 1 and one
+            // ten-millionth of the value.
+            while (!stopAtTen || i < 10)
+            {
+                var xKToTheNMinusOne = xk.Exponentiate(nMinusOne);
+                var aOver = A / xKToTheNMinusOne;
+                var nMinusOneXK = xk * nMinusOne;
+                var xk1 = oneOverN * (nMinusOneXK + aOver);
+                // These blow out very quickly, so discard
+                // bits to keep the numerators & denominators
+                // a feasible size.
+                xk1 = discardBits(xk1, 16384, 16384);
+                if (i == 9 || !stopAtTen)
+                {
+                    var diff = xk1 - xk;
+                    var threshold = xk1 / 10000000;
+                    if (threshold < Rational.Zero)
+                        threshold = -threshold;
+                    xk1 = discardBits(xk1, 16384, 16384);
+                    if (diff > Rational.One || -diff > Rational.One
+                            || diff > threshold || -diff > threshold)
+                    {
+                        // At this point, the algorithm will continue
+                        // until the thresholds above are met.
+                        stopAtTen = false;
+                    }
+                    else
+                    {
+                        xk = xk1;
+                        break;
+                    }
+                }
+                xk = xk1;
+                i++;
+            }
+            // Try to give an integer result if this is a perfect
+            // power.
+            var floor = xk.Integral;
+            var ceil = floor + 1;
+            if (floor.Exponentiate(n) == this)
+                return floor;
+            if (ceil.Exponentiate(n) == this)
+                return ceil;
+            return xk;
         }
 
         /// <inheritdoc />
@@ -326,6 +568,7 @@ namespace Grace.Utility
         }
 
         private Rational fractional;
+        private Rational integral;
         /// <summary>
         /// The fractional component of this rational.
         /// </summary>
@@ -350,6 +593,44 @@ namespace Grace.Utility
                     fractional = new Rational(n, d);
                 }
                 return fractional;
+            }
+        }
+
+        /// <summary>
+        /// The integral component of this rational.
+        /// </summary>
+        public Rational Integral
+        {
+            get
+            {
+                if (integral == null)
+                {
+                    integral = new Rational(numerator / denominator,
+                            BigInteger.One);
+                }
+                return integral;
+            }
+        }
+
+        /// <summary>
+        /// The numerator of this Rational, as an integer Rational.
+        /// </summary>
+        public Rational Numerator
+        {
+            get
+            {
+                return new Rational(numerator, 1);
+            }
+        }
+
+        /// <summary>
+        /// The denominator of this Rational, as an integer Rational.
+        /// </summary>
+        public Rational Denominator
+        {
+            get
+            {
+                return new Rational(denominator, 1);
             }
         }
 

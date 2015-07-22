@@ -83,6 +83,9 @@ namespace Grace.Runtime
             AddMethod("match", null);
             AddMethod("|", Matching.OrMethod);
             AddMethod("&", Matching.AndMethod);
+            // These methods are extensions and should not be used:
+            AddMethod("numerator", null);
+            AddMethod("denominator", null);
         }
 
         /// <inheritdoc />
@@ -106,6 +109,9 @@ namespace Grace.Runtime
                 case "prefix-": return new DelegateMethodNode0(Negate);
                 case "..": return new DelegateMethodNode1Ctx(DotDot);
                 case "match": return new DelegateMethodNode1Ctx(Match);
+                case "numerator": return new DelegateMethodNode0(mNumerator);
+                case "denominator":
+                                  return new DelegateMethodNode0(mDenominator);
             }
             return base.getLazyMethod(name);
         }
@@ -215,7 +221,7 @@ namespace Grace.Runtime
         public GraceObject Exponentiate(GraceObject other)
         {
             var oth = other.FindNativeParent<GraceNumber>();
-            return GraceNumber.Create(Math.Pow(this.Double, oth.Double));
+            return GraceNumber.Create(this.Value.Exponentiate(oth.Value));
         }
 
         /// <summary>Native method for Grace &gt;</summary>
@@ -260,6 +266,18 @@ namespace Grace.Runtime
                 return Matching.SuccessfulMatch(ctx, target);
             }
             return Matching.FailedMatch(ctx, target);
+        }
+
+        /// <summary>Native method for Grace numerator</summary>
+        public GraceObject mNumerator()
+        {
+            return Create(Value.Numerator);
+        }
+
+        /// <summary>Native method for Grace denominator</summary>
+        public GraceObject mDenominator()
+        {
+            return Create(Value.Denominator);
         }
 
         /// <summary>Native method for Grace unary negation</summary>
