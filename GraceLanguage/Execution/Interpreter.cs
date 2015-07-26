@@ -284,7 +284,7 @@ namespace Grace.Execution
                         continue;
                     }
                     filePath = Path.Combine(p, path + ".grace");
-                    mod = tryLoadModuleFile(filePath);
+                    mod = tryLoadModuleFile(filePath, path);
                     if (mod != null)
                     {
                         modules[path] = mod;
@@ -317,10 +317,11 @@ namespace Grace.Execution
         }
 
         /// <summary>Load a module file if it exists</summary>
-        private GraceObject tryLoadModuleFile(string path)
+        private GraceObject tryLoadModuleFile(string filePath,
+                string importPath)
         {
-            return (File.Exists(path))
-                ? loadModuleFile(path)
+            return (File.Exists(filePath))
+                ? loadModuleFile(filePath, importPath)
                 : null;
         }
 
@@ -343,16 +344,16 @@ namespace Grace.Execution
         }
 
         /// <summary>Load a module file</summary>
-        private GraceObject loadModuleFile(string path)
+        private GraceObject loadModuleFile(string filePath, string importPath)
         {
-            Interpreter.Debug("========== LOAD " + path + " ==========");
-            using (StreamReader reader = File.OpenText(path))
+            Interpreter.Debug("========== LOAD " + filePath + " ==========");
+            using (StreamReader reader = File.OpenText(filePath))
             {
-                var parser = new Parser(reader.ReadToEnd());
+                var parser = new Parser(importPath, reader.ReadToEnd());
                 var pt = parser.Parse() as ObjectParseNode;
                 var eMod = new ExecutionTreeTranslator().Translate(pt);
                 var ret = eMod.Evaluate(this);
-                Interpreter.Debug("========== END " + path + " ==========");
+                Interpreter.Debug("========== END " + filePath + " ==========");
                 return ret;
             }
         }
