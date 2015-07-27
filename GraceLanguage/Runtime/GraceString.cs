@@ -90,6 +90,8 @@ namespace Grace.Runtime
             set;
         }
 
+        private StringCodepoints codepointsObject;
+
         private static int[] emptyIntArray = new int[0];
         private GraceString(string val)
             : base(true)
@@ -108,6 +110,7 @@ namespace Grace.Runtime
             AddMethod("match", null);
             AddMethod("asString", null);
             AddMethod("substringFrom to", null);
+            AddMethod("codepoints", null);
             AddMethod("|", Matching.OrMethod);
             AddMethod("&", Matching.AndMethod);
         }
@@ -132,6 +135,7 @@ namespace Grace.Runtime
                 case "substringFrom to":
                                  return new DelegateMethodNodeReq(
                                          substringFromTo);
+                case "codepoints": return new DelegateMethodNode0(mCodepoints);
             }
             return base.getLazyMethod(name);
         }
@@ -290,6 +294,13 @@ namespace Grace.Runtime
                         }, "Index must be a number");
             int start = graphemeIndices[idx];
             return GraceString.Create(StringInfo.GetNextTextElement(Value, start));
+        }
+
+        private GraceObject mCodepoints()
+        {
+            if (codepointsObject == null)
+                codepointsObject = new StringCodepoints(Value);
+            return codepointsObject;
         }
 
         /// <summary>Native method for Grace substringFrom To</summary>
