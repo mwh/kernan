@@ -103,6 +103,7 @@ namespace Grace.Runtime
             AddMethod("<=", null);
             AddMethod(">=", null);
             AddMethod("at", null);
+            AddMethod("[]", null);
             AddMethod("size", null);
             AddMethod("match", null);
             AddMethod("asString", null);
@@ -123,7 +124,8 @@ namespace Grace.Runtime
                 case ">": return new DelegateMethodNode1(mGreaterThan);
                 case "<=": return new DelegateMethodNode1(mLessThanEqual);
                 case ">=": return new DelegateMethodNode1(mGreaterThanEqual);
-                case "at": return new DelegateMethodNode1(At);
+                case "at": return new DelegateMethodNode1Ctx(At);
+                case "[]": return new DelegateMethodNode1Ctx(At);
                 case "size": return new DelegateMethodNode0(Size);
                 case "match": return new DelegateMethodNode1Ctx(Match);
                 case "asString": return new DelegateMethodNode0(AsString);
@@ -270,13 +272,22 @@ namespace Grace.Runtime
         }
 
         /// <summary>Native method for Grace at</summary>
+        /// <param name="ctx">Current interpreter</param>
         /// <param name="other">Argument to the method</param>
-        public GraceObject At(GraceObject other)
+        public GraceObject At(EvaluationContext ctx, GraceObject other)
         {
             var oth = other.FindNativeParent<GraceNumber>();
             if (oth == null)
                 return GraceString.Create("bad index");
             int idx = oth.GetInt() - 1;
+            if (idx >= graphemeIndices.Length || idx < 0)
+                ErrorReporting.RaiseError(ctx, "R2013",
+                        new Dictionary<string, string> {
+                            { "index", "" + (idx + 1) },
+                            { "valid", graphemeIndices.Length > 0 ?
+                                "1 .. " + graphemeIndices.Length
+                                : "none (empty)" }
+                        }, "Index must be a number");
             int start = graphemeIndices[idx];
             return GraceString.Create(StringInfo.GetNextTextElement(Value, start));
         }
