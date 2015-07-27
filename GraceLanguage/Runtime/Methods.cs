@@ -32,6 +32,18 @@ namespace Grace.Runtime
             GraceObject self,
             GraceObject other);
 
+    /// <summary>
+    /// A native method accepting the receiver, with its type,
+    /// the interpreter, and the request.
+    /// </summary>
+    /// <remarks>
+    /// This type of method is reusable between instances.
+    /// </remarks>
+    public delegate GraceObject NativeMethodTyped<T>(
+            EvaluationContext ctx,
+            MethodRequest req,
+            T self);
+
     /// <summary>A Grace method wrapping a native method accepting
     /// a single Grace argument and an interpreter</summary>
     public class DelegateMethodNode0Ctx : MethodNode
@@ -154,6 +166,34 @@ namespace Grace.Runtime
         public override GraceObject Respond(EvaluationContext ctx, GraceObject self, MethodRequest req)
         {
             return method(ctx, req);
+        }
+    }
+
+    /// <summary>
+    /// A native method accepting the receiver, with its type,
+    /// the interpreter, and the request.
+    /// </summary>
+    /// <remarks>
+    /// This type of method is reusable between instances.
+    /// </remarks>
+    public class DelegateMethodNodeTyped<T> : MethodNode
+        where T : GraceObject
+    {
+        readonly NativeMethodTyped<T> method;
+
+        /// <param name="rm">Native method to wrap</param>
+        public DelegateMethodNodeTyped(NativeMethodTyped<T> rm)
+            : base(null, null)
+        {
+            method = rm;
+        }
+
+        /// <inheritdoc/>
+        public override GraceObject Respond(EvaluationContext ctx,
+                GraceObject self,
+                MethodRequest req)
+        {
+            return method(ctx, req, (T)self);
         }
     }
 

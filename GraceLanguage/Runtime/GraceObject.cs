@@ -224,6 +224,18 @@ namespace Grace.Runtime
             methods[name] = m;
         }
 
+        /// <summary>
+        /// Add several methods to this object with given names.
+        /// </summary>
+        /// <param name="meths">
+        /// Dictionary of method names=&gt;methods to add
+        /// </param>
+        public void AddMethods(IDictionary<string, MethodNode> meths)
+        {
+            foreach (var kvp in meths)
+                methods[kvp.Key] = kvp.Value;
+        }
+
         /// <summary>Add methods to this object representing a var
         /// declaration</summary>
         /// <param name="name">Name of the var to add</param>
