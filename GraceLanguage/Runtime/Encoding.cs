@@ -34,7 +34,13 @@ namespace Grace.Runtime
                 { "nfc",
                     new DelegateMethodNodeTyped<StringCodepoints>(mNFC) },
                 { "nfd",
-                    new DelegateMethodNodeTyped<StringCodepoints>(mNFD) }
+                    new DelegateMethodNodeTyped<StringCodepoints>(mNFD) },
+                { "utf8",
+                    new DelegateMethodNodeTyped<StringCodepoints>(mUTF8) },
+                { "utf16",
+                    new DelegateMethodNodeTyped<StringCodepoints>(mUTF16) },
+                { "utf32",
+                    new DelegateMethodNodeTyped<StringCodepoints>(mUTF32) },
             };
 
         /// <summary>
@@ -210,6 +216,30 @@ namespace Grace.Runtime
             var str = makeString(self);
             str = str.Normalize(NormalizationForm.FormD);
             return new StringCodepoints(str);
+        }
+
+        private static GraceObject mUTF8(EvaluationContext ctx,
+                MethodRequest req,
+                StringCodepoints self)
+        {
+            var str = makeString(self);
+            return new ByteString(Encoding.UTF8.GetBytes(str));
+        }
+
+        private static GraceObject mUTF16(EvaluationContext ctx,
+                MethodRequest req,
+                StringCodepoints self)
+        {
+            var str = makeString(self);
+            return new UTF16CodepointsView(str);
+        }
+
+        private static GraceObject mUTF32(EvaluationContext ctx,
+                MethodRequest req,
+                StringCodepoints self)
+        {
+            var str = makeString(self);
+            return new UTF32CodepointsView(str, self.utf32);
         }
 
         /// <inheritdoc/>
@@ -483,6 +513,167 @@ namespace Grace.Runtime
             return cache[cp];
         }
 
+    }
+
+    /// <summary>
+    /// Represents the UTF-16 encoding of codepoints, indexable
+    /// by code unit.
+    /// </summary>
+    class UTF16CodepointsView : GraceObject
+    {
+        private string data;
+
+        private static Dictionary<string, MethodNode> sharedMethods;
+
+        public UTF16CodepointsView(string s)
+        {
+            data = s;
+            addMethods();
+        }
+
+        private static void createSharedMethods()
+        {
+            sharedMethods = new Dictionary<string, MethodNode> {
+                { "at", new DelegateMethodNodeTyped<UTF16CodepointsView>(mAt) },
+                { "[]", new DelegateMethodNodeTyped<UTF16CodepointsView>(mAt) },
+                { "le",
+                    new DelegateMethodNodeTyped<UTF16CodepointsView>(mLEndian)
+                },
+                { "be",
+                    new DelegateMethodNodeTyped<UTF16CodepointsView>(mBEndian)
+                },
+            };
+        }
+
+        private static GraceObject mAt(EvaluationContext ctx,
+                MethodRequest req,
+                UTF16CodepointsView self)
+        {
+            var arg = req[0].Arguments[0];
+            var index = arg.FindNativeParent<GraceNumber>();
+            var idx = index.GetInt() - 1;
+            if (idx < 0 || idx >= self.data.Length)
+                ErrorReporting.RaiseError(ctx, "R2013",
+                        new Dictionary<string, string> {
+                            { "index", "" + (idx + 1) },
+                            { "valid", self.data.Length > 0 ?
+                                "1 .. " + self.data.Length
+                                : "none (empty)" }
+                        }, "IndexError: Index out of range");
+            return GraceNumber.Create(self.data[idx]);
+        }
+
+        private static GraceObject mLEndian(EvaluationContext ctx,
+                MethodRequest req,
+                UTF16CodepointsView self)
+        {
+            return new ByteString(Encoding.Unicode.GetBytes(self.data));
+        }
+
+        private static GraceObject mBEndian(EvaluationContext ctx,
+                MethodRequest req,
+                UTF16CodepointsView self)
+        {
+            var enc = new UnicodeEncoding(true, false);
+            return new ByteString(enc.GetBytes(self.data));
+        }
+
+        public override string ToString()
+        {
+            return "UTF16View[" + String.Join(" ",
+                        from b in data
+                        select ((int)b).ToString("X4")
+                    ) + "]";
+        }
+
+        private void addMethods()
+        {
+            if (sharedMethods == null)
+                createSharedMethods();
+            AddMethods(sharedMethods);
+        }
+    }
+
+
+    /// <summary>
+    /// Represents the UTF-32 encoding of codepoints, indexable
+    /// by code unit.
+    /// </summary>
+    class UTF32CodepointsView : GraceObject
+    {
+        private string stringData;
+        private List<int> utf32;
+
+        private static Dictionary<string, MethodNode> sharedMethods;
+
+        public UTF32CodepointsView(string s, List<int> u)
+        {
+            stringData = s;
+            utf32 = u;
+            addMethods();
+        }
+
+        private static void createSharedMethods()
+        {
+            sharedMethods = new Dictionary<string, MethodNode> {
+                { "at", new DelegateMethodNodeTyped<UTF32CodepointsView>(mAt) },
+                { "[]", new DelegateMethodNodeTyped<UTF32CodepointsView>(mAt) },
+                { "le",
+                    new DelegateMethodNodeTyped<UTF32CodepointsView>(mLEndian)
+                },
+                { "be",
+                    new DelegateMethodNodeTyped<UTF32CodepointsView>(mBEndian)
+                },
+            };
+        }
+
+        private static GraceObject mAt(EvaluationContext ctx,
+                MethodRequest req,
+                UTF32CodepointsView self)
+        {
+            var arg = req[0].Arguments[0];
+            var index = arg.FindNativeParent<GraceNumber>();
+            var idx = index.GetInt() - 1;
+            if (idx < 0 || idx >= self.utf32.Count)
+                ErrorReporting.RaiseError(ctx, "R2013",
+                        new Dictionary<string, string> {
+                            { "index", "" + (idx + 1) },
+                            { "valid", self.utf32.Count > 0 ?
+                                "1 .. " + self.utf32.Count
+                                : "none (empty)" }
+                        }, "IndexError: Index out of range");
+            return GraceNumber.Create(self.utf32[idx]);
+        }
+
+        private static GraceObject mLEndian(EvaluationContext ctx,
+                MethodRequest req,
+                UTF32CodepointsView self)
+        {
+            return new ByteString(Encoding.UTF32.GetBytes(self.stringData));
+        }
+
+        private static GraceObject mBEndian(EvaluationContext ctx,
+                MethodRequest req,
+                UTF32CodepointsView self)
+        {
+            var enc = new UTF32Encoding(true, false);
+            return new ByteString(enc.GetBytes(self.stringData));
+        }
+
+        public override string ToString()
+        {
+            return "UTF32View[" + String.Join(" ",
+                        from b in utf32
+                        select b.ToString("X8")
+                    ) + "]";
+        }
+
+        private void addMethods()
+        {
+            if (sharedMethods == null)
+                createSharedMethods();
+            AddMethods(sharedMethods);
+        }
     }
 
 }
