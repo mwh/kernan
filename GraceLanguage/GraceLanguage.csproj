@@ -64,6 +64,7 @@
     <Compile Include="Runtime\GraceObjectProxy.cs" />
     <Compile Include="Runtime\GraceString.cs" />
     <Compile Include="Runtime\Encoding.cs" />
+    <Compile Include="Runtime\ByteString.cs" />
     <Compile Include="Runtime\Methods.cs" />
     <Compile Include="ErrorReporting.cs" />
     <Compile Include="Utility\Rational.cs" />
