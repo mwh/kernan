@@ -293,7 +293,11 @@ namespace Grace.Parsing
                     || cat == UnicodeCategory.TitlecaseLetter
                     || cat == UnicodeCategory.ModifierLetter
                     || cat == UnicodeCategory.OtherLetter
-                    || c == '_');
+                    || c == '_'
+                    || (!isOperatorCharacter(c, cat) &&
+                        (cat == UnicodeCategory.OtherSymbol)
+                        )
+                    );
         }
 
         private bool isIdentifierCharacter(char c, UnicodeCategory cat)
@@ -309,6 +313,9 @@ namespace Grace.Parsing
                     || cat == UnicodeCategory.NonSpacingMark
                     || cat == UnicodeCategory.SpacingCombiningMark
                     || cat == UnicodeCategory.EnclosingMark
+                    || (!isOperatorCharacter(c, cat) &&
+                        (cat == UnicodeCategory.OtherSymbol)
+                        )
                     || c == '\'' || c == '_');
         }
 
@@ -420,14 +427,43 @@ namespace Grace.Parsing
         {
             return c != ':' && c != '"' && c != ',' && c != ';'
                 && c != '\'' &&
-                (cat == UnicodeCategory.MathSymbol
-                    || cat == UnicodeCategory.OtherSymbol
-                    || cat == UnicodeCategory.OtherPunctuation
-                    || c == '+' || c == '-' || c == '*' || c == '/'
+                (
+                    // Standard ASCII keyboard operators
+                    c == '+' || c == '-' || c == '*' || c == '/'
                     || c == '=' || c == '!' || c == '.' || c == '>'
                     || c == '<' || c == '@' || c == '$' || c == '?'
                     || c == '&' || c == '|' || c == '^' || c == '%'
-                    || c == '#');
+                    || c == '#' || c == '~'
+                    // Additional individual operator codepoints
+                    // From Latin-1
+                    || c == '¬' || c == '±' || c == '×' || c == '÷'
+                    || c == '¡' || c == '¢' || c == '£' || c == '¤'
+                    || c == '¥' || c == '§' || c == '¿'
+                    // From General Punctuation
+                    || c == '‽' || c == '⁂'
+                    // Block: Mathematical Operators
+                    || (c >= 0x2200 && c <= 0x22ff)
+                    // Block: Supplemental Mathematical Operators
+                    || (c >= 0x2a00 && c <= 0x2aff)
+                    // Block: Miscellaneous Mathematical Symbols-A
+                    || (c >= 0x27c0 && c <= 0x27ef)
+                    // Block: Miscellaneous Mathematical Symbols-B
+                    || (c >= 0x2980 && c <= 0x29ff)
+                    // Block: Miscellaneous Symbols and Arrows
+                    || (c >= 0x2b00 && c <= 0x2bff)
+                    // Block: Arrows
+                    || (c >= 0x2190 && c <= 0x21ff)
+                    // Block: Supplemental Arrows-A
+                    || (c >= 0x27f0 && c <= 0x27ff)
+                    // Block: Supplemental Arrows-B
+                    || (c >= 0x2900 && c <= 0x297f)
+                    // Block: Supplemental Technical
+                    || (c >= 0x2300 && c <= 0x23ff)
+                    // Block: Currency Symbols
+                    || (c >= 0x20a0 && c <= 0x20cf)
+                    // Block: Geometric Shapes
+                    || (c >= 0x25a0 && c <= 0x25ff)
+                    );
         }
 
         private void skipSpaces()
