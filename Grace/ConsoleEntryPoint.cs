@@ -54,8 +54,7 @@ namespace Grace
                 }
                 else if (arg.StartsWith("-"))
                 {
-                    Console.Error.WriteLine("Unknown option `" + arg + "`.");
-                    return 1;
+                    return error("Unknown option `" + arg + "`.");
                 }
                 else
                     filename = arg;
@@ -63,14 +62,11 @@ namespace Grace
             if (mode == "repl" || (mode == "run" && filename == null))
                 return repl(filename);
             if (filename == null) {
-                System.Console.Error.WriteLine("Required filename argument missing.");
-                return 1;
+                return error("Required filename argument missing.");
             }
             if (!File.Exists(filename))
             {
-                System.Console.Error.WriteLine(
-                        "File `" + filename + "` does not exist.");
-                return 1;
+                return error("File `" + filename + "` does not exist.");
             }
             var dir = Path.GetDirectoryName(Path.GetFullPath(filename));
             var interp = new Interpreter();
@@ -301,9 +297,7 @@ namespace Grace
             {
                 if (!File.Exists(filename))
                 {
-                    System.Console.Error.WriteLine(
-                            "File `" + filename + "` does not exist.");
-                    return 1;
+                    return error("File `" + filename + "` does not exist.");
                 }
                 var dir = Path.GetDirectoryName(Path.GetFullPath(filename));
                 interp.AddModuleRoot(dir);
@@ -426,6 +420,12 @@ namespace Grace
                 line = Console.ReadLine();
             }
             return 0;
+        }
+
+        private static int error(string msg)
+        {
+            Console.Error.WriteLine("grace: Error: " + msg);
+            return 1;
         }
     }
 
