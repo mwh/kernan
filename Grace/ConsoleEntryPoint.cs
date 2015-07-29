@@ -45,10 +45,22 @@ namespace Grace
                 {
                     builtinsFile = args[++i];
                 }
+                else if (arg == "--")
+                {
+                    if (i < args.Length - 1)
+                        filename = args[++i];
+                    i++;
+                    break;
+                }
+                else if (arg.StartsWith("-"))
+                {
+                    Console.Error.WriteLine("Unknown option `" + arg + "`.");
+                    return 1;
+                }
                 else
                     filename = arg;
             }
-            if (mode == "repl")
+            if (mode == "repl" || (mode == "run" && filename == null))
                 return repl(filename);
             if (filename == null) {
                 System.Console.Error.WriteLine("Required filename argument missing.");
