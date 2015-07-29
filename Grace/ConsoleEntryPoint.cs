@@ -21,6 +21,7 @@ namespace Grace
             string mode = "run";
             bool verbose = false;
             string errorCodeTarget = null;
+            var lines = new List<string>();
             for (int i = 0; i < args.Length; i++)
             {
                 var arg = args[i];
@@ -45,6 +46,13 @@ namespace Grace
                 {
                     builtinsFile = args[++i];
                 }
+                else if (arg == "-c")
+                {
+                    mode = "line";
+                    if (i >= args.Length - 1)
+                        return error("Expected code argument after `-c`.");
+                    lines.Add(args[++i]);
+                }
                 else if (arg == "--")
                 {
                     if (i < args.Length - 1)
@@ -61,20 +69,27 @@ namespace Grace
             }
             if (mode == "repl" || (mode == "run" && filename == null))
                 return repl(filename);
-            if (filename == null) {
+            if (filename == null && lines.Count == 0) {
                 return error("Required filename argument missing.");
             }
-            if (!File.Exists(filename))
+            if (!File.Exists(filename) && lines.Count == 0)
             {
                 return error("File `" + filename + "` does not exist.");
             }
-            var dir = Path.GetDirectoryName(Path.GetFullPath(filename));
             var interp = new Interpreter();
-            interp.AddModuleRoot(dir);
+            if (filename != null)
+                interp.AddModuleRoot(
+                        Path.GetDirectoryName(Path.GetFullPath(filename)));
+            else
+                interp.AddModuleRoot(Path.GetFullPath("."));
             interp.FailedImportHook = promptInstallModule;
             interp.LoadPrelude();
             if (builtinsFile != null)
                 interp.LoadBuiltins(builtinsFile);
+            if (runLines(interp, lines) != 0)
+                return 1;
+            if (filename == null)
+                return 0;
             using (StreamReader reader = File.OpenText(filename))
             {
                 Parser parser = new Parser(
@@ -283,6 +298,110 @@ namespace Grace
             return false;
         }
 
+        private static int runLines(Interpreter interp,
+                IEnumerable<string> lines)
+        {
+            var obj = new GraceObject();
+            interp.Extend(obj);
+            var ls = new LocalScope("code-inner");
+            ls.AddLocalDef("self", obj);
+            interp.ExtendMinor(ls);
+            var memo = interp.Memorise();
+            bool unfinished;
+            foreach (var line in lines)
+            {
+                int r = runLine(interp, obj, memo, line, out unfinished);
+                if (r != 0)
+                    return r;
+                if (unfinished)
+                    return 1;
+            }
+            return 0;
+        }
+
+        private static int runLine(Interpreter interp,
+                GraceObject obj,
+                Interpreter.ScopeMemo memo,
+                string line,
+                out bool unfinished)
+        {
+            if (true)
+            {
+                ParseNode module;
+                ObjectConstructorNode mod = null;
+                try {
+                    var p = new Parser("source code", line);
+                    module = p.Parse();
+                    var trans = new ExecutionTreeTranslator();
+                    mod = (ObjectConstructorNode)trans.Translate((ObjectParseNode)module);
+                }
+                catch (StaticErrorException ex)
+                {
+                    if (ex.Code == "P1001")
+                    {
+                        // "Unexpected end of file" is expected in the
+                        // repl for unfinished statements.
+                        unfinished = true;
+                        return 1;
+                    }
+                    else
+                    {
+                        // All other errors are errors.
+                        unfinished = false;
+                        return 1;
+                    }
+                }
+                unfinished = false;
+                if (mod != null)
+                {
+                    try
+                    {
+                        // The "module" object can only really have
+                        // a single element, but we don't know whether
+                        // it's a method, statement, or expression yet.
+                        foreach (var meth in mod.Methods.Values)
+                        {
+                            obj.AddMethod(meth);
+                        }
+                        foreach (var node in mod.Body)
+                        {
+                            var ret = node.Evaluate(interp);
+                            if (ret != null
+                                    && ret != GraceObject.Done
+                                    && ret != GraceObject.Uninitialised)
+                            {
+                                interp.Print(interp, ret);
+                            }
+                        }
+                    }
+                    catch (GraceExceptionPacketException e)
+                    {
+                        Console.Error.WriteLine("Uncaught exception:");
+                        ErrorReporting.WriteException(e.ExceptionPacket);
+                        if (e.ExceptionPacket.StackTrace != null)
+                        {
+                            foreach (var l in e.ExceptionPacket.StackTrace)
+                            {
+                                Console.Error.WriteLine("    from "
+                                        + l);
+                            }
+                        }
+                        return 1;
+                    }
+                    finally
+                    {
+                        // No matter what happened, restore the interpreter
+                        // to as pristine a state as we can manage before
+                        // the next time.
+                        interp.RestoreExactly(memo);
+                        interp.PopCallStackTo(0);
+                        mod = null;
+                    }
+                }
+            }
+            return 0;
+        }
+
         private static int repl(string filename)
         {
             Console.WriteLine("* Grace REPL with runtime "
@@ -346,75 +465,29 @@ namespace Grace
             Console.Write(">>> ");
             string line = Console.ReadLine();
             string accum = String.Empty;
+            bool unfinished;
             while (line != null)
             {
                 accum += line.Replace("\u0000", "") + "\n";
-                ObjectConstructorNode mod = null;
-                try {
-                    var p = new Parser("source code", accum);
-                    module = p.Parse();
-                    var trans = new ExecutionTreeTranslator();
-                    mod = (ObjectConstructorNode)trans.Translate((ObjectParseNode)module);
-                }
-                catch (StaticErrorException ex)
+                var r = runLine(interp, obj, memo, accum, out unfinished);
+                if (unfinished)
                 {
-                    if (ex.Code == "P1001")
-                    {
-                        // "Unexpected end of file" is expected here
-                        // for unfinished statements.
-                        Console.Write("... ");
-                    }
-                    else
-                    {
-                        // All other errors are errors, and should
-                        // clear the accumulated buffer and let the
-                        // user start again.
-                        Console.Write(">>> ");
-                        accum = String.Empty;
-                    }
+                    // "Unexpected end of file" is expected here
+                    // for unfinished statements.
+                    Console.Write("... ");
+                    unfinished = false;
                 }
-                if (mod != null)
+                else if (r != 0)
                 {
-                    try
-                    {
-                        // The "module" object can only really have
-                        // a single element, but we don't know whether
-                        // it's a method, statement, or expression yet.
-                        foreach (var meth in mod.Methods.Values)
-                        {
-                            obj.AddMethod(meth);
-                        }
-                        foreach (var node in mod.Body)
-                        {
-                            var ret = node.Evaluate(interp);
-                            if (ret != null
-                                    && ret != GraceObject.Done
-                                    && ret != GraceObject.Uninitialised)
-                            {
-                                interp.Print(interp, ret);
-                            }
-                        }
-                    }
-                    catch (GraceExceptionPacketException e)
-                    {
-                        Console.Error.WriteLine("Uncaught exception:");
-                        ErrorReporting.WriteException(e.ExceptionPacket);
-                        if (e.ExceptionPacket.StackTrace != null)
-                        {
-                            foreach (var l in e.ExceptionPacket.StackTrace)
-                            {
-                                Console.Error.WriteLine("    from "
-                                        + l);
-                            }
-                        }
-                    }
-                    // No matter what happened, restore the interpreter
-                    // to as pristine a state as we can manage before
-                    // the next time.
-                    interp.RestoreExactly(memo);
-                    interp.PopCallStackTo(0);
+                    // All other errors are errors, and should
+                    // clear the accumulated buffer and let the
+                    // user start again.
+                    Console.Write(">>> ");
                     accum = String.Empty;
-                    mod = null;
+                }
+                else
+                {
+                    accum = String.Empty;
                     Console.Write(">>> ");
                 }
                 line = Console.ReadLine();
