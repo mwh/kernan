@@ -33,6 +33,7 @@ namespace Grace.Runtime
                 { "at", new DelegateMethodNodeTyped<ByteString>(mAt) },
                 { "[]", new DelegateMethodNodeTyped<ByteString>(mAt) },
                 { "size", new DelegateMethodNodeTyped<ByteString>(mSize) },
+                { "++", new DelegateMethodNodeTyped<ByteString>(mConcat) },
             };
         }
 
@@ -66,6 +67,25 @@ namespace Grace.Runtime
             if (byteObjects[b] == null)
                 byteObjects[b] = GraceNumber.Create((int)b);
             return byteObjects[b];
+        }
+
+        private static GraceObject mConcat(EvaluationContext ctx,
+                MethodRequest req,
+                ByteString self)
+        {
+            var oth = req[0].Arguments[0].FindNativeParent<ByteString>();
+            if (oth == null)
+                ErrorReporting.RaiseError(ctx, "R2001",
+                        new Dictionary<string, string> {
+                            { "method", req.Name },
+                            { "index", "1" },
+                            { "part", req.Name },
+                            { "required", "byte string" },
+                        }, "ArgumentTypeError: Needed byte string");
+            var d2 = new byte[self.data.Length + oth.data.Length];
+            self.data.CopyTo(d2, 0);
+            oth.data.CopyTo(d2, self.data.Length);
+            return new ByteString(d2);
         }
 
         private void addMethods()

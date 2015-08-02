@@ -29,6 +29,8 @@ namespace Grace.Runtime
                     new DelegateMethodNodeTyped<StringCodepoints>(mAt) },
                 { "size",
                     new DelegateMethodNodeTyped<StringCodepoints>(mSize) },
+                { "++",
+                    new DelegateMethodNodeTyped<StringCodepoints>(mConcat) },
                 { "string",
                     new DelegateMethodNodeTyped<StringCodepoints>(mString) },
                 { "nfc",
@@ -83,8 +85,9 @@ namespace Grace.Runtime
                         new Dictionary<string, string> {
                             { "method", req.Name },
                             { "index", "1" },
-                            { "part", req.Name }
-                        }, "IndexError: Index must be a number");
+                            { "part", req.Name },
+                            { "required", "Number" },
+                        }, "ArgumentTypeError: Index must be a number");
             int idx = oth.GetInt() - 1;
             if (idx >= self.codepoints.Length || idx < 0)
                 ErrorReporting.RaiseError(ctx, "R2013",
@@ -106,6 +109,22 @@ namespace Grace.Runtime
                 StringCodepoints self)
         {
             return GraceNumber.Create(self.utf32.Count);
+        }
+
+        private static GraceObject mConcat(EvaluationContext ctx,
+                MethodRequest req,
+                StringCodepoints self)
+        {
+            var oth = req[0].Arguments[0].FindNativeParent<StringCodepoints>();
+            if (oth == null)
+                ErrorReporting.RaiseError(ctx, "R2001",
+                        new Dictionary<string, string> {
+                            { "method", req.Name },
+                            { "index", "1" },
+                            { "part", req.Name },
+                            { "required", "codepoints" },
+                        }, "ArgumentTypeError: Needed codepoints object");
+            return new StringCodepoints(self.utf32.Concat(oth.utf32));
         }
 
         private static string makeString(StringCodepoints self)
