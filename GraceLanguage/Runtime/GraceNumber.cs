@@ -83,6 +83,7 @@ namespace Grace.Runtime
             AddMethod("match", null);
             AddMethod("|", Matching.OrMethod);
             AddMethod("&", Matching.AndMethod);
+            AddMethod("hash", null);
             // These methods are extensions and should not be used:
             AddMethod("numerator", null);
             AddMethod("denominator", null);
@@ -110,6 +111,7 @@ namespace Grace.Runtime
                 case "prefix-": return new DelegateMethodNode0(Negate);
                 case "..": return new DelegateMethodNode1Ctx(DotDot);
                 case "match": return new DelegateMethodNode1Ctx(Match);
+                case "hash": return new DelegateMethodNode0(mHash);
                 case "numerator": return new DelegateMethodNode0(mNumerator);
                 case "denominator":
                                   return new DelegateMethodNode0(mDenominator);
@@ -256,6 +258,11 @@ namespace Grace.Runtime
         {
             var oth = other.FindNativeParent<GraceNumber>();
             return GraceBoolean.Create(this.Value <= oth.Value);
+        }
+
+        private GraceObject mHash()
+        {
+            return GraceNumber.Create(Value.GetHashCode());
         }
 
         /// <summary>Native method for Grace match</summary>

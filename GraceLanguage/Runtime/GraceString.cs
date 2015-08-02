@@ -111,6 +111,7 @@ namespace Grace.Runtime
             AddMethod("asString", null);
             AddMethod("substringFrom to", null);
             AddMethod("codepoints", null);
+            AddMethod("hash", null);
             AddMethod("|", Matching.OrMethod);
             AddMethod("&", Matching.AndMethod);
         }
@@ -136,6 +137,7 @@ namespace Grace.Runtime
                                  return new DelegateMethodNodeReq(
                                          substringFromTo);
                 case "codepoints": return new DelegateMethodNode0(mCodepoints);
+                case "hash": return new DelegateMethodNode0(mHash);
             }
             return base.getLazyMethod(name);
         }
@@ -294,6 +296,11 @@ namespace Grace.Runtime
                         }, "Index must be a number");
             int start = graphemeIndices[idx];
             return GraceString.Create(StringInfo.GetNextTextElement(Value, start));
+        }
+
+        private GraceObject mHash()
+        {
+            return GraceNumber.Create(nfc.GetHashCode());
         }
 
         private GraceObject mCodepoints()
