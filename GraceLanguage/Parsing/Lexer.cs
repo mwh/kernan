@@ -282,7 +282,8 @@ namespace Grace.Parsing
                 return new OuterKeywordToken(moduleName, line, column);
             if ("self" == ident)
                 return new SelfKeywordToken(moduleName, line, column);
-            return new IdentifierToken(moduleName, line, column, ident);
+            return new IdentifierToken(moduleName, line, column,
+                    ident.Normalize());
         }
 
         private bool isIdentifierStartCharacter(char c, UnicodeCategory cat)
@@ -335,7 +336,11 @@ namespace Grace.Parsing
                 spaceBefore = true;
             advanceIndex();
             UnicodeCategory cat = validateChar();
-            while (isOperatorCharacter(code[index], cat))
+            while (isOperatorCharacter(code[index], cat)
+                    || cat == UnicodeCategory.NonSpacingMark
+                    || cat == UnicodeCategory.SpacingCombiningMark
+                    || cat == UnicodeCategory.EnclosingMark
+                    )
             {
                 advanceIndex();
                 cat = validateChar();
@@ -374,7 +379,8 @@ namespace Grace.Parsing
                 index -= (op.Length - 1);
                 return new RGenericToken(moduleName, line, column);
             }
-            OperatorToken ret = new OperatorToken(moduleName, line, column, op);
+            OperatorToken ret = new OperatorToken(moduleName, line, column,
+                    op.Normalize());
             ret.SetSpacing(spaceBefore, spaceAfter);
             return ret;
         }
