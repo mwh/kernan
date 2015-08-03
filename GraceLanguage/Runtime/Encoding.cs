@@ -79,6 +79,7 @@ namespace Grace.Runtime
                 MethodRequest req,
                 StringCodepoints self)
         {
+            MethodHelper.CheckArity(ctx, req, 1);
             var oth = req[0].Arguments[0].FindNativeParent<GraceNumber>();
             if (oth == null)
                 ErrorReporting.RaiseError(ctx, "R2001",
@@ -115,6 +116,7 @@ namespace Grace.Runtime
                 MethodRequest req,
                 StringCodepoints self)
         {
+            MethodHelper.CheckArity(ctx, req, 1);
             var oth = req[0].Arguments[0].FindNativeParent<StringCodepoints>();
             if (oth == null)
                 ErrorReporting.RaiseError(ctx, "R2001",
@@ -162,6 +164,7 @@ namespace Grace.Runtime
                 MethodRequest req,
                 StringCodepoints self)
         {
+            MethodHelper.CheckArity(ctx, req, 1);
             var other = req[0].Arguments[0] as StringCodepoints;
             if (other == null)
                 return GraceBoolean.False;
@@ -172,6 +175,7 @@ namespace Grace.Runtime
                 MethodRequest req,
                 StringCodepoints self)
         {
+            MethodHelper.CheckArity(ctx, req, 1);
             var other = req[0].Arguments[0] as StringCodepoints;
             if (other == null)
                 return GraceBoolean.False;
@@ -182,6 +186,7 @@ namespace Grace.Runtime
                 MethodRequest req,
                 StringCodepoints self)
         {
+            MethodHelper.CheckArity(ctx, req, 1);
             var other = req[0].Arguments[0] as StringCodepoints;
             if (other == null)
                 return GraceBoolean.False;
@@ -192,6 +197,7 @@ namespace Grace.Runtime
                 MethodRequest req,
                 StringCodepoints self)
         {
+            MethodHelper.CheckArity(ctx, req, 1);
             var other = req[0].Arguments[0] as StringCodepoints;
             if (other == null)
                 return GraceBoolean.False;
@@ -202,6 +208,7 @@ namespace Grace.Runtime
                 MethodRequest req,
                 StringCodepoints self)
         {
+            MethodHelper.CheckArity(ctx, req, 1);
             var other = req[0].Arguments[0] as StringCodepoints;
             if (other == null)
                 return GraceBoolean.False;
@@ -212,6 +219,7 @@ namespace Grace.Runtime
                 MethodRequest req,
                 StringCodepoints self)
         {
+            MethodHelper.CheckArity(ctx, req, 1);
             var other = req[0].Arguments[0] as StringCodepoints;
             if (other == null)
                 return GraceBoolean.True;
@@ -469,6 +477,7 @@ namespace Grace.Runtime
                 MethodRequest req,
                 CodepointObject self)
         {
+            MethodHelper.CheckArity(ctx, req, 1);
             var other = req[0].Arguments[0] as CodepointObject;
             if (other == null)
                 return GraceBoolean.False;
@@ -479,6 +488,7 @@ namespace Grace.Runtime
                 MethodRequest req,
                 CodepointObject self)
         {
+            MethodHelper.CheckArity(ctx, req, 1);
             var other = req[0].Arguments[0] as CodepointObject;
             if (other == null)
                 return GraceBoolean.False;
@@ -489,6 +499,7 @@ namespace Grace.Runtime
                 MethodRequest req,
                 CodepointObject self)
         {
+            MethodHelper.CheckArity(ctx, req, 1);
             var other = req[0].Arguments[0] as CodepointObject;
             if (other == null)
                 return GraceBoolean.False;
@@ -499,6 +510,7 @@ namespace Grace.Runtime
                 MethodRequest req,
                 CodepointObject self)
         {
+            MethodHelper.CheckArity(ctx, req, 1);
             var other = req[0].Arguments[0] as CodepointObject;
             if (other == null)
                 return GraceBoolean.False;
@@ -568,6 +580,7 @@ namespace Grace.Runtime
                 MethodRequest req,
                 UTF16CodepointsView self)
         {
+            MethodHelper.CheckArity(ctx, req, 1);
             var arg = req[0].Arguments[0];
             var index = arg.FindNativeParent<GraceNumber>();
             var idx = index.GetInt() - 1;
@@ -650,6 +663,7 @@ namespace Grace.Runtime
                 MethodRequest req,
                 UTF32CodepointsView self)
         {
+            MethodHelper.CheckArity(ctx, req, 1);
             var arg = req[0].Arguments[0];
             var index = arg.FindNativeParent<GraceNumber>();
             var idx = index.GetInt() - 1;

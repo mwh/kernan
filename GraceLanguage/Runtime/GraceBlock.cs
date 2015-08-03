@@ -148,6 +148,7 @@ namespace Grace.Runtime
         /// <param name="req">Request that obtained this method</param>
         public GraceObject Match(EvaluationContext ctx, MethodRequest req)
         {
+            MethodHelper.CheckArity(ctx, req, 1);
             var target = req[0].Arguments[0];
             if (Pattern == null)
             {

@@ -48,6 +48,7 @@ namespace Grace.Runtime
                 MethodRequest req,
                 ByteString self)
         {
+            MethodHelper.CheckArity(ctx, req, 1);
             var arg = req[0].Arguments[0];
             var index = arg.FindNativeParent<GraceNumber>();
             var idx = index.GetInt() - 1;
@@ -73,6 +74,7 @@ namespace Grace.Runtime
                 MethodRequest req,
                 ByteString self)
         {
+            MethodHelper.CheckArity(ctx, req, 1);
             var oth = req[0].Arguments[0].FindNativeParent<ByteString>();
             if (oth == null)
                 ErrorReporting.RaiseError(ctx, "R2001",

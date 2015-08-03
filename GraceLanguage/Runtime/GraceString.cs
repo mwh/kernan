@@ -316,6 +316,7 @@ namespace Grace.Runtime
         private GraceObject substringFromTo(EvaluationContext ctx,
                 MethodRequest req)
         {
+            MethodHelper.CheckArity(ctx, req, 1, 1);
             // Index of first grapheme to include.
             var start = req[0].Arguments[0];
             // Index of last grapheme to include.

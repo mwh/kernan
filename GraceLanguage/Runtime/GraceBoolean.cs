@@ -183,6 +183,7 @@ namespace Grace.Runtime
         public GraceObject IfTrueIfFalse(EvaluationContext ctx,
                 MethodRequest req)
         {
+            MethodHelper.CheckArity(ctx, req, 1, 1);
             var trueBlock = req[0].Arguments[0];
             var falseBlock = req[1].Arguments[0];
             if (!(trueBlock is GraceBlock))

@@ -254,6 +254,7 @@ namespace Grace.Runtime
         /// <param name="req">Request that resolved to this method</param>
         public GraceObject Match(EvaluationContext ctx, MethodRequest req)
         {
+            MethodHelper.CheckArity(ctx, req, 1);
             var target = req[0].Arguments[0];
             var gep = target as GraceExceptionPacket;
             if (gep == null)
