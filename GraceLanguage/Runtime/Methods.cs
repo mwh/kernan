@@ -81,6 +81,7 @@ namespace Grace.Runtime
         /// <inheritdoc/>
         public override GraceObject Respond(EvaluationContext ctx, GraceObject self, MethodRequest req)
         {
+            MethodHelper.CheckArity(ctx, req, 1);
             GraceObject arg = req[0].Arguments[0];
             return method(ctx, arg);
         }
@@ -102,6 +103,7 @@ namespace Grace.Runtime
         /// <inheritdoc/>
         public override GraceObject Respond(EvaluationContext ctx, GraceObject self, MethodRequest req)
         {
+            MethodHelper.CheckArity(ctx, req, 1);
             GraceObject arg = req[0].Arguments[0];
             return method(ctx, self, arg);
         }
@@ -123,6 +125,7 @@ namespace Grace.Runtime
         /// <inheritdoc/>
         public override GraceObject Respond(EvaluationContext ctx, GraceObject self, MethodRequest req)
         {
+            MethodHelper.CheckArity(ctx, req, 1);
             GraceObject arg = req[0].Arguments[0];
             return method(arg);
         }
@@ -291,4 +294,50 @@ namespace Grace.Runtime
             return s == scope;
         }
     }
+
+    /// <summary>
+    /// Encapsulates helper methods for implementations of
+    /// native methods.
+    /// </summary>
+    public static class MethodHelper
+    {
+        /// <summary>
+        /// Raise an error if too many or too few arguments
+        /// provided to a part of a method.
+        /// </summary>
+        /// <param name="ctx">Current interpreter</param>
+        /// <param name="req">Method request to check</param>
+        /// <param name="counts">
+        /// Number of arguments required in each part
+        /// </param>
+        public static void CheckArity(EvaluationContext ctx,
+                MethodRequest req, params int[] counts)
+        {
+            for (int i = 0; i < counts.Length; i++)
+            {
+                var got = req[i].Arguments.Count;
+                var want = counts[i];
+                MethodNode.CheckArgCount(ctx, req.Name, req[i].Name,
+                        want, false, got);
+            }
+        }
+
+        /// <summary>
+        /// Raise an error if too many or too few arguments
+        /// provided to a method.
+        /// </summary>
+        /// <param name="ctx">Current interpreter</param>
+        /// <param name="req">Method request to check</param>
+        /// <param name="want">
+        /// Number of arguments this method wants.
+        /// </param>
+        public static void CheckArity(EvaluationContext ctx,
+                MethodRequest req, int want)
+        {
+            var got = req[0].Arguments.Count;
+            MethodNode.CheckArgCount(ctx, req.Name, req[0].Name,
+                    want, false, got);
+        }
+    }
+
 }
