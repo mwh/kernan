@@ -463,7 +463,7 @@ namespace Grace
             ls.AddLocalDef("self", obj);
             interp.ExtendMinor(ls);
             var memo = interp.Memorise();
-            var edit = new Editor();
+            var edit = new Editor(s => completion(obj, s));
             string accum = String.Empty;
             bool unfinished;
             string line = edit.GetLine(">>> ");
@@ -493,6 +493,136 @@ namespace Grace
                 line = edit.GetLine(">>> ");
             }
             return 0;
+        }
+
+        private static IList<Editor.Completion> completion(
+                GraceObject obj,
+                string line)
+        {
+            var ret = new List<Editor.Completion>();
+            var lparenIndex = line.LastIndexOf("(");
+            var commaIndex = line.LastIndexOf(",");
+            var lbraceIndex = line.LastIndexOf("[");
+            var spaceIndex = line.LastIndexOf(" ");
+            var dotIndex = line.LastIndexOf(".");
+            var last = Math.Max(Math.Max(Math.Max(lparenIndex, commaIndex),
+                    Math.Max(lbraceIndex, dotIndex)), spaceIndex);
+            if (last == -1)
+            {
+                // Nothing to look at
+                foreach (var k in obj.DotMethods)
+                {
+                    if (k == "asString")
+                        continue;
+                    if (k.StartsWith(line))
+                    {
+                        var append = k;
+                        var space = k.IndexOf(' ');
+                        if (space != -1)
+                            append = k.Substring(0, space);
+                        append = append.Substring(line.Length);
+                        ret.Add(Editor.CreateCompletion(append, k, ""));
+                    }
+                }
+            }
+            else if (commaIndex == last || lbraceIndex == last
+                    || lparenIndex == last || spaceIndex == last)
+            {
+                // If we found one of these, ignore everything leading
+                // up to it and make base completions for the rest.
+                ret.AddRange(completion(obj,
+                            line.Substring(last + 1).Trim()));
+            }
+            else
+            {
+                // We end with a dot. Check for a preceding
+                // bracket, comma, or space, and perform the
+                // same truncation as above if applicable.
+                var untilDot = dotIndex >= 0 ? line.Substring(0, dotIndex) : "";
+                var rbraceIndex = untilDot.LastIndexOf(']');
+                var commaIndex2 = untilDot.LastIndexOf(',');
+                var spaceIndex2 = untilDot.LastIndexOf(' ');
+                var rparenIndex = untilDot.LastIndexOf(')');
+                var m = Math.Max(Math.Max(rbraceIndex, spaceIndex2),
+                        Math.Max(commaIndex2, rparenIndex));
+                if (m != -1 && (m == commaIndex2 || m == spaceIndex2))
+                {
+                    // Rudimentary quote check - if we find one of these
+                    // with an odd number of quotation marks before it,
+                    // we retry from before the quote.
+                    if (countChars(untilDot.Substring(0, m), '"') % 2 == 1)
+                    {
+                        // Assume it's inside a quote
+                        var qIndex = untilDot.LastIndexOf('"', m);
+                        rparenIndex = untilDot.LastIndexOf(")", qIndex);
+                        commaIndex2 = untilDot.LastIndexOf(",", qIndex);
+                        rbraceIndex = untilDot.LastIndexOf("]", qIndex);
+                        spaceIndex2 = untilDot.LastIndexOf(" ", qIndex);
+                        m = Math.Max(Math.Max(rbraceIndex, spaceIndex2),
+                                Math.Max(commaIndex2, rparenIndex));
+                    }
+                    // Update untilDot to include only the now-relevant
+                    // part of the line.
+                    if (m != -1 && (m == commaIndex2 || m == spaceIndex2))
+                        untilDot = untilDot.Substring(m + 1);
+                    else if (m < lbraceIndex || m < lparenIndex)
+                        untilDot = untilDot.Substring(
+                                Math.Max(lbraceIndex, lparenIndex) + 1);
+                }
+                else if (m < lbraceIndex || m < lparenIndex)
+                {
+                    // Start after a still-open bracket.
+                    untilDot = untilDot.Substring(
+                            Math.Max(lbraceIndex, lparenIndex) + 1);
+                }
+                // We will speculatively parse and execute the code,
+                // and then examine the actual object that comes of
+                // it. The code may have side effects, which will be
+                // visible; it would be better to detect such code,
+                // but the information is not presently available.
+                if (untilDot != "")
+                {
+                    ErrorReporting.SuppressAllErrors = true;
+                    try {
+                        var p = new Parser("tab completion", untilDot);
+                        var module = p.Parse();
+                        var trans = new ExecutionTreeTranslator();
+                        var mod = (ObjectConstructorNode)
+                            trans.Translate((ObjectParseNode)module);
+                        if (mod.Body.Count > 0)
+                        {
+                            var element = mod.Body[0];
+                            var interp = new Interpreter();
+                            interp.Extend(obj);
+                            var o = element.Evaluate(interp);
+                            // Re-run completion with the rest of the
+                            // string and the obtained object.
+                            ret.AddRange(completion(o,
+                                        line.Substring(dotIndex + 1)));
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        // Eat everything silently - the code isn't meant
+                        // to be running, so we don't want to report any
+                        // errors.
+                    }
+                    finally
+                    {
+                        ErrorReporting.SuppressAllErrors = false;
+                    }
+                }
+            }
+            return ret;
+        }
+
+        private static int countChars(string s, char c)
+        {
+            int count = 0;
+            for (int i = 0; i < s.Length; i++)
+                if (s[i] == c)
+                    count++;
+            return count;
         }
 
         private static int error(string msg)

@@ -14,6 +14,12 @@ namespace Grace
         private static HashSet<string> SilencedErrors = new HashSet<string>();
 
         /// <summary>
+        /// While true, no error reports will be displayed. Exceptions
+        /// are still thrown.
+        /// </summary>
+        public static bool SuppressAllErrors { get; set; }
+
+        /// <summary>
         /// Retrieve the matching error message for a given code
         /// from the highest-priority error message source.
         /// </summary>
@@ -202,7 +208,7 @@ namespace Grace
         {
             string baseMessage = GetMessage(code, vars) ?? localDescription;
             string formattedMessage = FormatMessage(baseMessage, vars);
-            if (!SilencedErrors.Contains(code))
+            if (!SilencedErrors.Contains(code) && !SuppressAllErrors)
                 WriteError(module, line, code, formattedMessage);
             throw new StaticErrorException(code);
         }
@@ -230,7 +236,8 @@ namespace Grace
         {
             string baseMessage = GetMessage(code,
                     new Dictionary<string, string>()) ?? localDescription;
-            WriteError(module, line, code, baseMessage);
+            if (!SilencedErrors.Contains(code) && !SuppressAllErrors)
+                WriteError(module, line, code, baseMessage);
         }
 
         /// <summary>

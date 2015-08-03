@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Grace.Execution;
+using Grace.Parsing;
 
 namespace Grace.Runtime
 {
@@ -18,6 +19,24 @@ namespace Grace.Runtime
         }
         private Dictionary<string, MethodNode> methods = new Dictionary<string, MethodNode>();
         private Dictionary<string, GraceObject> fields = new Dictionary<string, GraceObject>();
+
+        /// <summary>
+        /// Gives the names of all non-operator methods on
+        /// this object, including inherited methods.
+        /// </summary>
+        public virtual IEnumerable<string> DotMethods
+        {
+            get
+            {
+                var names = new HashSet<string>();
+                foreach (var m in methods.Keys)
+                    if (Lexer.IsIdentifier(m))
+                        names.Add(m);
+                foreach (var p in parents)
+                    names.UnionWith(p.DotMethods);
+                return names;
+            }
+        }
 
         private Stack<GraceObject> parents = new Stack<GraceObject>();
 

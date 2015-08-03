@@ -286,7 +286,29 @@ namespace Grace.Parsing
                     ident.Normalize());
         }
 
-        private bool isIdentifierStartCharacter(char c, UnicodeCategory cat)
+        /// <summary>
+        /// Check whether a given string is an identifier.
+        /// </summary>
+        /// <param name="s">String to check</param>
+        public static bool IsIdentifier(string s)
+        {
+            var first = StringInfo.GetNextTextElement(s);
+            var cat = UnicodeLookup.GetUnicodeCategory(s, 0);
+            if (!isIdentifierStartCharacter(first[0], cat))
+                return false;
+            var en = StringInfo.GetTextElementEnumerator(s);
+            while (en.MoveNext())
+            {
+                var el = (string)en.Current;
+                cat = UnicodeLookup.GetUnicodeCategory(el, 0);
+                if (!isIdentifierCharacter(el[0], cat))
+                    return false;
+            }
+            return true;
+        }
+
+        private static bool isIdentifierStartCharacter(char c,
+                UnicodeCategory cat)
         {
             return (cat == UnicodeCategory.LowercaseLetter
                     || cat == UnicodeCategory.UppercaseLetter
@@ -300,7 +322,7 @@ namespace Grace.Parsing
                     );
         }
 
-        private bool isIdentifierCharacter(char c, UnicodeCategory cat)
+        private static bool isIdentifierCharacter(char c, UnicodeCategory cat)
         {
             return (cat == UnicodeCategory.LowercaseLetter
                     || cat == UnicodeCategory.UppercaseLetter
@@ -423,7 +445,7 @@ namespace Grace.Parsing
             return new CommentToken(moduleName, line, column, body);
         }
 
-        private bool isOperatorCharacter(char c, UnicodeCategory cat)
+        private static bool isOperatorCharacter(char c, UnicodeCategory cat)
         {
             return c != ':' && c != '"' && c != ',' && c != ';'
                 && c != '\'' &&
