@@ -8,6 +8,7 @@ using System.Net;
 using Grace.Execution;
 using Grace.Parsing;
 using Grace.Runtime;
+using ActiveLineEditor;
 
 namespace Grace
 {
@@ -462,10 +463,10 @@ namespace Grace
             ls.AddLocalDef("self", obj);
             interp.ExtendMinor(ls);
             var memo = interp.Memorise();
-            Console.Write(">>> ");
-            string line = Console.ReadLine();
+            var edit = new Editor();
             string accum = String.Empty;
             bool unfinished;
+            string line = edit.GetLine(">>> ");
             while (line != null)
             {
                 accum += line.Replace("\u0000", "") + "\n";
@@ -474,23 +475,22 @@ namespace Grace
                 {
                     // "Unexpected end of file" is expected here
                     // for unfinished statements.
-                    Console.Write("... ");
+                    line = edit.GetLine("... ");
                     unfinished = false;
+                    continue;
                 }
                 else if (r != 0)
                 {
                     // All other errors are errors, and should
                     // clear the accumulated buffer and let the
                     // user start again.
-                    Console.Write(">>> ");
                     accum = String.Empty;
                 }
                 else
                 {
                     accum = String.Empty;
-                    Console.Write(">>> ");
                 }
-                line = Console.ReadLine();
+                line = edit.GetLine(">>> ");
             }
             return 0;
         }
