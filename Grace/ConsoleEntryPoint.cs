@@ -309,9 +309,11 @@ namespace Grace
             interp.ExtendMinor(ls);
             var memo = interp.Memorise();
             bool unfinished;
+            GraceObject result;
             foreach (var line in lines)
             {
-                int r = runLine(interp, obj, memo, line, out unfinished);
+                int r = runLine(interp, obj, memo, line, out unfinished,
+                        out result);
                 if (r != 0)
                     return r;
                 if (unfinished)
@@ -324,8 +326,9 @@ namespace Grace
                 GraceObject obj,
                 Interpreter.ScopeMemo memo,
                 string line,
-                out bool unfinished)
+                out bool unfinished, out GraceObject result)
         {
+            result = null;
             if (true)
             {
                 ParseNode module;
@@ -373,6 +376,7 @@ namespace Grace
                             {
                                 interp.Print(interp, ret);
                             }
+                            result = ret;
                         }
                     }
                     catch (GraceExceptionPacketException e)
@@ -461,16 +465,21 @@ namespace Grace
             interp.Extend(obj);
             var ls = new LocalScope("repl-inner");
             ls.AddLocalDef("self", obj);
+            ls.AddLocalDef("LAST", GraceObject.Done);
             interp.ExtendMinor(ls);
             var memo = interp.Memorise();
             var edit = new Editor(s => completion(obj, s));
             string accum = String.Empty;
             bool unfinished;
+            GraceObject result;
             string line = edit.GetLine(">>> ");
             while (line != null)
             {
                 accum += line.Replace("\u0000", "") + "\n";
-                var r = runLine(interp, obj, memo, accum, out unfinished);
+                var r = runLine(interp, obj, memo, accum, out unfinished,
+                        out result);
+                if (result != null)
+                    ls["LAST"] = result;
                 if (unfinished)
                 {
                     // "Unexpected end of file" is expected here
