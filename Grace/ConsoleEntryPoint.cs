@@ -17,6 +17,9 @@ namespace Grace
         static string builtinsFile;
         static int Main(string[] args)
         {
+            var enc = new UTF8Encoding(false);
+            Console.OutputEncoding = enc;
+            Console.InputEncoding = enc;
             ParseNode module;
             string filename = null;
             string mode = "run";
