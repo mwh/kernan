@@ -499,9 +499,10 @@ namespace Grace.Execution
             finallyBlock = req[0].Arguments[1];
             for (int i = 2; i < req[0].Arguments.Count; i++)
                 catchBlocks.Add(req[0].Arguments[i]);
+            var ret = GraceObject.Done;
             try
             {
-                tryBlock.Request(ctx, MethodRequest.Nullary("apply"));
+                ret = tryBlock.Request(ctx, MethodRequest.Nullary("apply"));
             }
             catch (GraceExceptionPacketException e)
             {
@@ -528,7 +529,7 @@ namespace Grace.Execution
                 if (finallyBlock != null)
                     finallyBlock.Request(ctx, MethodRequest.Nullary("apply"));
             }
-            return GraceObject.Done;
+            return ret;
         }
 
         /// <inheritdoc />
