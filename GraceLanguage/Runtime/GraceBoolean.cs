@@ -30,6 +30,7 @@ namespace Grace.Runtime
                     new DelegateMethodNode0(new NativeMethod0(this.Negate)));
             AddMethod("not",
                     new DelegateMethodNode0(new NativeMethod0(this.Negate)));
+            AddMethod("hash", new DelegateMethodNode0(mHash));
             AddMethod("&&",
                     new DelegateMethodNode1Ctx(this.AndAnd));
             AddMethod("||",
@@ -61,6 +62,11 @@ namespace Grace.Runtime
             if (Boolean)
                 return GraceBoolean.False;
             return GraceBoolean.True;
+        }
+
+        private GraceObject mHash()
+        {
+            return GraceNumber.Create(Boolean.GetHashCode());
         }
 
         /// <summary>Native method for Grace match</summary>
