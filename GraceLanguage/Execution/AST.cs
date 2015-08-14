@@ -1659,6 +1659,11 @@ end:
         public override GraceObject Evaluate(EvaluationContext ctx)
         {
             MethodScope ms = ctx.FindNearestMethod();
+            if (ms == null)
+                ErrorReporting.RaiseError(ctx, "R2016",
+                        new Dictionary<string,string>(),
+                        "IllegalReturnError: top-level return"
+                    );
             if (Value != null)
                 ms.Return(ctx, Value.Evaluate(ctx), this);
             else

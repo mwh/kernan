@@ -517,6 +517,8 @@ namespace Grace.Execution
                     if (Matching.Succeeded(ctx, mr))
                     {
                         caught = true;
+                        ret = mr.Request(ctx,
+                                MethodRequest.Nullary("result"));
                         break;
                     }
                 }

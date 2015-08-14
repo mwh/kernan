@@ -77,3 +77,4 @@ R2012 |[ dividend == "0" ]| ZeroDivisionError: Zero divided by zero is indetermi
 R2012 ZeroDivisionError: Division by zero is undefined.
 R2013 |[ valid != "" ]| IndexError: ${index} is not a valid index. Valid indices are ${valid}.
 R2013 IndexError: ${index} is not a valid index.
+R2016 IllegalReturnError: Cannot return from top level of a module.
