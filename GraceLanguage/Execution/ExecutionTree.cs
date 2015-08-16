@@ -329,6 +329,24 @@ namespace Grace.Execution
             if (lrrn != null)
             {
                 lrrn.MakeBind(right);
+                if (bpn.Left is OperatorParseNode ||
+                        bpn.Left is InterpolatedStringParseNode)
+                    lrrn = null;
+            }
+            if (lrrn == null)
+            {
+                var name = ret.GetType().Name;
+                name = name.Substring(0, name.Length - 4);
+                if (bpn.Left is OperatorParseNode)
+                    name = "Operator";
+                if (bpn.Left is InterpolatedStringParseNode)
+                    name = "StringLiteral";
+                ErrorReporting.ReportStaticError(bpn.Token.Module,
+                        bpn.Line, "P1044",
+                        new Dictionary<string, string> {
+                            { "lhs", name }
+                        },
+                        "Cannot assign to " + name);
             }
             return ret;
         }

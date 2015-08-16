@@ -44,6 +44,7 @@ P1039 Variadic *parameter must be at end of parameter list, but saw '${found}' a
 P1040 Part '${part}' of method request needs an argument list.
 P1042 The 'outer' keyword must always be followed by a '.' and method name or an operator, not ${found}.
 P1043 The name '${name}' can only be used to make parent requests here, and must be followed by an operator or a '.' and a method name.
+P1044 Cannot assign to a '${lhs}' with ':='.
 
 L0000 Character ${codepoint} (${name}) may not appear here
 L0001 Tab characters are not permitted in the source code
