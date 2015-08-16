@@ -465,7 +465,6 @@ namespace Grace.Parsing
             var partName = new IdentifierParseNode(circumfix, "circumfix"
                     + ob.Name + ob.Other);
             var ret = new OrdinarySignaturePartParseNode(partName);
-            nextToken();
             parseParameterList<CloseBracketToken>(ob, ret.Parameters);
             expectWithError<CloseBracketToken>("P1033",
                     ob.Name + " ... " + ob.Other);
