@@ -61,6 +61,7 @@ namespace Grace.Runtime
         public override GraceObject Respond(EvaluationContext ctx,
                 GraceObject self, MethodRequest req)
         {
+            MethodHelper.CheckNoInherits(ctx, req);
             return method(ctx);
         }
     }
@@ -148,6 +149,7 @@ namespace Grace.Runtime
         /// <inheritdoc/>
         public override GraceObject Respond(EvaluationContext ctx, GraceObject self, MethodRequest req)
         {
+            MethodHelper.CheckArity(ctx, req, 0);
             return method();
         }
     }
@@ -168,6 +170,7 @@ namespace Grace.Runtime
         /// <inheritdoc/>
         public override GraceObject Respond(EvaluationContext ctx, GraceObject self, MethodRequest req)
         {
+            MethodHelper.CheckNoInherits(ctx, req);
             return method(ctx, req);
         }
     }
@@ -196,6 +199,7 @@ namespace Grace.Runtime
                 GraceObject self,
                 MethodRequest req)
         {
+            MethodHelper.CheckNoInherits(ctx, req);
             return method(ctx, req, (T)self);
         }
     }
@@ -216,6 +220,7 @@ namespace Grace.Runtime
         /// <inheritdoc/>
         public override GraceObject Respond(EvaluationContext ctx, GraceObject self, MethodRequest req)
         {
+            MethodHelper.CheckNoInherits(ctx, req);
             return returnValue;
         }
     }
@@ -320,6 +325,7 @@ namespace Grace.Runtime
                 MethodNode.CheckArgCount(ctx, req.Name, req[i].Name,
                         want, false, got);
             }
+            CheckNoInherits(ctx, req);
         }
 
         /// <summary>
@@ -337,6 +343,25 @@ namespace Grace.Runtime
             var got = req[0].Arguments.Count;
             MethodNode.CheckArgCount(ctx, req.Name, req[0].Name,
                     want, false, got);
+            CheckNoInherits(ctx, req);
+        }
+
+        /// <summary>
+        /// Raise an error if the user is trying to inherit from
+        /// this method.
+        /// </summary>
+        /// <param name="ctx">Current interpreter</param>
+        /// <param name="req">Method request to check</param>
+        public static void CheckNoInherits(EvaluationContext ctx,
+                MethodRequest req)
+        {
+            if (req.IsInherits)
+                ErrorReporting.RaiseError(ctx, "R2017",
+                        new Dictionary<string,string> {
+                            { "method", req.Name }
+                        },
+                        "InheritanceError: Invalid inheritance"
+                    );
         }
     }
 

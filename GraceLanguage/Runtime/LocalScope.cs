@@ -133,6 +133,7 @@ namespace Grace.Runtime
         public override GraceObject Respond(EvaluationContext ctx, GraceObject self, MethodRequest req)
         {
             checkAccessibility(ctx, req);
+            MethodHelper.CheckNoInherits(ctx, req);
             CheckArgCount(ctx, req.Name, req.Name,
                     0, false,
                     req[0].Arguments.Count);

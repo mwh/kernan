@@ -1202,6 +1202,15 @@ end:
                         ret = n.Evaluate(ctx);
                     }
                     var last = body[body.Count - 1] as ObjectConstructorNode;
+                    if (last == null)
+                    {
+                        ErrorReporting.RaiseError(ctx, "R2017",
+                                new Dictionary<string,string> {
+                                    { "method", req.Name }
+                                },
+                                "InheritanceError: Invalid inheritance"
+                            );
+                    }
                     ret = last.BeInherited(ctx, req.InheritingObject,
                             req.InheritingName, req.InheritingSelf);
                 }
