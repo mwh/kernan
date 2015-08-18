@@ -26,6 +26,12 @@ namespace Grace.Runtime
     public delegate GraceObject NativeMethod1Ctx(EvaluationContext ctx,
             GraceObject other);
 
+    /// <summary>
+    /// A native method given a receiver object, and an interpreter
+    /// </summary>
+    public delegate GraceObject NativeMethodReceiver0Ctx(EvaluationContext ctx,
+            GraceObject self);
+
     /// <summary>A native method accepting a single Grace argument,
     /// a receiver object, and an interpreter</summary>
     public delegate GraceObject NativeMethodReceiver1Ctx(EvaluationContext ctx,
@@ -85,6 +91,29 @@ namespace Grace.Runtime
             MethodHelper.CheckArity(ctx, req, 1);
             GraceObject arg = req[0].Arguments[0];
             return method(ctx, arg);
+        }
+    }
+
+    /// <summary>
+    /// A Grace method wrapping a native method to be given
+    /// the receiver and an interpreter.
+    /// </summary>
+    public class DelegateMethodNodeReceiver0Ctx : MethodNode
+    {
+        readonly NativeMethodReceiver0Ctx method;
+
+        /// <param name="rm">Native method to wrap</param>
+        public DelegateMethodNodeReceiver0Ctx(NativeMethodReceiver0Ctx rm)
+            : base(null, null)
+        {
+            method = rm;
+        }
+
+        /// <inheritdoc/>
+        public override GraceObject Respond(EvaluationContext ctx, GraceObject self, MethodRequest req)
+        {
+            MethodHelper.CheckArity(ctx, req, 0);
+            return method(ctx, self);
         }
     }
 

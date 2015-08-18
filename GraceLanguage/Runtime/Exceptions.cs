@@ -120,15 +120,15 @@ namespace Grace.Runtime
         private void initialise()
         {
             AddMethod("asString",
-                new DelegateMethodNode0(
-                    new NativeMethod0(this.AsString)));
+                new DelegateMethodNodeReceiver0Ctx(AsString));
             AddMethod("message",
                 new DelegateMethodNode0(
                     new NativeMethod0(this.Message)));
         }
 
         /// <summary>Native method for Grace asString</summary>
-        new public GraceObject AsString()
+        new public GraceObject AsString(EvaluationContext ctx,
+                GraceObject self)
         {
             return GraceString.Create(KindName + ": " + message);
         }
@@ -230,8 +230,8 @@ namespace Grace.Runtime
             Children = new HashSet<string>();
             Children.Add(Name);
             AddMethod("asString",
-                new DelegateMethodNode0(
-                    new NativeMethod0(this.AsString)));
+                new DelegateMethodNodeReceiver0Ctx(
+                    new NativeMethodReceiver0Ctx(this.AsString)));
             AddMethod("match",
                 new DelegateMethodNodeReq(
                     new NativeMethodReq(this.Match)));

@@ -186,9 +186,10 @@ namespace Grace.Runtime
         }
 
         /// <summary>Native method supporting Grace AsString</summary>
-        public virtual GraceObject AsString()
+        public virtual GraceObject AsString(EvaluationContext ctx,
+                GraceObject self)
         {
-            return GraceString.Create(this.ToString());
+            return GraceString.Create(self.ToString());
         }
 
         /// <summary>Native method supporting Grace ==</summary>
@@ -335,7 +336,7 @@ namespace Grace.Runtime
             switch(name)
             {
                 case "asString":
-                    m = new DelegateMethodNode0(AsString);
+                    m = new DelegateMethodNodeReceiver0Ctx(AsString);
                     m.UseRealReceiver = true;
                     return m;
                 case "==":

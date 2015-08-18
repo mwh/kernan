@@ -372,7 +372,7 @@ namespace Grace.Runtime
         }
 
         /// <summary>Native method for Grace asString</summary>
-        new public GraceObject AsString()
+        public GraceObject AsString()
         {
             return this;
         }
