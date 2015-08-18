@@ -629,8 +629,15 @@ namespace Grace.Execution
         /// <inheritdoc />
         public Node Visit(InheritsParseNode ipn)
         {
-            return new InheritsNode(ipn.Token, ipn,
-                    ipn.From.Visit(this));
+            var frm = ipn.From.Visit(this);
+            if (!(frm is RequestNode))
+                ErrorReporting.ReportStaticError(ipn.From.Token.Module,
+                        ipn.From.Line, "P1045",
+                        new Dictionary<string, string> {
+                        },
+                        "Can only inherit from method requests" );
+
+            return new InheritsNode(ipn.Token, ipn, frm);
         }
 
         /// <inheritdoc />
