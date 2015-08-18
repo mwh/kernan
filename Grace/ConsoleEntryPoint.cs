@@ -305,9 +305,9 @@ namespace Grace
         private static int runLines(Interpreter interp,
                 IEnumerable<string> lines)
         {
-            var obj = new GraceObject();
-            interp.Extend(obj);
             var ls = new LocalScope("code-inner");
+            var obj = new GraceObject(ls, false);
+            interp.Extend(obj);
             ls.AddLocalDef("self", obj);
             interp.ExtendMinor(ls);
             var memo = interp.Memorise();
@@ -372,6 +372,11 @@ namespace Grace
                         }
                         foreach (var node in mod.Body)
                         {
+                            var inherits = node as InheritsNode;
+                            if (inherits != null)
+                            {
+                                inherits.Inherit(interp, obj, obj);
+                            }
                             var ret = node.Evaluate(interp);
                             if (ret != null
                                     && ret != GraceObject.Done
@@ -419,7 +424,8 @@ namespace Grace
             interp.LoadPrelude();
             if (builtinsFile != null)
                 interp.LoadBuiltins(builtinsFile);
-            var obj = new GraceObject();
+            var ls = new LocalScope("repl-inner");
+            var obj = new GraceObject(ls, false);
             if (filename != null)
             {
                 if (!File.Exists(filename))
@@ -466,7 +472,6 @@ namespace Grace
             Console.WriteLine("* Enter code at the prompt.\n");
             ErrorReporting.SilenceError("P1001");
             interp.Extend(obj);
-            var ls = new LocalScope("repl-inner");
             ls.AddLocalDef("self", obj);
             ls.AddLocalDef("LAST", GraceObject.Done);
             interp.ExtendMinor(ls);
