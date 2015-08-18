@@ -1384,7 +1384,9 @@ end:
             checkAccessibility(ctx, req);
             GraceObject ret = GraceObject.Done;
             Interpreter.ScopeMemo memo = ctx.Memorise();
+            ctx.Extend(self);
             var myScope = new MethodScope(req.Name);
+            myScope.AddLocalDef("self", self);
             foreach (var pp in Signature.Zip(req, (dp, rp) => new { mine = dp, req = rp }))
             {
                 if (!(pp.mine is OrdinarySignaturePartNode))

@@ -361,7 +361,12 @@ namespace Grace.Runtime
             return null;
         }
 
-        private MethodNode findMethod(string name)
+        /// <summary>
+        /// Find a method node with a given name in this object
+        /// or its parents.
+        /// </summary>
+        /// <param name="name">Method name to find</param>
+        protected virtual MethodNode FindMethod(string name)
         {
             if (methods.ContainsKey(name))
             {
@@ -371,11 +376,22 @@ namespace Grace.Runtime
             }
             foreach (var o in parents)
             {
-                var m = o.findMethod(name);
+                var m = o.FindMethod(name);
                 if (m != null)
                     return m;
             }
             return null;
+        }
+
+        /// <summary>
+        /// Find a method node with a given name in a given object
+        /// or its parents.
+        /// </summary>
+        /// <param name="obj">Object to search</param>
+        /// <param name="name">Method name to find</param>
+        protected MethodNode FindMethod(GraceObject obj, string name)
+        {
+            return obj.FindMethod(name);
         }
 
         /// <summary>Request a method of this object in a given
@@ -386,13 +402,28 @@ namespace Grace.Runtime
         public virtual GraceObject Request(EvaluationContext ctx,
                 MethodRequest req)
         {
-            var m = findMethod(req.Name);
+            return Request(ctx, req, this.Identity);
+        }
+
+        /// <summary>
+        /// Request a method of this object in a given
+        /// context with a particular receiver identity
+        /// </summary>
+        /// <param name="ctx">Current interpreter</param>
+        /// <param name="req">Request</param>
+        /// <param name="receiver">Receiver identity</param>
+        /// <returns>Return value of the resolved method</returns>
+        public virtual GraceObject Request(EvaluationContext ctx,
+                MethodRequest req,
+                GraceObject receiver)
+        {
+            var m = FindMethod(req.Name);
             if (!methods.ContainsKey(req.Name))
             {
                 bool found = false;
                 foreach (var o in parents)
                 {
-                    m = o.findMethod(req.Name);
+                    m = o.FindMethod(req.Name);
                     if (m != null)
                     {
                         if (m.UseRealReceiver)
@@ -400,7 +431,7 @@ namespace Grace.Runtime
                             found = true;
                             break;
                         }
-                        return o.Request(ctx, req);
+                        return o.Request(ctx, req, receiver);
                     }
                 }
                 if (!found)
@@ -415,7 +446,7 @@ namespace Grace.Runtime
             }
             if (lexicalScope != null)
                 ctx.Remember(lexicalScope);
-            var ret = m.Respond(ctx, this.Identity, req);
+            var ret = m.Respond(ctx, receiver, req);
             if (lexicalScope != null)
                 ctx.Forget(lexicalScope);
             return ret;
