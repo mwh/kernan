@@ -113,10 +113,12 @@ namespace Grace.Execution
     {
 
         private DialectParseNode origin;
-        internal DialectNode(Token location, DialectParseNode source)
+        internal DialectNode(Token location, DialectParseNode source,
+                ObjectConstructorNode module)
             : base(location, source)
         {
             origin = source;
+            Module = module;
         }
 
         /// <summary>Module path</summary>
@@ -130,12 +132,20 @@ namespace Grace.Execution
             }
         }
 
+        /// <summary>
+        /// The module in which this dialect statement appears.
+        /// </summary>
+        public ObjectConstructorNode Module { get; private set; }
+
         /// <inheritdoc/>
         public override GraceObject Evaluate(EvaluationContext ctx)
         {
             var mod = ctx.LoadModule(Path);
             ctx.InsertOuter(mod);
             ctx.AddMinorDef("dialect", mod);
+            var checker = MethodRequest.Single("checker", Module);
+            if (mod.RespondsTo(checker))
+                mod.Request(ctx, checker);
             var atModuleStart = MethodRequest.Single("atModuleStart", GraceString.Create(""));
             if (mod.RespondsTo(atModuleStart))
                 mod.Request(ctx, atModuleStart);

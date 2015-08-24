@@ -8,6 +8,9 @@ namespace Grace.Execution
     /// <summary>Translates a tree of ParseNodes into Nodes</summary>
     public class ExecutionTreeTranslator : ParseNodeVisitor<Node>
     {
+
+        private ObjectConstructorNode module;
+
         /// <summary>Translate a tree rooted at a parse node for an
         /// object into the corresponding Node tree</summary>
         /// <param name="obj">Root of the tree</param>
@@ -27,6 +30,8 @@ namespace Grace.Execution
         public Node Visit(ObjectParseNode obj)
         {
             var ret = new ObjectConstructorNode(obj.Token, obj);
+            if (module == null)
+                module = ret;
             InheritsNode parent = null;
             var parentNames = new HashSet<string>();
             var singleParent = true;
@@ -625,7 +630,7 @@ namespace Grace.Execution
         /// <inheritdoc />
         public Node Visit(DialectParseNode dpn)
         {
-            return new DialectNode(dpn.Token, dpn);
+            return new DialectNode(dpn.Token, dpn, module);
         }
 
         /// <inheritdoc />
