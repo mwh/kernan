@@ -35,6 +35,8 @@ namespace Grace.Execution
             this.Location = location;
             this.parseNode = source;
             TagName = this.GetType().Name;
+            if (acceptMethod != null)
+                AddMethod("accept", acceptMethod);
             addMethods();
         }
 
@@ -43,6 +45,8 @@ namespace Grace.Execution
         {
             this.parseNode = source;
             TagName = this.GetType().Name;
+            if (acceptMethod != null)
+                AddMethod("accept", acceptMethod);
             addMethods();
         }
 
@@ -61,6 +65,9 @@ namespace Grace.Execution
         /// </summary>
         protected abstract void addMethods();
 
+        private static MethodNode acceptMethod =
+            new DelegateMethodNodeReceiver1Ctx(mAccept);
+
         /// <summary>Represents an implicit "Done" in the source.</summary>
         protected static readonly GraceObject ImplicitDone =
             new ImplicitNode("Done");
@@ -72,6 +79,25 @@ namespace Grace.Execution
         /// </summary>
         protected static readonly GraceObject ImplicitUninitialised =
             new ImplicitNode("Uninitialised");
+
+        private static GraceObject mAccept(EvaluationContext ctx,
+                GraceObject receiver,
+                GraceObject other)
+        {
+            var name = "visit" + ((Node)receiver).getVisibleName();
+            var req = MethodRequest.Single(name, receiver);
+            return other.Request(ctx, req);
+        }
+
+        /// <summary>
+        /// Gets the name used for user-visible tasks (such as
+        /// visitors) for this node.
+        /// </summary>
+        protected virtual string getVisibleName()
+        {
+            var name = this.GetType().Name;
+            return name.Substring(0, name.Length - 4);
+        }
     }
 
     /// <summary>
@@ -87,6 +113,12 @@ namespace Grace.Execution
             : base(null, null)
         {
             kind = n;
+        }
+
+        /// <inheritdoc/>
+        protected override string getVisibleName()
+        {
+            return "Implicit" + kind;
         }
 
         // This node never appears in the tree, so these methods will
@@ -975,6 +1007,8 @@ end:
                     { "typeArguments",
                         new DelegateMethodNodeTyped0
                             <RequestPartNode>(mTypeArguments) },
+                    { "accept",
+                        new DelegateMethodNodeReceiver1Ctx(mAccept) },
                 };
 
         private static GraceObject mName(RequestPartNode self)
@@ -992,6 +1026,14 @@ end:
             return GraceVariadicList.Of(self.GenericArguments);
         }
 
+        private static GraceObject mAccept(EvaluationContext ctx,
+                GraceObject receiver,
+                GraceObject other)
+        {
+            var name = "visitRequestPart";
+            var req = MethodRequest.Single(name, receiver);
+            return other.Request(ctx, req);
+        }
     }
 
     /// <summary>An object constructor expression</summary>
