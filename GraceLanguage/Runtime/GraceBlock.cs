@@ -38,7 +38,7 @@ namespace Grace.Runtime
                 {
                     Pattern = first.Type.Evaluate(ctx);
                 }
-                else if (par is NumberNode || par is StringLiteralNode
+                else if (par is NumberLiteralNode || par is StringLiteralNode
                         || par is ExplicitReceiverRequestNode)
                 {
                     Pattern = par.Evaluate(ctx);

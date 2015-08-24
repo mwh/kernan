@@ -96,6 +96,18 @@ namespace Grace.Runtime
             TagName = "VariadicList";
         }
 
+        /// <summary>
+        /// List of particular items.
+        /// </summary>
+        /// <param name="items">Enumerable of items to use</param>
+        public static GraceVariadicList Of(IEnumerable<GraceObject> items)
+        {
+            var ret = new GraceVariadicList();
+            foreach (var it in items)
+                ret.Add(it);
+            return ret;
+        }
+
         /// <summary>Add an object to the list</summary>
         /// <param name="obj">Object to add</param>
         public void Add(GraceObject obj)

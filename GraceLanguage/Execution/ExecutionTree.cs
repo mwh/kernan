@@ -64,7 +64,7 @@ namespace Grace.Execution
         /// <inheritdoc />
         public Node Visit(NumberParseNode n)
         {
-            return new NumberNode(n.Token, n);
+            return new NumberLiteralNode(n.Token, n);
         }
 
         /// <inheritdoc />
@@ -119,6 +119,8 @@ namespace Grace.Execution
             {
                 ret.AddPart((SignaturePartNode)part.Visit(this));
             }
+            if (spn.ReturnType != null)
+                ret.ReturnType = spn.ReturnType.Visit(this);
             return ret;
         }
 
@@ -169,7 +171,7 @@ namespace Grace.Execution
                 var id = p as IdentifierParseNode;
                 if (id != null)
                 {
-                    generics.Add(new IdentifierNode(id.Token, id));
+                    generics.Add(new ParameterNode(id.Token, id));
                 }
                 else
                 {

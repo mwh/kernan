@@ -12,7 +12,7 @@ namespace Grace.Execution
 
     /// <summary>An abstract executable representation of a piece of
     /// source code</summary>
-    public abstract class Node
+    public abstract class Node : GraceObject
     {
         /// <summary>The original source code location whence this
         /// Node originate</summary>
@@ -34,12 +34,16 @@ namespace Grace.Execution
         {
             this.Location = location;
             this.parseNode = source;
+            TagName = this.GetType().Name;
+            addMethods();
         }
 
         /// <param name="source">ParseNode spawning this node</param>
         internal Node(ParseNode source)
         {
             this.parseNode = source;
+            TagName = this.GetType().Name;
+            addMethods();
         }
 
         /// <summary>Execute this node and return the resulting value</summary>
@@ -51,6 +55,57 @@ namespace Grace.Execution
         /// <param name="tw">Destination for debugging string</param>
         /// <param name="prefix">String to prepend to each line</param>
         public abstract void DebugPrint(System.IO.TextWriter tw, string prefix);
+
+        /// <summary>
+        /// Add methods common to a given subclass.
+        /// </summary>
+        protected abstract void addMethods();
+
+        /// <summary>Represents an implicit "Done" in the source.</summary>
+        protected static readonly GraceObject ImplicitDone =
+            new ImplicitNode("Done");
+        /// <summary>Represents an implicit "Unknown" in the source.</summary>
+        protected static readonly GraceObject ImplicitUnknown =
+            new ImplicitNode("Unknown");
+        /// <summary>
+        /// Represents an implicit "uninitialised" in the source.
+        /// </summary>
+        protected static readonly GraceObject ImplicitUninitialised =
+            new ImplicitNode("Uninitialised");
+    }
+
+    /// <summary>
+    /// A node representing an implicit value arising from an absent
+    /// specification in the source text.
+    /// </summary>
+    public class ImplicitNode : Node
+    {
+        private string kind;
+
+        /// <param name="n">Kind of implicit this is</param>
+        public ImplicitNode(string n)
+            : base(null, null)
+        {
+            kind = n;
+        }
+
+        // This node never appears in the tree, so these methods will
+        // never be called.
+
+        /// <inheritdoc/>
+        public override GraceObject Evaluate(EvaluationContext ctx)
+        {
+            return null;
+        }
+
+        /// <inheritdoc/>
+        public override void DebugPrint(System.IO.TextWriter tw, string prefix)
+        {
+            tw.WriteLine(prefix + "Implicit" + kind);
+        }
+
+        /// <inheritdoc/>
+        protected override void addMethods() {}
     }
 
     /// <summary>A dialect statement</summary>
@@ -98,6 +153,26 @@ namespace Grace.Execution
             tw.WriteLine(prefix + "Dialect:");
             tw.WriteLine(prefix + "    " + Path);
         }
+
+        // Below exposes state as Grace methods.
+        private static Dictionary<string, MethodNode>
+            sharedMethods =
+                new Dictionary<string, MethodNode> {
+                    { "path",
+                        new DelegateMethodNodeTyped0<DialectNode>(mPath) },
+                };
+
+        /// <inheritdoc/>
+        protected override void addMethods()
+        {
+            AddMethods(sharedMethods);
+        }
+
+        private static GraceObject mPath(DialectNode self)
+        {
+            return GraceString.Create(self.Path);
+        }
+
     }
 
     /// <summary>An import statement</summary>
@@ -163,6 +238,43 @@ namespace Grace.Execution
                 type.DebugPrint(tw, prefix + "    ");
             }
         }
+
+        // Below exposes state as Grace methods.
+        private static Dictionary<string, MethodNode>
+            sharedMethods =
+                new Dictionary<string, MethodNode> {
+                    { "path",
+                        new DelegateMethodNodeTyped0<ImportNode>(mPath) },
+                    { "name",
+                        new DelegateMethodNodeTyped0<ImportNode>(mName) },
+                    { "typeAnnotation",
+                        new DelegateMethodNodeTyped0<ImportNode>
+                            (mTypeAnnotation) },
+                };
+
+        /// <inheritdoc/>
+        protected override void addMethods()
+        {
+            AddMethods(sharedMethods);
+        }
+
+        private static GraceObject mPath(ImportNode self)
+        {
+            return GraceString.Create(self.Path);
+        }
+
+        private static GraceObject mName(ImportNode self)
+        {
+            return GraceString.Create(self.Name);
+        }
+
+        private static GraceObject mTypeAnnotation(ImportNode self)
+        {
+            if (self.type != null)
+                return self.type;
+            return ImplicitUnknown;
+        }
+
     }
 
     /// <summary>A method request with a syntactic receiver</summary>
@@ -249,6 +361,27 @@ namespace Grace.Execution
                 rec = receiver.Evaluate(ctx);
             }
             return rec;
+        }
+
+        // Below exposes state as Grace methods.
+        private static Dictionary<string, MethodNode>
+            sharedMethods =
+                new Dictionary<string, MethodNode> {
+                    { "receiver",
+                        new DelegateMethodNodeTyped0
+                            <ExplicitReceiverRequestNode>(mReceiver) },
+                };
+
+        /// <inheritdoc/>
+        protected override void addMethods()
+        {
+            base.addMethods();
+            AddMethods(sharedMethods);
+        }
+
+        private static GraceObject mReceiver(ExplicitReceiverRequestNode self)
+        {
+            return self.receiver;
         }
 
     }
@@ -548,6 +681,26 @@ namespace Grace.Execution
             return performRequest(ctx, rec, req);
         }
 
+        // Below exposes state as Grace methods.
+        private static Dictionary<string, MethodNode>
+            sharedMethods =
+                new Dictionary<string, MethodNode> {
+                    { "parts",
+                        new DelegateMethodNodeTyped0
+                            <RequestNode>(mParts) },
+                };
+
+        /// <inheritdoc/>
+        protected override void addMethods()
+        {
+            AddMethods(sharedMethods);
+        }
+
+        private static GraceObject mParts(RequestNode self)
+        {
+            return GraceVariadicList.Of(self.parts);
+        }
+
     }
 
     /// <summary>Specialisation for if-then requests</summary>
@@ -749,7 +902,7 @@ end:
     }
 
     /// <summary>A part of a method name and its arguments</summary>
-    public class RequestPartNode
+    public class RequestPartNode : GraceObject
     {
         private string name;
         private List<Node> generics;
@@ -760,6 +913,7 @@ end:
             this.name = name;
             this.generics = generics;
             this.arguments = arguments;
+            AddMethods(sharedMethods);
         }
 
         /// <summary>Make this part into a := bind request part</summary>
@@ -798,6 +952,36 @@ end:
             }
         }
 
+        // Below exposes state as Grace methods.
+        private static Dictionary<string, MethodNode>
+            sharedMethods =
+                new Dictionary<string, MethodNode> {
+                    { "name",
+                        new DelegateMethodNodeTyped0
+                            <RequestPartNode>(mName) },
+                    { "arguments",
+                        new DelegateMethodNodeTyped0
+                            <RequestPartNode>(mArguments) },
+                    { "typeArguments",
+                        new DelegateMethodNodeTyped0
+                            <RequestPartNode>(mTypeArguments) },
+                };
+
+        private static GraceObject mName(RequestPartNode self)
+        {
+            return GraceString.Create(self.Name);
+        }
+
+        private static GraceObject mArguments(RequestPartNode self)
+        {
+            return GraceVariadicList.Of(self.Arguments);
+        }
+
+        private static GraceObject mTypeArguments(RequestPartNode self)
+        {
+            return GraceVariadicList.Of(self.GenericArguments);
+        }
+
     }
 
     /// <summary>An object constructor expression</summary>
@@ -810,6 +994,8 @@ end:
             new List<InheritsNode>();
         private List<DefDeclarationNode> defs = new List<DefDeclarationNode>();
         private List<VarDeclarationNode> vars = new List<VarDeclarationNode>();
+
+        private List<Node> statements = new List<Node>();
 
         internal ObjectConstructorNode(Token token, ParseNode source)
             : base(token, source)
@@ -835,8 +1021,9 @@ end:
                 defs.Add(d);
             if (v != null)
                 vars.Add(v);
+            body.Add(node);
             if (meth == null)
-                body.Add(node);
+                statements.Add(node);
             else
             {
                 methods[meth.Name] = meth;
@@ -933,7 +1120,7 @@ end:
             ret.RememberScope(ctx);
             foreach (MethodNode m in methods.Values)
                 ret.AddMethod(m);
-            foreach (Node n in body)
+            foreach (Node n in statements)
             {
                 if (n is InheritsNode)
                 {
@@ -954,6 +1141,26 @@ end:
             ctx.Unextend(local);
             ctx.Unextend(ret);
             return ret;
+        }
+
+        // Below exposes state as Grace methods.
+        private static Dictionary<string, MethodNode>
+            sharedMethods =
+                new Dictionary<string, MethodNode> {
+                    { "body",
+                        new DelegateMethodNodeTyped0
+                            <ObjectConstructorNode>(mBody) },
+                };
+
+        /// <inheritdoc/>
+        protected override void addMethods()
+        {
+            AddMethods(sharedMethods);
+        }
+
+        private static GraceObject mBody(ObjectConstructorNode self)
+        {
+            return GraceVariadicList.Of(self.Body);
         }
 
     }
@@ -1236,6 +1443,41 @@ end:
             ctx.RestoreExactly(memo);
             return ret;
         }
+
+        // Below exposes state as Grace methods.
+        private static Dictionary<string, MethodNode>
+            sharedMethods =
+                new Dictionary<string, MethodNode> {
+                    { "signature",
+                        new DelegateMethodNodeTyped0
+                            <MethodNode>(mSignature) },
+                    { "body",
+                        new DelegateMethodNodeTyped0
+                            <MethodNode>(mBody) },
+                };
+
+        /// <inheritdoc/>
+        protected override void addMethods()
+        {
+            // Because method nodes are created statically,
+            // the sharedMethods dictionary isn't always
+            // initialised. These methods are not accessible
+            // by dialects, so that shouldn't matter outside
+            // of reflection.
+            if (sharedMethods != null)
+                AddMethods(sharedMethods);
+        }
+
+        private static GraceObject mSignature(MethodNode self)
+        {
+            return self.Signature;
+        }
+
+        private static GraceObject mBody(MethodNode self)
+        {
+            return GraceVariadicList.Of(self.body);
+        }
+
     }
 
     /// <summary>A block expression</summary>
@@ -1314,17 +1556,45 @@ end:
             return ret;
         }
 
+        // Below exposes state as Grace methods.
+        private static Dictionary<string, MethodNode>
+            sharedMethods =
+                new Dictionary<string, MethodNode> {
+                    { "parameters",
+                        new DelegateMethodNodeTyped0
+                            <BlockNode>(mParameters) },
+                    { "body",
+                        new DelegateMethodNodeTyped0
+                            <BlockNode>(mBody) },
+                };
+
+        /// <inheritdoc/>
+        protected override void addMethods()
+        {
+            AddMethods(sharedMethods);
+        }
+
+        private static GraceObject mParameters(BlockNode self)
+        {
+            return GraceVariadicList.Of(self.Parameters);
+        }
+
+        private static GraceObject mBody(BlockNode self)
+        {
+            return GraceVariadicList.Of(self.Body);
+        }
+
     }
 
     /// <summary>A numeric literal</summary>
-    public class NumberNode : Node
+    public class NumberLiteralNode : Node
     {
 
         private NumberParseNode origin;
         Rational numbase = 10;
         Rational val;
 
-        internal NumberNode(Token location, NumberParseNode source)
+        internal NumberLiteralNode(Token location, NumberParseNode source)
             : base(location, source)
         {
             origin = source;
@@ -1402,6 +1672,27 @@ end:
             //return new GraceObjectProxy(Value);
             return GraceNumber.Create(Value);
         }
+
+        // Below exposes state as Grace methods.
+        private static Dictionary<string, MethodNode>
+            sharedMethods =
+                new Dictionary<string, MethodNode> {
+                    { "value",
+                        new DelegateMethodNodeTyped0
+                            <NumberLiteralNode>(mValue) },
+                };
+
+        /// <inheritdoc/>
+        protected override void addMethods()
+        {
+            AddMethods(sharedMethods);
+        }
+
+        private static GraceObject mValue(NumberLiteralNode self)
+        {
+            return GraceNumber.Create(self.Value);
+        }
+
     }
 
     /// <summary>A string literal</summary>
@@ -1437,10 +1728,31 @@ end:
         {
             return GraceString.Create(Value);
         }
+
+        // Below exposes state as Grace methods.
+        private static Dictionary<string, MethodNode>
+            sharedMethods =
+                new Dictionary<string, MethodNode> {
+                    { "value",
+                        new DelegateMethodNodeTyped0
+                            <StringLiteralNode>(mValue) },
+                };
+
+        /// <inheritdoc/>
+        protected override void addMethods()
+        {
+            AddMethods(sharedMethods);
+        }
+
+        private static GraceObject mValue(StringLiteralNode self)
+        {
+            return GraceString.Create(self.Value);
+        }
+
     }
 
     /// <summary>A bare identifier</summary>
-    public class IdentifierNode : Node
+    public abstract class IdentifierNode : Node
     {
 
         private IdentifierParseNode origin;
@@ -1563,6 +1875,47 @@ end:
                 Value.DebugPrint(tw, prefix + "    ");
             }
         }
+
+        // Below exposes state as Grace methods.
+        private static Dictionary<string, MethodNode>
+            sharedMethods =
+                new Dictionary<string, MethodNode> {
+                    { "name",
+                        new DelegateMethodNodeTyped0
+                            <VarDeclarationNode>(mName) },
+                    { "value",
+                        new DelegateMethodNodeTyped0
+                            <VarDeclarationNode>(mValue) },
+                    { "typeAnnotation",
+                        new DelegateMethodNodeTyped0
+                            <VarDeclarationNode>(mTypeAnnotation) },
+                };
+
+        /// <inheritdoc/>
+        protected override void addMethods()
+        {
+            AddMethods(sharedMethods);
+        }
+
+        private static GraceObject mName(VarDeclarationNode self)
+        {
+            return GraceString.Create(self.Name);
+        }
+
+        private static GraceObject mValue(VarDeclarationNode self)
+        {
+            if (self.Value != null)
+                return self.Value;
+            return ImplicitUninitialised;
+        }
+
+        private static GraceObject mTypeAnnotation(VarDeclarationNode self)
+        {
+            if (self.type != null)
+                return self.type;
+            return ImplicitUnknown;
+        }
+
     }
 
     /// <summary>A def declaration</summary>
@@ -1647,6 +2000,47 @@ end:
                 Value.DebugPrint(tw, prefix + "    ");
             }
         }
+
+        // Below exposes state as Grace methods.
+        private static Dictionary<string, MethodNode>
+            sharedMethods =
+                new Dictionary<string, MethodNode> {
+                    { "name",
+                        new DelegateMethodNodeTyped0
+                            <DefDeclarationNode>(mName) },
+                    { "value",
+                        new DelegateMethodNodeTyped0
+                            <DefDeclarationNode>(mValue) },
+                    { "typeAnnotation",
+                        new DelegateMethodNodeTyped0
+                            <DefDeclarationNode>(mTypeAnnotation) },
+                };
+
+        /// <inheritdoc/>
+        protected override void addMethods()
+        {
+            AddMethods(sharedMethods);
+        }
+
+        private static GraceObject mName(DefDeclarationNode self)
+        {
+            return GraceString.Create(self.Name);
+        }
+
+        private static GraceObject mValue(DefDeclarationNode self)
+        {
+            if (self.Value != null)
+                return self.Value;
+            return ImplicitUninitialised;
+        }
+
+        private static GraceObject mTypeAnnotation(DefDeclarationNode self)
+        {
+            if (self.type != null)
+                return self.type;
+            return ImplicitUnknown;
+        }
+
     }
 
     /// <summary>A return statement</summary>
@@ -1690,6 +2084,29 @@ end:
                 Value.DebugPrint(tw, prefix + "    ");
             }
         }
+
+        // Below exposes state as Grace methods.
+        private static Dictionary<string, MethodNode>
+            sharedMethods =
+                new Dictionary<string, MethodNode> {
+                    { "value",
+                        new DelegateMethodNodeTyped0
+                            <ReturnNode>(mValue) },
+                };
+
+        /// <inheritdoc/>
+        protected override void addMethods()
+        {
+            AddMethods(sharedMethods);
+        }
+
+        private static GraceObject mValue(ReturnNode self)
+        {
+            if (self.Value != null)
+                return self.Value;
+            return ImplicitDone;
+        }
+
     }
 
     /// <summary>A placeholder node with no effect</summary>
@@ -1714,6 +2131,17 @@ end:
         {
             tw.WriteLine(prefix + "Noop");
         }
+
+        // Below exposes state as Grace methods.
+        private static Dictionary<string, MethodNode>
+            sharedMethods = new Dictionary<string, MethodNode>();
+
+        /// <inheritdoc/>
+        protected override void addMethods()
+        {
+            AddMethods(sharedMethods);
+        }
+
     }
 
     /// <summary>A type literal</summary>
@@ -1759,6 +2187,27 @@ end:
                 ret.Add(n);
             return ret;
         }
+
+        // Below exposes state as Grace methods.
+        private static Dictionary<string, MethodNode>
+            sharedMethods =
+                new Dictionary<string, MethodNode> {
+                    { "signatures",
+                        new DelegateMethodNodeTyped0
+                            <TypeNode>(mSignatures) },
+                };
+
+        /// <inheritdoc/>
+        protected override void addMethods()
+        {
+            AddMethods(sharedMethods);
+        }
+
+        private static GraceObject mSignatures(TypeNode self)
+        {
+            return GraceVariadicList.Of(self.body);
+        }
+
     }
 
     /// <summary>A parameter a : b</summary>
@@ -1816,6 +2265,45 @@ end:
         {
             return null;
         }
+
+        // Below exposes state as Grace methods.
+        private static Dictionary<string, MethodNode>
+            sharedMethods =
+                new Dictionary<string, MethodNode> {
+                    { "name",
+                        new DelegateMethodNodeTyped0
+                            <ParameterNode>(mName) },
+                    { "typeAnnotation",
+                        new DelegateMethodNodeTyped0
+                            <ParameterNode>(mTypeAnnotation) },
+                    { "isVariadic",
+                        new DelegateMethodNodeTyped0
+                            <ParameterNode>(mIsVariadic) },
+                };
+
+        /// <inheritdoc/>
+        protected override void addMethods()
+        {
+            AddMethods(sharedMethods);
+        }
+
+        private static GraceObject mName(ParameterNode self)
+        {
+            return GraceString.Create(self.Name);
+        }
+
+        private static GraceObject mTypeAnnotation(ParameterNode self)
+        {
+            if (self.Type != null)
+                return self.Type;
+            return ImplicitUnknown;
+        }
+
+        private static GraceObject mIsVariadic(ParameterNode self)
+        {
+            return GraceBoolean.Create(self.Variadic);
+        }
+
     }
 
     /// <summary>An inherits clause</summary>
@@ -1861,6 +2349,36 @@ end:
         {
             return null;
         }
+
+        // Below exposes state as Grace methods.
+        private static Dictionary<string, MethodNode>
+            sharedMethods =
+                new Dictionary<string, MethodNode> {
+                    { "name",
+                        new DelegateMethodNodeTyped0
+                            <InheritsNode>(mName) },
+                    { "request",
+                        new DelegateMethodNodeTyped0
+                            <InheritsNode>(mRequest) },
+                };
+
+        /// <inheritdoc/>
+        protected override void addMethods()
+        {
+            AddMethods(sharedMethods);
+        }
+
+        private static GraceObject mName(InheritsNode self)
+        {
+            if (self.As != null)
+                return GraceString.Create(self.As);
+            return GraceString.Create("");
+        }
+
+        private static GraceObject mRequest(InheritsNode self)
+        {
+            return self.From;
+        }
     }
 
     /// <summary>A method signature</summary>
@@ -1872,6 +2390,11 @@ end:
 
         /// <summary>Parts of the method name</summary>
         public IList<SignaturePartNode> Parts { get; private set; }
+
+        /// <summary>
+        /// The return type of this method.
+        /// </summary>
+        public Node ReturnType { get; set; }
 
         /// <summary>
         /// True if this signature is an exact list of literal parts.
@@ -1926,6 +2449,35 @@ end:
             return GetEnumerator();
         }
 
+        // Below exposes state as Grace methods.
+        private static Dictionary<string, MethodNode>
+            sharedMethods =
+                new Dictionary<string, MethodNode> {
+                    { "parts",
+                        new DelegateMethodNodeTyped0
+                            <SignatureNode>(mParts) },
+                    { "returnType",
+                        new DelegateMethodNodeTyped0
+                            <SignatureNode>(mReturnType) },
+                };
+
+        /// <inheritdoc/>
+        protected override void addMethods()
+        {
+            AddMethods(sharedMethods);
+        }
+
+        private static GraceObject mParts(SignatureNode self)
+        {
+            return GraceVariadicList.Of(self.Parts);
+        }
+
+        private static GraceObject mReturnType(SignatureNode self)
+        {
+            if (self.ReturnType != null)
+                return self.ReturnType;
+            return ImplicitUnknown;
+        }
     }
 
 
@@ -1994,6 +2546,43 @@ end:
         public override GraceObject Evaluate(EvaluationContext ctx)
         {
             return null;
+        }
+
+        // Below exposes state as Grace methods.
+        private static Dictionary<string, MethodNode>
+            sharedMethods =
+                new Dictionary<string, MethodNode> {
+                    { "name",
+                        new DelegateMethodNodeTyped0
+                            <OrdinarySignaturePartNode>(mName) },
+                    { "typeParameters",
+                        new DelegateMethodNodeTyped0
+                            <OrdinarySignaturePartNode>(mTypeParameters) },
+                    { "parameters",
+                        new DelegateMethodNodeTyped0
+                            <OrdinarySignaturePartNode>(mParameters) },
+                };
+
+        /// <inheritdoc/>
+        protected override void addMethods()
+        {
+            AddMethods(sharedMethods);
+        }
+
+        private static GraceObject mName(OrdinarySignaturePartNode self)
+        {
+            return GraceString.Create(self.Name);
+        }
+
+        private static GraceObject mTypeParameters(
+                OrdinarySignaturePartNode self)
+        {
+            return GraceVariadicList.Of(self.GenericParameters);
+        }
+
+        private static GraceObject mParameters(OrdinarySignaturePartNode self)
+        {
+            return GraceVariadicList.Of(self.Parameters);
         }
     }
 
