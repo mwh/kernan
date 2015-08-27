@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Grace.Execution;
 using Grace.Parsing;
 
@@ -126,7 +127,16 @@ namespace Grace.Execution
             }
             if (spn.ReturnType != null)
                 ret.ReturnType = spn.ReturnType.Visit(this);
+            addAnnotations(spn.Annotations, ret.Annotations);
             return ret;
+        }
+
+        private void addAnnotations(AnnotationsParseNode source,
+                AnnotationsNode dest)
+        {
+            if (source != null)
+                dest.AddAnnotations(from x in source.Annotations
+                        select x.Visit(this));
         }
 
         /// <inheritdoc />
@@ -193,6 +203,7 @@ namespace Grace.Execution
             var ret = new MethodNode(d.Token, d);
             var sig = (SignatureNode)d.Signature.Visit(this);
             ret.Signature = sig;
+            ret.Annotations = sig.Annotations;
             string name = sig.Name;
             ret.Confidential = (d.Signature.Annotations != null
                     && d.Signature.Annotations.HasAnnotation("confidential"));
@@ -291,6 +302,7 @@ namespace Grace.Execution
                 type = vdpn.Type.Visit(this);
             var ret = new VarDeclarationNode(vdpn.Token, vdpn,
                     val, type);
+            addAnnotations(vdpn.Annotations, ret.Annotations);
             if (vdpn.Annotations != null
                     && vdpn.Annotations.HasAnnotation("public"))
             {
@@ -318,6 +330,7 @@ namespace Grace.Execution
                 type = vdpn.Type.Visit(this);
             var ret = new DefDeclarationNode(vdpn.Token, vdpn,
                     val, type);
+            addAnnotations(vdpn.Annotations, ret.Annotations);
             if (vdpn.Annotations != null
                     && vdpn.Annotations.HasAnnotation("public"))
                 ret.Public = true;

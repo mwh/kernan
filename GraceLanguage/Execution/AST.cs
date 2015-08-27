@@ -1232,6 +1232,11 @@ end:
         public bool Fresh { get; set; }
 
         /// <summary>
+        /// The annotations on this method (and its signature).
+        /// </summary>
+        public AnnotationsNode Annotations { get; set; }
+
+        /// <summary>
         /// Whether this method should be given the user-facing receiver
         /// (true) or the concrete part-object on which it was found
         /// (false)
@@ -1241,7 +1246,8 @@ end:
         internal MethodNode(Token token, ParseNode source)
             : base(token, source)
         {
-
+            if (source == null)
+                Annotations = new AnnotationsNode(token, null);
         }
 
         /// <summary>The name of this method</summary>
@@ -1506,6 +1512,9 @@ end:
                     { "body",
                         new DelegateMethodNodeTyped0
                             <MethodNode>(mBody) },
+                    { "annotations",
+                        new DelegateMethodNodeTyped0
+                            <MethodNode>(mAnnotations) },
                 };
 
         /// <inheritdoc/>
@@ -1528,6 +1537,11 @@ end:
         private static GraceObject mBody(MethodNode self)
         {
             return GraceVariadicList.Of(self.body);
+        }
+
+        private static GraceObject mAnnotations(MethodNode self)
+        {
+            return self.Annotations;
         }
 
     }
@@ -1855,6 +1869,11 @@ end:
         /// <summary>Whether this var is annotated writable</summary>
         public bool Writable { get; set; }
 
+        /// <summary>
+        /// The "is" annotations on this declaration.
+        /// </summary>
+        public AnnotationsNode Annotations { get; set; }
+
         internal VarDeclarationNode(Token location,
                 VarDeclarationParseNode source,
                 Node val,
@@ -1864,6 +1883,11 @@ end:
             this.type = type;
             Value = val;
             this.origin = source;
+            Annotations = new AnnotationsNode(
+                    source.Annotations == null
+                        ? location
+                        : source.Annotations.Token,
+                    source.Annotations);
         }
 
         /// <summary>The initial value given in this var declaration</summary>
@@ -1921,6 +1945,11 @@ end:
                 tw.WriteLine(prefix + "  Type:");
                 type.DebugPrint(tw, prefix + "    ");
             }
+            if (Annotations.Count > 0)
+            {
+                tw.WriteLine(prefix + "  Annotations:");
+                Annotations.DebugPrint(tw, prefix + "    ");
+            }
             if (Value != null)
             {
                 tw.WriteLine(prefix + "  Value:");
@@ -1941,6 +1970,9 @@ end:
                     { "typeAnnotation",
                         new DelegateMethodNodeTyped0
                             <VarDeclarationNode>(mTypeAnnotation) },
+                    { "annotations",
+                        new DelegateMethodNodeTyped0
+                            <VarDeclarationNode>(mAnnotations) },
                 };
 
         /// <inheritdoc/>
@@ -1968,6 +2000,11 @@ end:
             return ImplicitUnknown;
         }
 
+        private static GraceObject mAnnotations(VarDeclarationNode self)
+        {
+            return self.Annotations;
+        }
+
     }
 
     /// <summary>A def declaration</summary>
@@ -1984,6 +2021,11 @@ end:
         /// <summary>Whether this def is annotated public</summary>
         public bool Public { get; set; }
 
+        /// <summary>
+        /// The "is" annotations on this declaration.
+        /// </summary>
+        public AnnotationsNode Annotations { get; set; }
+
         internal DefDeclarationNode(Token location,
                 DefDeclarationParseNode source,
                 Node val,
@@ -1993,6 +2035,11 @@ end:
             this.type = type;
             Value = val;
             this.origin = source;
+            Annotations = new AnnotationsNode(
+                    source.Annotations == null
+                        ? location
+                        : source.Annotations.Token,
+                    source.Annotations);
         }
 
         /// <summary>The initial value given in this def declaration</summary>
@@ -2042,6 +2089,11 @@ end:
                 tw.WriteLine(prefix + "  Type:");
                 type.DebugPrint(tw, prefix + "    ");
             }
+            if (Annotations.Count > 0)
+            {
+                tw.WriteLine(prefix + "  Annotations:");
+                Annotations.DebugPrint(tw, prefix + "    ");
+            }
             if (Public)
             {
                 tw.WriteLine(prefix + "  Public: yes");
@@ -2066,6 +2118,9 @@ end:
                     { "typeAnnotation",
                         new DelegateMethodNodeTyped0
                             <DefDeclarationNode>(mTypeAnnotation) },
+                    { "annotations",
+                        new DelegateMethodNodeTyped0
+                            <DefDeclarationNode>(mAnnotations) },
                 };
 
         /// <inheritdoc/>
@@ -2091,6 +2146,11 @@ end:
             if (self.type != null)
                 return self.type;
             return ImplicitUnknown;
+        }
+
+        private static GraceObject mAnnotations(DefDeclarationNode self)
+        {
+            return self.Annotations;
         }
 
     }
@@ -2433,6 +2493,112 @@ end:
         }
     }
 
+    /// <summary>
+    /// A group of "is" annotations.
+    /// </summary>
+    public class AnnotationsNode : Node, IEnumerable<Node>
+    {
+
+        private List<Node> annotations = new List<Node>();
+
+        internal AnnotationsNode(Token location,
+                AnnotationsParseNode source)
+            : base(location, source)
+        {
+        }
+
+        /// <summary>
+        /// Add an annotation.
+        /// </summary>
+        /// <param name="ann">Annotation</param>
+        public void AddAnnotation(Node ann)
+        {
+            annotations.Add(ann);
+        }
+
+        /// <summary>
+        /// Add many annotations at once.
+        /// </summary>
+        /// <param name="anns">Enumerable of annotations</param>
+        public void AddAnnotations(IEnumerable<Node> anns)
+        {
+            annotations.AddRange(anns);
+        }
+
+        /// <summary>
+        /// Get an enumerator giving each annotation in turn.
+        /// </summary>
+        public IEnumerator<Node> GetEnumerator()
+        {
+            return annotations.GetEnumerator();
+        }
+
+        /// <summary>
+        /// Get an enumerator giving each annotation in turn.
+        /// </summary>
+        System.Collections.IEnumerator
+            System.Collections.IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
+
+        /// <summary>
+        /// Number of annotations in this group.
+        /// </summary>
+        public int Count
+        {
+            get
+            {
+                return annotations.Count;
+            }
+        }
+
+        /// <inheritdoc/>
+        public override void DebugPrint(System.IO.TextWriter tw, string prefix)
+        {
+            tw.WriteLine(prefix + "Annotations:");
+            foreach (var a in annotations)
+                a.DebugPrint(tw, prefix + "    ");
+        }
+
+        /// <inheritdoc/>
+        public override GraceObject Evaluate(EvaluationContext ctx)
+        {
+            return null;
+        }
+
+        // Below exposes state as Grace methods.
+        private static Dictionary<string, MethodNode>
+            sharedMethods =
+                new Dictionary<string, MethodNode> {
+                    { "do",
+                        new DelegateMethodNodeTyped
+                            <AnnotationsNode>(mDo) },
+                };
+
+        /// <inheritdoc/>
+        protected override void addMethods()
+        {
+            if (sharedMethods != null)
+                AddMethods(sharedMethods);
+        }
+
+        private static GraceObject mDo(EvaluationContext ctx,
+                MethodRequest req,
+                AnnotationsNode self)
+        {
+            var block = req[0].Arguments[0];
+            var apply = MethodRequest.Single("apply", null);
+            foreach (var a in self.annotations)
+            {
+                apply[0].Arguments[0] = a;
+                block.Request(ctx, apply);
+            }
+            return GraceObject.Done;
+        }
+
+    }
+
     /// <summary>A method signature</summary>
     public class SignatureNode : Node, IEnumerable<SignaturePartNode>
     {
@@ -2453,17 +2619,30 @@ end:
         /// </summary>
         public bool Linear = true;
 
+        /// <summary>
+        /// All "is" annotations on this signature.
+        /// </summary>
+        public AnnotationsNode Annotations { get; set; }
+
         internal SignatureNode(Token location, SignatureParseNode source)
             : base(location, source)
         {
             Name = source.Name;
             Parts = new List<SignaturePartNode>();
+            Annotations = new AnnotationsNode(location,
+                    source != null ? source.Annotations : null);
         }
 
         /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
             tw.WriteLine(prefix + "Signature: " + Name);
+            if (Annotations != null && Annotations.Count > 0)
+            {
+                tw.WriteLine(prefix + "  Annotations:");
+                Annotations.DebugPrint(tw, prefix + "    ");
+                tw.WriteLine(prefix + "  Parts:");
+            }
             foreach (var p in Parts)
                 p.DebugPrint(tw, prefix + "    ");
         }
