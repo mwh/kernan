@@ -39,6 +39,14 @@ namespace Grace.Runtime
             GraceObject other);
 
     /// <summary>
+    /// A native method that can be inherited, with no arguments.
+    /// </summary>
+    public delegate GraceObject NativeMethodInheritable(
+            EvaluationContext ctx,
+            MethodRequest req,
+            GraceObject self);
+
+    /// <summary>
     /// A native method accepting the receiver, with its type,
     /// the interpreter, and the request.
     /// </summary>
@@ -145,6 +153,29 @@ namespace Grace.Runtime
             MethodHelper.CheckArity(ctx, req, 1);
             GraceObject arg = req[0].Arguments[0];
             return method(ctx, self, arg);
+        }
+    }
+
+    /// <summary>
+    /// A Grace method that can be inherited from.
+    /// </summary>
+    public class DelegateMethodNodeInheritable : MethodNode
+    {
+        readonly NativeMethodInheritable method;
+
+        /// <param name="rm">Native method to wrap</param>
+        public DelegateMethodNodeInheritable(NativeMethodInheritable rm)
+            : base(null, null)
+        {
+            method = rm;
+        }
+
+        /// <inheritdoc/>
+        public override GraceObject Respond(EvaluationContext ctx,
+                GraceObject self,
+                MethodRequest req)
+        {
+            return method(ctx, req, self);
         }
     }
 
