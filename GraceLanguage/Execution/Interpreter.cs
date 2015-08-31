@@ -500,6 +500,7 @@ namespace Grace.Execution
             for (int i = 2; i < req[0].Arguments.Count; i++)
                 catchBlocks.Add(req[0].Arguments[i]);
             var ret = GraceObject.Done;
+            var caught = true;
             try
             {
                 ret = tryBlock.Request(ctx, MethodRequest.Nullary("apply"));
@@ -510,7 +511,7 @@ namespace Grace.Execution
                 GraceObject gep = e.ExceptionPacket;
                 MethodRequest matchReq = MethodRequest.Single("match",
                         gep);
-                var caught = false;
+                caught = false;
                 foreach (var cb in catchBlocks)
                 {
                     var mr = cb.Request(ctx, matchReq);
@@ -529,7 +530,24 @@ namespace Grace.Execution
             {
                 ctx.RestoreExactly(memo);
                 if (finallyBlock != null)
-                    finallyBlock.Request(ctx, MethodRequest.Nullary("apply"));
+                    if (caught)
+                    {
+                        finallyBlock.Request(ctx,
+                                MethodRequest.Nullary("apply"));
+                    }
+                    else
+                    {
+                        try {
+                            finallyBlock.Request(ctx,
+                                    MethodRequest.Nullary("apply"));
+                        }
+                        catch (ReturnException)
+                        {
+                            ErrorReporting.RaiseError(ctx, "R2018",
+                                new Dictionary<string, string>(),
+                                "IllegalReturnError: From completed finally");
+                        }
+                    }
             }
             return ret;
         }
