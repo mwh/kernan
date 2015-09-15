@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="utf-8">
+    <title>Grace Editor</title>
+    <link rel="stylesheet" href="style/layout.css">
+    <script src="scripts/minigrace.js"></script>
+    <script src="scripts/setup.js"></script>
+  </head>
+
+  <body class="horizontal">
+
+    <nav id="left-sidebar" class="vertical no-select fill-height">
+      <header class="header horizontal">
+        <div id="upload" class="button">
+          <div class="icon">&#8623;</div>
+          <div class="label">Upload</div>
+        </div>
+        <div class="fill"></div>
+        <div id="new-file" class="button">
+          <div class="icon">&#8853;</div>
+          <div class="label">New</div>
+        </div>
+      </header>
+      <input id="upload-input" type="file" multiple>
+      <ul id="file-tree" class="fill"></ul>
+      <div id="version"></div>
+    </nav>
+
+    <div id="left-sidebar-resize" class="no-select"></div>
+
+    <div id="grace-view" class="view horizontal fill fill-height hidden">
+      <section class="open-file vertical fill no-select">
+        <header class="header horizontal">
+          <a class="download button" download="new-file.grace">
+            <span class="icon">&#8623;</span>
+            <span class="label">Download</span>
+          </a>
+          <div class="fill">
+            <div class="file-name"></div>
+            <input class="file-name-input">
+          </div>
+          <div class="delete button">
+            <span class="label">Delete</span>
+            <span class="icon">&#8855;</span>
+          </div>
+        </header>
+
+        <div class="editor fill fill-height"></div>
+      </section>
+
+      <section class="feedback fill vertical">
+        <div class="compilation no-select">
+          <header class="header horizontal waiting">
+            <div class="run button fill">
+              <span class="label">Run</span>
+              <span class="icon">&#9654;</span>
+            </div>
+            <div class="build fill button">
+              <span class="label">Build</span>
+              <span class="icon">&#9874;</span>
+            </div>
+            <div class="wait fill">
+              <span class="label">Building</span><span class="dots">...</span>
+            </div>
+            <div class="stop button fill">
+              <span class="label">Stop</span>
+              <span class="icon">&#9632;</span>
+            </div>
+          </header>
+        </div>
+
+        <pre class="output fill"></pre>
+      </section>
+
+    </div>
+
+    <div id="image-view" class="view horizontal fill fill-height hidden">
+      <img src="" width="700" height="550" alt="Image file">
+    </div>
+
+    <div id="audio-view" class="view horizontal fill fill-height hidden">
+      <audio controls>
+        <source src="" type="">
+        Your browser does not support the audio element.
+      </audio>
+    </div>
+
+    <div id="minigrace-dump">
+      <input id="debugtoggle" type="checkbox">
+    </div>
+
+  </body>
+
+</html>

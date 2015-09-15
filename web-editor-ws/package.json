@@ -1,0 +1,41 @@
+{ "name": "grace-web-editor"
+, "version": "0.1.0-pre"
+, "description": "A web editor for Minigrace"
+, "keywords":
+  [ "grace"
+  , "editor"
+  ]
+, "dependencies":
+  { "brace": "0.5.x"
+  , "jquery": "2.1.x"
+  , "jquery-ui": "1.10.x"
+  , "setimmediate": "1.x"
+  }
+, "devDependencies":
+  { "browserify": "9.x"
+  , "eslint": "0.15.x"
+  }
+, "main": "scripts/boot.js"
+, "scripts":
+  { "lint": "node_modules/eslint/bin/eslint.js scripts"
+  , "prepublish": "node_modules/browserify/bin/cmd.js . -o scripts/setup.js"
+  }
+, "homepage": "https://github.com/gracelang/grace-web-editor"
+, "repository":
+  { "type": "git"
+  , "url": "git://github.com/gracelang/grace-web-editor.git"
+  }
+, "bugs":
+  { "url": "https://github.com/gracelang/grace-web-editor/issues"
+  , "email": "git@zmthy.io"
+  }
+, "author":
+  { "name": "Timothy Jones"
+  , "email": "tim@zmthy.io"
+  , "url": "http://zmthy.io"
+  }
+, "license":
+  { "type": "GPL-3.0+"
+  , "url": "https://www.gnu.org/licenses/gpl-3.0.html"
+  }
+}
