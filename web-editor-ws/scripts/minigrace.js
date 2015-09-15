@@ -122,20 +122,44 @@ function remote_assign(rec, call) {
 
 var theWindow = null;
 
+function close_stop() {
+    minigrace.stop();
+    if (minigrace.onExecutionComplete != null)
+        minigrace.onExecutionComplete.call(null);
+}
+
 function protocol_call(call) {
     if (call.name == 'init') {
-        if (theWindow !== null)
+        if (theWindow !== null) {
+            if (theWindow.removeEventListener)
+                theWindow.removeEventListener('unload', close_stop);
             theWindow.close();
+        }
         var win = window.open(
                 'about:blank',
                 '_blank',
                 'width=540,height=500,status=no,scrollbars=no,toolbar=no');
+        if (win == null) {
+            minigrace.stop();
+            if (minigrace.onExecutionComplete != null)
+                minigrace.onExecutionComplete.call(null);
+            return;
+        }
         theWindow = win;
-        win.onload = function() {
+        // about:blank doesn't get an onload execution on Chrome, so
+        // we fall back to a timer and assume it didn't take more than
+        // half a second there.
+        var timerID;
+        var func = function() {
             win.document.title = "Grace";
             remote_object_map(win.document);
             remote_reply(call, win);
-        }
+            clearTimeout(timerID);
+            win.removeEventListener('load', func);
+            win.addEventListener('unload', close_stop);
+        };
+        win.addEventListener('load', func);
+        timerID = setTimeout(func, 500);
         mapped_objects = [];
         object_id_map = new WeakMap();
         remote_object_map(win);
