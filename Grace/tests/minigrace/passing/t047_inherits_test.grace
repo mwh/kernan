@@ -1,4 +1,4 @@
-class A.new(v') {
+class A(v') {
     var v := v'
     method foo {
         print "A's foo: {self.v}"
@@ -7,8 +7,8 @@ class A.new(v') {
         print "A's baz"
     }
 }
-class B.new(x) {
-    inherits A.new(x)
+class B(x) {
+    inherits A(x)
     method bar {
         print "B's bar"
     }
@@ -17,7 +17,7 @@ class B.new(x) {
     }
 }
 
-var b := B.new("ARGUMENT")
+var b := B("ARGUMENT")
 b.foo
 b.bar
 b.baz

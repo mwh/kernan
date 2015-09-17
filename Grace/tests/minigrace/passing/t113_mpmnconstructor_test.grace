@@ -1,5 +1,5 @@
 
-class aCat.named(aName) coloured (aColour) {
+class aCat(aName) coloured (aColour) {
     def colour = aColour
     def name = aName
     var miceEaten := 0
@@ -8,8 +8,8 @@ class aCat.named(aName) coloured (aColour) {
     }
 }
 
-def myCat = aCat.named "Timothy" coloured ("black")
-def yourCat = aCat.named "Gregory" coloured ("tortoiseshell")
+def myCat = aCat "Timothy" coloured ("black")
+def yourCat = aCat "Gregory" coloured ("tortoiseshell")
 
 myCat.describe
 yourCat.describe

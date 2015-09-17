@@ -1,11 +1,11 @@
-class aCat.named(name') {
+class aCat(name') {
     def name = name'
     method describe {
         print "A cat called {name}"
     }
 }
 
-def myCat = aCat.named "Timothy"
-def yourCat = aCat.named "Gregory"
+def myCat = aCat "Timothy"
+def yourCat = aCat "Gregory"
 myCat.describe
 yourCat.describe

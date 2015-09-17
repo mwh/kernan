@@ -148,7 +148,6 @@ namespace Grace.Parsing
         public virtual ParseNode Visit(ClassDeclarationParseNode bpn)
         {
             bpn.Signature.Visit(this);
-            bpn.BaseName.Visit(this);
             foreach (var s in bpn.Body)
                 s.Visit(this);
             return bpn;

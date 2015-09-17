@@ -1,4 +1,4 @@
-class ConsGood.new(hd', tl') {
+class ConsGood(hd', tl') {
     def hd = hd'
     def tl = tl'
     def brand = "Cons"
@@ -10,8 +10,8 @@ class ConsGood.new(hd', tl') {
     }
 }
 
-def a = ConsGood.new(3, 4)
-def b = ConsGood.new(6, 7)
+def a = ConsGood(3, 4)
+def b = ConsGood(6, 7)
 def ae = a.extract
 print "{ae.x} {ae.y}"
 def be = b.extract

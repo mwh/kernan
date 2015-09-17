@@ -1,13 +1,13 @@
-class X.new {
+class X {
     method a {
-        Y.new("Hello")
+        Y("Hello")
     }
 }
-class Y.new(v') {
+class Y(v') {
     def v = v'
     method asString {
         "Y({v})"
     }
 }
 
-print(X.new.a)
+print(X.a)

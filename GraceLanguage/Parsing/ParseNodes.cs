@@ -368,17 +368,9 @@ namespace Grace.Parsing
     /// <summary>Parse node for a class declaration</summary>
     public class ClassDeclarationParseNode : ParseNode
     {
-        private ParseNode _baseName;
 
         /// <summary>Signature of this class's constructor</summary>
         public SignatureParseNode Signature { get; set; }
-
-        /// <summary>Name of this class</summary>
-        public ParseNode BaseName
-        {
-            get { return _baseName; }
-            set { _baseName = value; }
-        }
 
         private List<ParseNode> _body;
 
@@ -389,18 +381,16 @@ namespace Grace.Parsing
             set { _body = value; }
         }
 
-        internal ClassDeclarationParseNode(Token tok, ParseNode baseName)
+        internal ClassDeclarationParseNode(Token tok)
             : base(tok)
         {
-            this._baseName = baseName;
             _body = new List<ParseNode>();
         }
 
         /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
-            IdentifierParseNode b = _baseName as IdentifierParseNode;
-            string name = b.Name + "." + Signature.Name;
+            string name = Signature.Name;
             tw.WriteLine(prefix + "ClassDeclaration: " + name);
             tw.WriteLine(prefix + "  Signature:");
             Signature.DebugPrint(tw, prefix + "    ");

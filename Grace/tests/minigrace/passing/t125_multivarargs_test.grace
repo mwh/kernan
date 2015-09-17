@@ -16,7 +16,7 @@ var x : X := object {
 }
 x.bar("hello", 17, 42)baz("world", -1, 0, 1)
 
-class Foo.with(a, *b)varargs(c, *d) {
+class with(a, *b)varargs(c, *d) {
     method bar {
         print(a)
         for (b) do { e ->
@@ -28,5 +28,5 @@ class Foo.with(a, *b)varargs(c, *d) {
         }
     }
 }
-var y := Foo.with("one", "two", "three")varargs("four", "five", "six")
+var y := with("one", "two", "three")varargs("four", "five", "six")
 y.bar

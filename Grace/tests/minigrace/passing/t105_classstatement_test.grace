@@ -1,9 +1,9 @@
-class X.new(y) {
+class X(y) {
     print(y)
     object {
         print(y)
     }
 }
 
-X.new(5)
+X(5)
 

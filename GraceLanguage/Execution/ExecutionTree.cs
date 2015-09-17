@@ -565,24 +565,17 @@ namespace Grace.Execution
         /// <inheritdoc />
         public Node Visit(ClassDeclarationParseNode d)
         {
-            var clsObj = new ObjectParseNode(d.Token);
             var constructor = new MethodDeclarationParseNode(d.Token);
             constructor.Signature = d.Signature;
             var instanceObj = new ObjectParseNode(d.Token);
             instanceObj.Body = d.Body;
             constructor.Body.Add(instanceObj);
-            clsObj.Body.Add(constructor);
-            var dpn = new DefDeclarationParseNode(d.Token,
-                    d.BaseName,
-                    clsObj,
-                    null, // Type
-                    null);
-            var ret = (DefDeclarationNode)dpn.Visit(this);
+            var ret = (MethodNode)constructor.Visit(this);
             // Classes are public by default.
             // The next line makes them public always; it is not
             // possible to have a confidential class. It is unclear
             // whether that should be permitted or not.
-            ret.Public = true;
+            ret.Confidential = false;
             return ret;
         }
 

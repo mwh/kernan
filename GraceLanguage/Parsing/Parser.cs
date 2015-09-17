@@ -655,10 +655,7 @@ namespace Grace.Parsing
             Token start = lexer.current;
             nextToken();
             expect<IdentifierToken>();
-            ParseNode baseName = parseIdentifier();
-            expect<DotToken>();
-            nextToken();
-            ClassDeclarationParseNode ret = new ClassDeclarationParseNode(start, baseName);
+            ClassDeclarationParseNode ret = new ClassDeclarationParseNode(start);
             ret.Signature = parseSignature(start);
             expect<LBraceToken>();
             List<ParseNode> origComments = prepareComments();

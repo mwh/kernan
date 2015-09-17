@@ -2,10 +2,10 @@ method a {
   print("out")
 }
 
-class A.new {
+class A {
   method b {
     a
   }
 }
 
-A.new.b
+A.b

@@ -1,18 +1,18 @@
-class A.new {
+class A {
     method foo {
         "world"
     }
 }
 
-class B.new {
-    inherits A.new
+class B {
+    inherits A
     method bar {
         print "hello {foo}"
     }
 }
 
-class C.new {
-    inherits B.new
+class C {
+    inherits B
     method quux {
         print "X"
         bar
@@ -20,15 +20,15 @@ class C.new {
 }
 
 object {
-    inherits A.new
+    inherits A
 }
 
-def x = B.new
+def x = B
 x.bar
 type T = {
     foo
     quux
 }
-def y : T = C.new
+def y : T = C
 y.quux
 
