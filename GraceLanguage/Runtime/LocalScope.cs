@@ -55,6 +55,15 @@ namespace Grace.Runtime
             return "LocalScope";
         }
 
+        /// <summary>
+        /// Check for a named member of this object
+        /// </summary>
+        /// <param name="name">Name to check</param>
+        public bool Contains(string name)
+        {
+            return locals.ContainsKey(name);
+        }
+
         /// <summary>Add a new def to this scope</summary>
         /// <param name="name">Name of def to create</param>
         public void AddLocalDef(string name)

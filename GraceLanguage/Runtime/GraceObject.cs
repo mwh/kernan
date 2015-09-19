@@ -149,6 +149,16 @@ namespace Grace.Runtime
         }
 
         /// <summary>
+        /// Check for a named superobject in this object
+        /// </summary>
+        /// <param name="name">Name of parent</param>
+        public bool HasParent(string name)
+        {
+            return _internalScope != null &&
+                _internalScope.Contains(name);
+        }
+
+        /// <summary>
         /// Find a Grace superobject that is an instance of the native
         /// type T.
         /// </summary>

@@ -367,7 +367,7 @@ namespace Grace.Execution
             GraceObject rec;
             if (rirq != null)
             {
-                if (rirq.Name == "self")
+                if (rirq.Name == "self" || ctx.IsParentName(rirq.Name))
                 {
                     if (req == null)
                         return null;

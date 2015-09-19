@@ -428,6 +428,19 @@ namespace Grace.Execution
             }
         }
 
+        /// <inheritdoc/>
+        public bool IsParentName(string name)
+        {
+            var s = scope;
+            while (s != null)
+            {
+                if (s.scope.HasParent(name))
+                    return true;
+                s = s.next;
+            }
+            return false;
+        }
+
         /// <inheritdoc />
         public List<string> GetStackTrace()
         {
@@ -879,6 +892,13 @@ namespace Grace.Execution
         /// <summary>Discard a dynamic scope</summary>
         /// <param name="sm">Currently ignored</param>
         void Forget(Interpreter.ScopeMemo sm);
+
+        /// <summary>
+        /// Check whether a name resolves to a named parent
+        /// in the current scope.
+        /// </summary>
+        /// <param name="name">Name to check</param>
+        bool IsParentName(string name);
 
         /// <summary>Get a textual backtrace of the current stack</summary>
         List<string> GetStackTrace();
