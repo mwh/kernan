@@ -102,6 +102,12 @@ namespace Grace.Runtime
                     req[0].Arguments.Count);
             ctx.Remember(lexicalScope);
             var myScope = new LocalScope(req.Name);
+            // Bind any local methods (types) on the scope
+            foreach (var localMeth in body.OfType<MethodNode>())
+            {
+                myScope.AddMethod(localMeth);
+            }
+            // Bind parameters and arguments
             foreach (var arg in parameters.Zip(req[0].Arguments, (a, b) => new { name = a, val = b }))
             {
                 var id = arg.name as ParameterNode;

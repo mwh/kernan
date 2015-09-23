@@ -1309,7 +1309,7 @@ end:
         /// <inheritdoc/>
         public override GraceObject Evaluate(EvaluationContext ctx)
         {
-            return null;
+            return GraceObject.Done;
         }
 
         /// <summary>Confirm that this method can be accessed through
@@ -1387,6 +1387,12 @@ end:
             ctx.Extend(self);
             var myScope = new MethodScope(req.Name);
             myScope.AddLocalDef("self", self);
+            // Bind any local methods (types) on the scope
+            foreach (var localMeth in Body.OfType<MethodNode>())
+            {
+                myScope.AddMethod(localMeth);
+            }
+            // Bind parameters and arguments
             foreach (var pp in Signature.Zip(req, (dp, rp) => new { mine = dp, req = rp }))
             {
                 if (!(pp.mine is OrdinarySignaturePartNode))
