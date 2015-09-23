@@ -50,7 +50,7 @@ namespace Grace.Parsing
             {
                 consumeBlankLines();
                 indentColumn = lexer.current.column;
-                ParseNode n = parseStatement();
+                ParseNode n = parseStatement(StatementLevel.ModuleLevel);
                 body.Add(n);
                 if (lexer.current == was)
                 {
@@ -278,7 +278,14 @@ namespace Grace.Parsing
             comments = orig;
         }
 
-        private ParseNode parseStatement()
+        private enum StatementLevel
+        {
+            ModuleLevel = 3, ObjectLevel = 2, MethodLevel = 1
+        }
+
+        private ParseNode parseStatement(
+                StatementLevel level
+                )
         {
             List<ParseNode> origComments = comments;
             comments = new List<ParseNode>();
@@ -289,6 +296,9 @@ namespace Grace.Parsing
             {
                 reportError("P1029", "Unpaired closing brace found");
             }
+            bool allowMethods = level != StatementLevel.MethodLevel;
+            bool allowImports = level == StatementLevel.ModuleLevel;
+            bool allowInherits = level != StatementLevel.MethodLevel;
             if ((lexer.current is NewLineToken || lexer.current is EndToken
                         || lexer.current is RBraceToken)
                     && comments.Count != 0)
@@ -303,15 +313,15 @@ namespace Grace.Parsing
                 ret = parseVarDeclaration();
             else if (lexer.current is DefKeywordToken)
                 ret = parseDefDeclaration();
-            else if (lexer.current is MethodKeywordToken)
+            else if (allowMethods && lexer.current is MethodKeywordToken)
                 ret = parseMethodDeclaration();
-            else if (lexer.current is ClassKeywordToken)
+            else if (allowMethods && lexer.current is ClassKeywordToken)
                 ret = parseClassDeclaration();
-            else if (lexer.current is InheritsKeywordToken)
+            else if (allowInherits && lexer.current is InheritsKeywordToken)
                 ret = parseInherits();
-            else if (lexer.current is ImportKeywordToken)
+            else if (allowImports && lexer.current is ImportKeywordToken)
                 ret = parseImport();
-            else if (lexer.current is DialectKeywordToken)
+            else if (allowImports && lexer.current is DialectKeywordToken)
                 ret = parseDialect();
             else if (lexer.current is ReturnKeywordToken)
                 ret = parseReturn();
@@ -644,7 +654,7 @@ namespace Grace.Parsing
             ret.Signature = parseSignature(start);
             expect<LBraceToken>();
             List<ParseNode> origComments = prepareComments();
-            parseBraceDelimitedBlock(ret.Body);
+            parseBraceDelimitedBlock(ret.Body, StatementLevel.MethodLevel);
             attachComments(ret, comments);
             restoreComments(origComments);
             return ret;
@@ -659,7 +669,7 @@ namespace Grace.Parsing
             ret.Signature = parseSignature(start);
             expect<LBraceToken>();
             List<ParseNode> origComments = prepareComments();
-            parseBraceDelimitedBlock(ret.Body);
+            parseBraceDelimitedBlock(ret.Body, StatementLevel.ObjectLevel);
             attachComments(ret, comments);
             restoreComments(origComments);
             return ret;
@@ -1341,7 +1351,8 @@ namespace Grace.Parsing
             return valstack.Pop();
         }
 
-        private void parseBraceDelimitedBlock(List<ParseNode> body)
+        private void parseBraceDelimitedBlock(List<ParseNode> body,
+                StatementLevel level)
         {
             int indentBefore = indentColumn;
             Token start = lexer.current;
@@ -1386,7 +1397,7 @@ namespace Grace.Parsing
                             + (lexer.current.column - 1) + ", should be "
                             + (indentColumn - 1) + ".");
                 }
-                body.Add(parseStatement());
+                body.Add(parseStatement(level));
                 if (lexer.current == lastToken)
                 {
                     reportError("P1000", lexer.current,
@@ -1406,7 +1417,7 @@ namespace Grace.Parsing
                 reportError("P1021", "object must have '{' after.");
             }
             List<ParseNode> origComments = prepareComments();
-            parseBraceDelimitedBlock(ret.Body);
+            parseBraceDelimitedBlock(ret.Body, StatementLevel.ObjectLevel);
             attachComments(ret, comments);
             restoreComments(origComments);
             return ret;
@@ -1565,7 +1576,7 @@ namespace Grace.Parsing
             indentColumn = firstBodyToken.column;
             while (!(lexer.current is RBraceToken))
             {
-                ret.Body.Add(parseStatement());
+                ret.Body.Add(parseStatement(StatementLevel.MethodLevel));
                 if (lexer.current == lastToken)
                 {
                     reportError("P1000", lexer.current,
