@@ -514,6 +514,18 @@ namespace Grace.Parsing
         }
     }
 
+    class TraitKeywordToken : KeywordToken
+    {
+        public TraitKeywordToken(string module, int line, int column)
+            : base(module, line, column)
+        { }
+
+        protected override string describe()
+        {
+            return "TraitKeyword";
+        }
+    }
+
     class InheritsKeywordToken : KeywordToken
     {
         public InheritsKeywordToken(string module, int line, int column)

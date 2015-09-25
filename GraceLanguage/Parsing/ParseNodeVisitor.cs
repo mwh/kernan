@@ -58,6 +58,9 @@ namespace Grace.Parsing
         /// <summary>Visit a ClassDeclarationParseNode</summary>
         /// <param name="bpn">ClassDeclarationParseNode to visit</param>
         T Visit(ClassDeclarationParseNode bpn);
+        /// <summary>Visit a TraitDeclarationParseNode</summary>
+        /// <param name="bpn">TraitDeclarationParseNode to visit</param>
+        T Visit(TraitDeclarationParseNode bpn);
         /// <summary>Visit a ReturnParseNode</summary>
         /// <param name="rpn">ReturnParseNode to visit</param>
         T Visit(ReturnParseNode rpn);

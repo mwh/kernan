@@ -46,6 +46,7 @@ P1042 The 'outer' keyword must always be followed by a '.' and method name or an
 P1043 The name '${name}' can only be used to make parent requests here, and must be followed by an operator or a '.' and a method name.
 P1044 Cannot assign to a '${lhs}' with ':='.
 P1045 Only method requests can be inherited from, not literals.
+P1046 Cannot have ${token} inside ${context}.
 
 L0000 Character ${codepoint} (${name}) may not appear here
 L0001 Tab characters are not permitted in the source code

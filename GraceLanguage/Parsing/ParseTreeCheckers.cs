@@ -154,6 +154,15 @@ namespace Grace.Parsing
         }
 
         /// <inheritdoc/>
+        public virtual ParseNode Visit(TraitDeclarationParseNode bpn)
+        {
+            bpn.Signature.Visit(this);
+            foreach (var s in bpn.Body)
+                s.Visit(this);
+            return bpn;
+        }
+
+        /// <inheritdoc/>
         public virtual ParseNode Visit(ReturnParseNode rpn)
         {
             if (rpn.ReturnValue != null)

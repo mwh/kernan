@@ -409,6 +409,50 @@ namespace Grace.Parsing
 
     }
 
+    /// <summary>Parse node for a trair declaration</summary>
+    public class TraitDeclarationParseNode : ParseNode
+    {
+
+        /// <summary>Signature of this class's constructor</summary>
+        public SignatureParseNode Signature { get; set; }
+
+        private List<ParseNode> _body;
+
+        /// <summary>Body of this class</summary>
+        public List<ParseNode> Body
+        {
+            get { return _body; }
+            set { _body = value; }
+        }
+
+        internal TraitDeclarationParseNode(Token tok)
+            : base(tok)
+        {
+            _body = new List<ParseNode>();
+        }
+
+        /// <inheritdoc/>
+        public override void DebugPrint(System.IO.TextWriter tw, string prefix)
+        {
+            string name = Signature.Name;
+            tw.WriteLine(prefix + "TraitDeclaration: " + name);
+            tw.WriteLine(prefix + "  Signature:");
+            Signature.DebugPrint(tw, prefix + "    ");
+            tw.WriteLine(prefix + "  Body:");
+            foreach (ParseNode n in _body)
+            {
+                n.DebugPrint(tw, prefix + "    ");
+            }
+            writeComment(tw, prefix);
+        }
+        /// <inheritdoc/>
+        public override T Visit<T>(ParseNodeVisitor<T> visitor)
+        {
+            return visitor.Visit(this);
+        }
+
+    }
+
     /// <summary>Parse node for a type statement</summary>
     public class TypeStatementParseNode : ParseNode
     {

@@ -280,7 +280,31 @@ namespace Grace.Parsing
 
         private enum StatementLevel
         {
-            ModuleLevel = 3, ObjectLevel = 2, MethodLevel = 1
+            ModuleLevel, TraitLevel, ObjectLevel, MethodLevel
+        }
+
+        private string describeKeyword(Token t)
+        {
+            var ret = "inline code";
+            if (t is VarKeywordToken)
+                ret = "var declaration";
+            else if (t is DefKeywordToken)
+                ret = "def declaration";
+            else if (t is MethodKeywordToken)
+                ret = "method declaration";
+            else if (t is ClassKeywordToken)
+                ret = "class declaration";
+            else if (t is TraitKeywordToken)
+                ret = "trait declaration";
+            else if (t is InheritsKeywordToken)
+                ret = "inherits statement";
+            else if (t is ImportKeywordToken)
+                ret = "import statement";
+            else if (t is DialectKeywordToken)
+                ret = "dialect declaration";
+            else if (t is ReturnKeywordToken)
+                ret = "return statement";
+            return ret;
         }
 
         private ParseNode parseStatement(
@@ -296,9 +320,11 @@ namespace Grace.Parsing
             {
                 reportError("P1029", "Unpaired closing brace found");
             }
+            bool notTrait = level != StatementLevel.TraitLevel;
             bool allowMethods = level != StatementLevel.MethodLevel;
             bool allowImports = level == StatementLevel.ModuleLevel;
             bool allowInherits = level != StatementLevel.MethodLevel;
+            bool allowReturns = level == StatementLevel.MethodLevel;
             if ((lexer.current is NewLineToken || lexer.current is EndToken
                         || lexer.current is RBraceToken)
                     && comments.Count != 0)
@@ -309,25 +335,27 @@ namespace Grace.Parsing
             }
             else if (lexer.current is CommentToken)
                 ret = parseComment();
-            else if (lexer.current is VarKeywordToken)
+            else if (notTrait && lexer.current is VarKeywordToken)
                 ret = parseVarDeclaration();
-            else if (lexer.current is DefKeywordToken)
+            else if (notTrait && lexer.current is DefKeywordToken)
                 ret = parseDefDeclaration();
             else if (allowMethods && lexer.current is MethodKeywordToken)
                 ret = parseMethodDeclaration();
             else if (allowMethods && lexer.current is ClassKeywordToken)
                 ret = parseClassDeclaration();
+            else if (allowMethods && lexer.current is TraitKeywordToken)
+                ret = parseTraitDeclaration();
             else if (allowInherits && lexer.current is InheritsKeywordToken)
                 ret = parseInherits();
             else if (allowImports && lexer.current is ImportKeywordToken)
                 ret = parseImport();
             else if (allowImports && lexer.current is DialectKeywordToken)
                 ret = parseDialect();
-            else if (lexer.current is ReturnKeywordToken)
+            else if (allowReturns && lexer.current is ReturnKeywordToken)
                 ret = parseReturn();
             else if (lexer.current is TypeKeywordToken)
                 ret = parseTypeStatement();
-            else
+            else if (notTrait)
             {
                 ret = parseExpression();
                 if (lexer.current is BindToken)
@@ -336,6 +364,28 @@ namespace Grace.Parsing
                     ParseNode expr = parseExpression();
                     ret = new BindParseNode(start, ret, expr);
                 }
+            }
+            else
+            {
+                var context = "context";
+                switch (level)
+                {
+                    case StatementLevel.TraitLevel:
+                        context = "trait";
+                        break;
+                    case StatementLevel.ObjectLevel:
+                        context = "object or class";
+                        break;
+                    case StatementLevel.MethodLevel:
+                        context = "method body";
+                        break;
+                }
+                reportError("P1046", new Dictionary<string, string>() {
+                        { "token", "" + describeKeyword(lexer.current) },
+                        { "context", context }
+                    },
+                    "May not have ${token} inside ${context}.");
+                return null;
             }
             takeSemicolon();
             if (!(lexer.current is NewLineToken
@@ -670,6 +720,21 @@ namespace Grace.Parsing
             expect<LBraceToken>();
             List<ParseNode> origComments = prepareComments();
             parseBraceDelimitedBlock(ret.Body, StatementLevel.ObjectLevel);
+            attachComments(ret, comments);
+            restoreComments(origComments);
+            return ret;
+        }
+
+        private ParseNode parseTraitDeclaration()
+        {
+            Token start = lexer.current;
+            nextToken();
+            expect<IdentifierToken>();
+            TraitDeclarationParseNode ret = new TraitDeclarationParseNode(start);
+            ret.Signature = parseSignature(start);
+            expect<LBraceToken>();
+            List<ParseNode> origComments = prepareComments();
+            parseBraceDelimitedBlock(ret.Body, StatementLevel.TraitLevel);
             attachComments(ret, comments);
             restoreComments(origComments);
             return ret;

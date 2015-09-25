@@ -580,6 +580,23 @@ namespace Grace.Execution
         }
 
         /// <inheritdoc />
+        public Node Visit(TraitDeclarationParseNode d)
+        {
+            var constructor = new MethodDeclarationParseNode(d.Token);
+            constructor.Signature = d.Signature;
+            var instanceObj = new ObjectParseNode(d.Token);
+            instanceObj.Body = d.Body;
+            constructor.Body.Add(instanceObj);
+            var ret = (MethodNode)constructor.Visit(this);
+            // Traits are public by default.
+            // The next line makes them public always; it is not
+            // possible to have a confidential trait. It is unclear
+            // whether that should be permitted or not.
+            ret.Confidential = false;
+            return ret;
+        }
+
+        /// <inheritdoc />
         public Node Visit(ReturnParseNode rpn)
         {
             if (rpn.ReturnValue == null)
