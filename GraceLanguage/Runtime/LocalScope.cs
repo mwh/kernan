@@ -75,7 +75,7 @@ namespace Grace.Runtime
         /// <param name="name">Name of def to create</param>
         /// <param name="val">Value to set def to</param>
         /// <returns>Method that was added</returns>
-        public override MethodNode AddLocalDef(string name, GraceObject val)
+        public override Method AddLocalDef(string name, GraceObject val)
         {
             locals[name] = val;
             AddMethod(name, Reader);
@@ -127,7 +127,7 @@ namespace Grace.Runtime
     }
 
     /// <summary>Method to read a local variable</summary>
-    public class LocalReaderMethod : MethodNode
+    public class LocalReaderMethod : Method
     {
 
         ///
@@ -143,7 +143,7 @@ namespace Grace.Runtime
         {
             checkAccessibility(ctx, req);
             MethodHelper.CheckNoInherits(ctx, req);
-            CheckArgCount(ctx, req.Name, req.Name,
+            MethodNode.CheckArgCount(ctx, req.Name, req.Name,
                     0, false,
                     req[0].Arguments.Count);
             LocalScope s = self as LocalScope;
@@ -164,7 +164,7 @@ namespace Grace.Runtime
     }
 
     /// <summary>Method to write a local variable</summary>
-    public class LocalWriterMethod : MethodNode
+    public class LocalWriterMethod : Method
     {
         ///
         public LocalWriterMethod()

@@ -110,15 +110,15 @@ namespace Grace.Execution
             scope.scope = new GraceObject();
             majorScope = scope.scope;
             scope.scope.AddMethod("print",
-                    new DelegateMethodNode1Ctx(Print));
+                    new DelegateMethod1Ctx(Print));
             scope.scope.AddLocalDef("true", GraceBoolean.True);
             scope.scope.AddLocalDef("false", GraceBoolean.False);
             scope.scope.AddMethod("_base_while_do",
-                    new DelegateMethodNodeReq(BaseWhileDo));
+                    new DelegateMethodReq(BaseWhileDo));
             scope.scope.AddMethod("_base_try_catch_finally",
-                    new DelegateMethodNodeReq(BaseTryCatchFinally));
+                    new DelegateMethodReq(BaseTryCatchFinally));
             scope.scope.AddMethod("Exception",
-                    new ConstantMethodNode(
+                    new ConstantMethod(
                         new GraceExceptionKind("Exception")));
         }
 
@@ -705,13 +705,13 @@ namespace Grace.Execution
         }
 
         /// <inheritdoc />
-        public MethodNode AddDef(string name, GraceObject val)
+        public Method AddDef(string name, GraceObject val)
         {
             return majorScope.AddLocalDef(name, val);
         }
 
         /// <inheritdoc />
-        public MethodNode AddMinorDef(string name, GraceObject val)
+        public Method AddMinorDef(string name, GraceObject val)
         {
             return scope.scope.AddLocalDef(name, val);
         }
@@ -798,9 +798,9 @@ namespace Grace.Execution
     public struct ReaderWriterPair
     {
         /// <summary>Reader method</summary>
-        public MethodNode Read;
+        public Method Read;
         /// <summary>Writer method</summary>
-        public MethodNode Write;
+        public Method Write;
     }
 
     /// <summary>Represents the current status of a program evaluation</summary>
@@ -870,12 +870,12 @@ namespace Grace.Execution
         /// <param name="name">Variable name to use</param>
         /// <param name="val">Value of the field</param>
         /// <returns>The method added to the object</returns>
-        MethodNode AddDef(string name, GraceObject val);
+        Method AddDef(string name, GraceObject val);
         /// <summary>Add a def field to the nearest scope</summary>
         /// <param name="name">Variable name to use</param>
         /// <param name="val">Value of the field</param>
         /// <returns>The method added to the object</returns>
-        MethodNode AddMinorDef(string name, GraceObject val);
+        Method AddMinorDef(string name, GraceObject val);
 
         /// <summary>Create a Memo that can restore interpreter state</summary>
         Interpreter.ScopeMemo Memorise();

@@ -34,7 +34,7 @@ namespace Grace.Runtime
                 left = l;
                 right = r;
                 AddMethod("do",
-                    new DelegateMethodNode1Ctx(
+                    new DelegateMethod1Ctx(
                         new NativeMethod1Ctx(this.Do)));
                 AddMethod("++", Iterables.ConcatMethod);
                 TagName = "ConcatenatedIterables";
@@ -73,7 +73,7 @@ namespace Grace.Runtime
         }
 
         /// <summary>Reusable method for ++</summary>
-        public static readonly MethodNode ConcatMethod = new DelegateMethodNodeReceiver1Ctx(
+        public static readonly Method ConcatMethod = new DelegateMethodReceiver1Ctx(
                     new NativeMethodReceiver1Ctx(Iterables.MConcat)
                 );
     }
@@ -87,11 +87,11 @@ namespace Grace.Runtime
         public GraceVariadicList()
         {
             AddMethod("do",
-                new DelegateMethodNode1Ctx(
+                new DelegateMethod1Ctx(
                     new NativeMethod1Ctx(this.Do)));
             AddMethod("++", Iterables.ConcatMethod);
             AddMethod("with do",
-                new DelegateMethodNodeReq(
+                new DelegateMethodReq(
                     new NativeMethodReq(this.WithDo)));
             TagName = "VariadicList";
         }
@@ -158,7 +158,7 @@ namespace Grace.Runtime
                 _elements = elements;
                 _block = block;
                 AddMethod("apply",
-                    new DelegateMethodNode1Ctx(
+                    new DelegateMethod1Ctx(
                         new NativeMethod1Ctx(this.apply)));
             }
 

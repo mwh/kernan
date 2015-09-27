@@ -15,34 +15,34 @@ namespace Grace.Runtime
         private List<int> utf32 = new List<int>();
         private CodepointObject[] codepoints;
 
-        private static Dictionary<string, MethodNode> sharedMethods =
-            new Dictionary<string, MethodNode> {
-                { "<", new DelegateMethodNodeTyped<StringCodepoints>(mLT) },
-                { "<=", new DelegateMethodNodeTyped<StringCodepoints>(mLTE) },
-                { ">", new DelegateMethodNodeTyped<StringCodepoints>(mGT) },
-                { ">=", new DelegateMethodNodeTyped<StringCodepoints>(mGTE) },
-                { "==", new DelegateMethodNodeTyped<StringCodepoints>(mEQ) },
-                { "!=", new DelegateMethodNodeTyped<StringCodepoints>(mNE) },
+        private static Dictionary<string, Method> sharedMethods =
+            new Dictionary<string, Method> {
+                { "<", new DelegateMethodTyped<StringCodepoints>(mLT) },
+                { "<=", new DelegateMethodTyped<StringCodepoints>(mLTE) },
+                { ">", new DelegateMethodTyped<StringCodepoints>(mGT) },
+                { ">=", new DelegateMethodTyped<StringCodepoints>(mGTE) },
+                { "==", new DelegateMethodTyped<StringCodepoints>(mEQ) },
+                { "!=", new DelegateMethodTyped<StringCodepoints>(mNE) },
                 { "[]",
-                    new DelegateMethodNodeTyped<StringCodepoints>(mAt) },
+                    new DelegateMethodTyped<StringCodepoints>(mAt) },
                 { "at",
-                    new DelegateMethodNodeTyped<StringCodepoints>(mAt) },
+                    new DelegateMethodTyped<StringCodepoints>(mAt) },
                 { "size",
-                    new DelegateMethodNodeTyped<StringCodepoints>(mSize) },
+                    new DelegateMethodTyped<StringCodepoints>(mSize) },
                 { "++",
-                    new DelegateMethodNodeTyped<StringCodepoints>(mConcat) },
+                    new DelegateMethodTyped<StringCodepoints>(mConcat) },
                 { "string",
-                    new DelegateMethodNodeTyped<StringCodepoints>(mString) },
+                    new DelegateMethodTyped<StringCodepoints>(mString) },
                 { "nfc",
-                    new DelegateMethodNodeTyped<StringCodepoints>(mNFC) },
+                    new DelegateMethodTyped<StringCodepoints>(mNFC) },
                 { "nfd",
-                    new DelegateMethodNodeTyped<StringCodepoints>(mNFD) },
+                    new DelegateMethodTyped<StringCodepoints>(mNFD) },
                 { "utf8",
-                    new DelegateMethodNodeTyped<StringCodepoints>(mUTF8) },
+                    new DelegateMethodTyped<StringCodepoints>(mUTF8) },
                 { "utf16",
-                    new DelegateMethodNodeTyped<StringCodepoints>(mUTF16) },
+                    new DelegateMethodTyped<StringCodepoints>(mUTF16) },
                 { "utf32",
-                    new DelegateMethodNodeTyped<StringCodepoints>(mUTF32) },
+                    new DelegateMethodTyped<StringCodepoints>(mUTF32) },
             };
 
         /// <summary>
@@ -296,7 +296,7 @@ namespace Grace.Runtime
         private int codepoint;
         private string[] parts;
 
-        private static Dictionary<string, MethodNode> sharedMethods;
+        private static Dictionary<string, Method> sharedMethods;
         private CodepointObject(int cp)
         {
             codepoint = cp;
@@ -308,47 +308,47 @@ namespace Grace.Runtime
 
         private static void createSharedMethods()
         {
-            sharedMethods = new Dictionary<string, MethodNode> {
-                { "<", new DelegateMethodNodeTyped<CodepointObject>(mLT) },
-                { "<=", new DelegateMethodNodeTyped<CodepointObject>(mLTE) },
-                { ">", new DelegateMethodNodeTyped<CodepointObject>(mGT) },
-                { ">=", new DelegateMethodNodeTyped<CodepointObject>(mGTE) },
+            sharedMethods = new Dictionary<string, Method> {
+                { "<", new DelegateMethodTyped<CodepointObject>(mLT) },
+                { "<=", new DelegateMethodTyped<CodepointObject>(mLTE) },
+                { ">", new DelegateMethodTyped<CodepointObject>(mGT) },
+                { ">=", new DelegateMethodTyped<CodepointObject>(mGTE) },
                 { "asString",
-                    new DelegateMethodNodeTyped<CodepointObject>(mAsString) },
+                    new DelegateMethodTyped<CodepointObject>(mAsString) },
                 { "codepoint",
-                    new DelegateMethodNodeTyped<CodepointObject>(mCodepoint) },
+                    new DelegateMethodTyped<CodepointObject>(mCodepoint) },
                 { "name",
-                    new DelegateMethodNodeTyped<CodepointObject>(mName) },
+                    new DelegateMethodTyped<CodepointObject>(mName) },
                 { "category",
-                    new DelegateMethodNodeTyped<CodepointObject>(mCategory) },
+                    new DelegateMethodTyped<CodepointObject>(mCategory) },
                 { "combining",
-                    new DelegateMethodNodeTyped<CodepointObject>(mCombining) },
+                    new DelegateMethodTyped<CodepointObject>(mCombining) },
                 { "bidirectional",
-                    new DelegateMethodNodeTyped<CodepointObject>(mBidirectional)
+                    new DelegateMethodTyped<CodepointObject>(mBidirectional)
                 },
                 { "decomposition",
-                    new DelegateMethodNodeTyped<CodepointObject>(mDecomposition)
+                    new DelegateMethodTyped<CodepointObject>(mDecomposition)
                 },
                 { "decimalDigit",
-                    new DelegateMethodNodeTyped<CodepointObject>(mDecimalDigit)
+                    new DelegateMethodTyped<CodepointObject>(mDecimalDigit)
                 },
                 { "digit",
-                    new DelegateMethodNodeTyped<CodepointObject>(mDigit)
+                    new DelegateMethodTyped<CodepointObject>(mDigit)
                 },
                 { "numeric",
-                    new DelegateMethodNodeTyped<CodepointObject>(mNumeric)
+                    new DelegateMethodTyped<CodepointObject>(mNumeric)
                 },
                 { "mirrored",
-                    new DelegateMethodNodeTyped<CodepointObject>(mMirrored)
+                    new DelegateMethodTyped<CodepointObject>(mMirrored)
                 },
                 { "uppercase",
-                    new DelegateMethodNodeTyped<CodepointObject>(mUppercase) },
+                    new DelegateMethodTyped<CodepointObject>(mUppercase) },
                 { "lowercase",
-                    new DelegateMethodNodeTyped<CodepointObject>(mLowercase) },
+                    new DelegateMethodTyped<CodepointObject>(mLowercase) },
                 { "titlecase",
-                    new DelegateMethodNodeTyped<CodepointObject>(mTitlecase) },
+                    new DelegateMethodTyped<CodepointObject>(mTitlecase) },
                 { "string",
-                    new DelegateMethodNodeTyped<CodepointObject>(mString) },
+                    new DelegateMethodTyped<CodepointObject>(mString) },
             };
         }
 
@@ -554,7 +554,7 @@ namespace Grace.Runtime
     {
         private string data;
 
-        private static Dictionary<string, MethodNode> sharedMethods;
+        private static Dictionary<string, Method> sharedMethods;
 
         public UTF16CodepointsView(string s)
         {
@@ -564,14 +564,14 @@ namespace Grace.Runtime
 
         private static void createSharedMethods()
         {
-            sharedMethods = new Dictionary<string, MethodNode> {
-                { "at", new DelegateMethodNodeTyped<UTF16CodepointsView>(mAt) },
-                { "[]", new DelegateMethodNodeTyped<UTF16CodepointsView>(mAt) },
+            sharedMethods = new Dictionary<string, Method> {
+                { "at", new DelegateMethodTyped<UTF16CodepointsView>(mAt) },
+                { "[]", new DelegateMethodTyped<UTF16CodepointsView>(mAt) },
                 { "le",
-                    new DelegateMethodNodeTyped<UTF16CodepointsView>(mLEndian)
+                    new DelegateMethodTyped<UTF16CodepointsView>(mLEndian)
                 },
                 { "be",
-                    new DelegateMethodNodeTyped<UTF16CodepointsView>(mBEndian)
+                    new DelegateMethodTyped<UTF16CodepointsView>(mBEndian)
                 },
             };
         }
@@ -636,7 +636,7 @@ namespace Grace.Runtime
         private string stringData;
         private List<int> utf32;
 
-        private static Dictionary<string, MethodNode> sharedMethods;
+        private static Dictionary<string, Method> sharedMethods;
 
         public UTF32CodepointsView(string s, List<int> u)
         {
@@ -647,14 +647,14 @@ namespace Grace.Runtime
 
         private static void createSharedMethods()
         {
-            sharedMethods = new Dictionary<string, MethodNode> {
-                { "at", new DelegateMethodNodeTyped<UTF32CodepointsView>(mAt) },
-                { "[]", new DelegateMethodNodeTyped<UTF32CodepointsView>(mAt) },
+            sharedMethods = new Dictionary<string, Method> {
+                { "at", new DelegateMethodTyped<UTF32CodepointsView>(mAt) },
+                { "[]", new DelegateMethodTyped<UTF32CodepointsView>(mAt) },
                 { "le",
-                    new DelegateMethodNodeTyped<UTF32CodepointsView>(mLEndian)
+                    new DelegateMethodTyped<UTF32CodepointsView>(mLEndian)
                 },
                 { "be",
-                    new DelegateMethodNodeTyped<UTF32CodepointsView>(mBEndian)
+                    new DelegateMethodTyped<UTF32CodepointsView>(mBEndian)
                 },
             };
         }

@@ -120,9 +120,9 @@ namespace Grace.Runtime
         private void initialise()
         {
             AddMethod("asString",
-                new DelegateMethodNodeReceiver0Ctx(AsString));
+                new DelegateMethodReceiver0Ctx(AsString));
             AddMethod("message",
-                new DelegateMethodNode0(
+                new DelegateMethod0(
                     new NativeMethod0(this.Message)));
         }
 
@@ -230,16 +230,16 @@ namespace Grace.Runtime
             Children = new HashSet<string>();
             Children.Add(Name);
             AddMethod("asString",
-                new DelegateMethodNodeReceiver0Ctx(
+                new DelegateMethodReceiver0Ctx(
                     new NativeMethodReceiver0Ctx(this.AsString)));
             AddMethod("match",
-                new DelegateMethodNodeReq(
+                new DelegateMethodReq(
                     new NativeMethodReq(this.Match)));
             AddMethod("raise",
-                new DelegateMethodNode1Ctx(
+                new DelegateMethod1Ctx(
                     new NativeMethod1Ctx(this.Raise)));
             AddMethod("refine",
-                new DelegateMethodNode1Ctx(
+                new DelegateMethod1Ctx(
                     new NativeMethod1Ctx(this.Refine)));
         }
 

@@ -117,27 +117,27 @@ namespace Grace.Runtime
         }
 
         /// <inheritdoc />
-        protected override MethodNode getLazyMethod(string name)
+        protected override Method getLazyMethod(string name)
         {
             switch(name) {
                 case "++":
-                    return new DelegateMethodNode1Ctx(mConcatenate);
-                case "==": return new DelegateMethodNode1(EqualsEquals);
-                case "!=": return new DelegateMethodNode1(NotEquals);
-                case "<": return new DelegateMethodNode1(mLessThan);
-                case ">": return new DelegateMethodNode1(mGreaterThan);
-                case "<=": return new DelegateMethodNode1(mLessThanEqual);
-                case ">=": return new DelegateMethodNode1(mGreaterThanEqual);
-                case "at": return new DelegateMethodNode1Ctx(At);
-                case "[]": return new DelegateMethodNode1Ctx(At);
-                case "size": return new DelegateMethodNode0(Size);
-                case "match": return new DelegateMethodNode1Ctx(Match);
-                case "asString": return new DelegateMethodNode0(AsString);
+                    return new DelegateMethod1Ctx(mConcatenate);
+                case "==": return new DelegateMethod1(EqualsEquals);
+                case "!=": return new DelegateMethod1(NotEquals);
+                case "<": return new DelegateMethod1(mLessThan);
+                case ">": return new DelegateMethod1(mGreaterThan);
+                case "<=": return new DelegateMethod1(mLessThanEqual);
+                case ">=": return new DelegateMethod1(mGreaterThanEqual);
+                case "at": return new DelegateMethod1Ctx(At);
+                case "[]": return new DelegateMethod1Ctx(At);
+                case "size": return new DelegateMethod0(Size);
+                case "match": return new DelegateMethod1Ctx(Match);
+                case "asString": return new DelegateMethod0(AsString);
                 case "substringFrom to":
-                                 return new DelegateMethodNodeReq(
+                                 return new DelegateMethodReq(
                                          substringFromTo);
-                case "codepoints": return new DelegateMethodNode0(mCodepoints);
-                case "hash": return new DelegateMethodNode0(mHash);
+                case "codepoints": return new DelegateMethod0(mCodepoints);
+                case "hash": return new DelegateMethod0(mHash);
             }
             return base.getLazyMethod(name);
         }

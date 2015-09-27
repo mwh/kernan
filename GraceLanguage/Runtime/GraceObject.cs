@@ -17,7 +17,7 @@ namespace Grace.Runtime
             /// <summary>Dialect should run atModuleEnd method</summary>
             RunAtModuleEnd = 2
         }
-        private Dictionary<string, MethodNode> methods = new Dictionary<string, MethodNode>();
+        private Dictionary<string, Method> methods = new Dictionary<string, Method>();
         private Dictionary<string, GraceObject> fields = new Dictionary<string, GraceObject>();
 
         /// <summary>
@@ -243,13 +243,13 @@ namespace Grace.Runtime
         /// <param name="m">Method to add</param>
         public void AddMethod(MethodNode m)
         {
-            methods[m.Name] = m;
+            methods[m.Name] = new Method(m, lexicalScope);
         }
 
         /// <summary>Add a method to this object with a custom name</summary>
         /// <param name="name">Name to give this method</param>
         /// <param name="m">Method to add</param>
-        public void AddMethod(string name, MethodNode m)
+        public void AddMethod(string name, Method m)
         {
             methods[name] = m;
         }
@@ -260,7 +260,7 @@ namespace Grace.Runtime
         /// <param name="meths">
         /// Dictionary of method names=&gt;methods to add
         /// </param>
-        public void AddMethods(IDictionary<string, MethodNode> meths)
+        public void AddMethods(IDictionary<string, Method> meths)
         {
             foreach (var kvp in meths)
                 methods[kvp.Key] = kvp.Value;
@@ -297,7 +297,7 @@ namespace Grace.Runtime
         /// <param name="name">Name of the def to add</param>
         /// <param name="val">Value of this def</param>
         /// <returns>Added method</returns>
-        public virtual MethodNode AddLocalDef(string name, GraceObject val)
+        public virtual Method AddLocalDef(string name, GraceObject val)
         {
             fields[name] = val;
             var read = new FieldReaderMethod(fields);
@@ -336,26 +336,19 @@ namespace Grace.Runtime
         /// when first accessed, if ever.
         /// </remarks>
         /// <param name="name">Name of method to create</param>
-        protected virtual MethodNode getLazyMethod(string name)
+        protected virtual Method getLazyMethod(string name)
         {
-            MethodNode m;
-            // These methods should be given the final object's
-            // identity as their receiver, as otherwise equality
-            // will always fail. The UseRealReceiver flag on a
-            // method node ensures this.
+            Method m;
             switch(name)
             {
                 case "asString":
-                    m = new DelegateMethodNodeReceiver0Ctx(AsString);
-                    m.UseRealReceiver = true;
+                    m = new DelegateMethodReceiver0Ctx(AsString);
                     return m;
                 case "==":
-                    m = new DelegateMethodNodeReceiver1Ctx(mEqualsEquals);
-                    m.UseRealReceiver = true;
+                    m = new DelegateMethodReceiver1Ctx(mEqualsEquals);
                     return m;
                 case "!=":
-                    m = new DelegateMethodNodeReceiver1Ctx(mNotEquals);
-                    m.UseRealReceiver = true;
+                    m = new DelegateMethodReceiver1Ctx(mNotEquals);
                     return m;
             }
             return null;
@@ -366,7 +359,7 @@ namespace Grace.Runtime
         /// or its parents.
         /// </summary>
         /// <param name="name">Method name to find</param>
-        protected virtual MethodNode FindMethod(string name)
+        protected virtual Method FindMethod(string name)
         {
             if (methods.ContainsKey(name))
             {
@@ -389,7 +382,7 @@ namespace Grace.Runtime
         /// </summary>
         /// <param name="obj">Object to search</param>
         /// <param name="name">Method name to find</param>
-        protected MethodNode FindMethod(GraceObject obj, string name)
+        protected Method FindMethod(GraceObject obj, string name)
         {
             return obj.FindMethod(name);
         }
@@ -420,22 +413,15 @@ namespace Grace.Runtime
             var m = FindMethod(req.Name);
             if (!methods.ContainsKey(req.Name))
             {
-                bool found = false;
                 foreach (var o in parents)
                 {
                     m = o.FindMethod(req.Name);
                     if (m != null)
                     {
-                        if (m.UseRealReceiver)
-                        {
-                            found = true;
-                            break;
-                        }
                         return o.Request(ctx, req, receiver);
                     }
                 }
-                if (!found)
-                    ErrorReporting.RaiseError(ctx, "R2000",
+                ErrorReporting.RaiseError(ctx, "R2000",
                         new Dictionary<string, string> {
                             { "method", req.Name },
                             { "receiver", ToString() }
@@ -444,11 +430,7 @@ namespace Grace.Runtime
                             + "» not found in object «" + ToString() + "»"
                 );
             }
-            if (lexicalScope != null)
-                ctx.Remember(lexicalScope);
             var ret = m.Respond(ctx, receiver, req);
-            if (lexicalScope != null)
-                ctx.Forget(lexicalScope);
             return ret;
         }
 
@@ -478,7 +460,7 @@ namespace Grace.Runtime
     }
 
     /// <summary>Reusable method reading a field of an object</summary>
-    public class FieldReaderMethod : MethodNode
+    public class FieldReaderMethod : Method
     {
         private Dictionary<string, GraceObject> fields;
 
@@ -498,7 +480,7 @@ namespace Grace.Runtime
         {
             checkAccessibility(ctx, req);
             MethodHelper.CheckNoInherits(ctx, req);
-            CheckArgCount(ctx, req.Name, req.Name,
+            MethodNode.CheckArgCount(ctx, req.Name, req.Name,
                     0, false,
                     req[0].Arguments.Count);
             string name = req.Name;
@@ -518,7 +500,7 @@ namespace Grace.Runtime
     }
 
     /// <summary>Reusable method writing a field of an object</summary>
-    public class FieldWriterMethod : MethodNode
+    public class FieldWriterMethod : Method
     {
         private Dictionary<string, GraceObject> fields;
 

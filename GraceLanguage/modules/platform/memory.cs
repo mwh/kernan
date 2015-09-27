@@ -18,7 +18,7 @@ namespace Grace.Platform.Memory
 
         public PlatformMemory() : base("platform/memory")
         {
-            AddMethod("allocate", new DelegateMethodNode1(mAlloc));
+            AddMethod("allocate", new DelegateMethod1(mAlloc));
         }
 
         private GraceObject mAlloc(GraceObject arg)
@@ -38,13 +38,13 @@ namespace Grace.Platform.Memory
         public FixedSizeArray(int size)
         {
             data = new GraceObject[size];
-            var at = new DelegateMethodNode1Ctx(mAt);
-            var atPut = new DelegateMethodNodeReq(mAtPut);
+            var at = new DelegateMethod1Ctx(mAt);
+            var atPut = new DelegateMethodReq(mAtPut);
             AddMethod("[]", at);
             AddMethod("at", at);
             AddMethod("[] :=", atPut);
             AddMethod("at put", atPut);
-            AddMethod("size", new DelegateMethodNode0(mSize));
+            AddMethod("size", new DelegateMethod0(mSize));
         }
 
         private GraceObject mAt(EvaluationContext ctx, GraceObject index)

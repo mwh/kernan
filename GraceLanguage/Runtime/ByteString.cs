@@ -10,7 +10,7 @@ namespace Grace.Runtime
     {
         private byte[] data;
 
-        private static Dictionary<string, MethodNode> sharedMethods;
+        private static Dictionary<string, Method> sharedMethods;
 
         public byte this[int index]
         {
@@ -28,12 +28,12 @@ namespace Grace.Runtime
 
         private static void createSharedMethods()
         {
-            sharedMethods = new Dictionary<string, MethodNode>
+            sharedMethods = new Dictionary<string, Method>
             {
-                { "at", new DelegateMethodNodeTyped<ByteString>(mAt) },
-                { "[]", new DelegateMethodNodeTyped<ByteString>(mAt) },
-                { "size", new DelegateMethodNodeTyped<ByteString>(mSize) },
-                { "++", new DelegateMethodNodeTyped<ByteString>(mConcat) },
+                { "at", new DelegateMethodTyped<ByteString>(mAt) },
+                { "[]", new DelegateMethodTyped<ByteString>(mAt) },
+                { "size", new DelegateMethodTyped<ByteString>(mSize) },
+                { "++", new DelegateMethodTyped<ByteString>(mConcat) },
             };
         }
 

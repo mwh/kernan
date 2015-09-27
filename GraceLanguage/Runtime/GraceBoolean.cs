@@ -27,33 +27,33 @@ namespace Grace.Runtime
         {
             Boolean = val;
             AddMethod("prefix!",
-                    new DelegateMethodNode0(new NativeMethod0(this.Negate)));
+                    new DelegateMethod0(new NativeMethod0(this.Negate)));
             AddMethod("not",
-                    new DelegateMethodNode0(new NativeMethod0(this.Negate)));
-            AddMethod("hash", new DelegateMethodNode0(mHash));
+                    new DelegateMethod0(new NativeMethod0(this.Negate)));
+            AddMethod("hash", new DelegateMethod0(mHash));
             AddMethod("&&",
-                    new DelegateMethodNode1Ctx(this.AndAnd));
+                    new DelegateMethod1Ctx(this.AndAnd));
             AddMethod("||",
-                    new DelegateMethodNode1Ctx(this.OrOr));
+                    new DelegateMethod1Ctx(this.OrOr));
             AddMethod("ifTrue",
-                    new DelegateMethodNode1Ctx(
+                    new DelegateMethod1Ctx(
                         new NativeMethod1Ctx(this.IfTrue)));
             AddMethod("ifFalse",
-                    new DelegateMethodNode1Ctx(
+                    new DelegateMethod1Ctx(
                         new NativeMethod1Ctx(this.IfFalse)));
             AddMethod("ifTrue ifFalse",
-                    new DelegateMethodNodeReq(
+                    new DelegateMethodReq(
                         new NativeMethodReq(this.IfTrueIfFalse)));
             AddMethod("andAlso",
-                    new DelegateMethodNode1Ctx(
+                    new DelegateMethod1Ctx(
                         new NativeMethod1Ctx(this.AndAlso)));
             AddMethod("orElse",
-                    new DelegateMethodNode1Ctx(
+                    new DelegateMethod1Ctx(
                         new NativeMethod1Ctx(this.OrElse)));
-            AddMethod("match", new DelegateMethodNode1Ctx(
+            AddMethod("match", new DelegateMethod1Ctx(
                         new NativeMethod1Ctx(this.Match)));
             AddMethod("asString",
-                    new DelegateMethodNode0(new NativeMethod0(this.AsString)));
+                    new DelegateMethod0(new NativeMethod0(this.AsString)));
         }
 
         /// <summary>Native method for Grace !</summary>

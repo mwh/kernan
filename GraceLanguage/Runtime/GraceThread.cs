@@ -22,7 +22,7 @@ namespace Grace.Runtime
         /// <param name="blk">Grace block to apply in the new thread</param>
         public GraceThread(EvaluationContext ctx, GraceBlock blk)
         {
-            AddMethod("join", new DelegateMethodNode0(mJoin));
+            AddMethod("join", new DelegateMethod0(mJoin));
             interpreter = ((Interpreter)ctx).Copy();
             interpreter.NestRequest("<new thread>", 0, "<new thread>");
             block = blk;

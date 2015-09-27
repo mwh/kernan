@@ -15,7 +15,7 @@ namespace Grace.Runtime
         public GraceType(string name)
         {
             this.name = name;
-            AddMethod("match", new DelegateMethodNode1Ctx(
+            AddMethod("match", new DelegateMethod1Ctx(
                         new NativeMethod1Ctx(this.Match)));
             AddMethod("|", Matching.OrMethod);
             AddMethod("&", Matching.AndMethod);

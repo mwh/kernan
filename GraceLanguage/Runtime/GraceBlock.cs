@@ -49,12 +49,12 @@ namespace Grace.Runtime
         }
 
         /// <inheritdoc />
-        protected override MethodNode getLazyMethod(string name)
+        protected override Method getLazyMethod(string name)
         {
             switch(name) {
-                case "apply": return new DelegateMethodNodeReq(Apply);
-                case "match": return new DelegateMethodNodeReq(Match);
-                case "spawn": return new DelegateMethodNode0Ctx(mSpawn);
+                case "apply": return new DelegateMethodReq(Apply);
+                case "match": return new DelegateMethodReq(Match);
+                case "spawn": return new DelegateMethod0Ctx(mSpawn);
             }
             return base.getLazyMethod(name);
         }
@@ -69,7 +69,7 @@ namespace Grace.Runtime
                 return;
             explicitPattern = true;
             AddMethod("match",
-                new DelegateMethodNodeReq(
+                new DelegateMethodReq(
                     new NativeMethodReq(this.Match)));
             AddMethod("|", Matching.OrMethod);
             AddMethod("&", Matching.AndMethod);
@@ -199,7 +199,7 @@ namespace Grace.Runtime
             {
                 _dest = dest;
                 AddMethod("apply",
-                    new DelegateMethodNode1Ctx(
+                    new DelegateMethod1Ctx(
                         new NativeMethod1Ctx(this.apply)));
             }
 
@@ -224,7 +224,7 @@ namespace Grace.Runtime
                 MethodRequest req)
         {
             AddMethod("apply",
-                    new DelegateMethodNodeReq(new NativeMethodReq(this.Apply)));
+                    new DelegateMethodReq(new NativeMethodReq(this.Apply)));
             this.receiver = receiver;
             this.request = req;
         }
@@ -350,12 +350,12 @@ namespace Grace.Runtime
         }
 
         /// <summary>Reusable method for the &amp; combinator</summary>
-        public static readonly MethodNode AndMethod = new DelegateMethodNodeReceiver1Ctx(
+        public static readonly Method AndMethod = new DelegateMethodReceiver1Ctx(
                     new NativeMethodReceiver1Ctx(Matching.AndCombinator)
                 );
 
         /// <summary>Reusable method for the | combinator</summary>
-        public static readonly MethodNode OrMethod = new DelegateMethodNodeReceiver1Ctx(
+        public static readonly Method OrMethod = new DelegateMethodReceiver1Ctx(
                     new NativeMethodReceiver1Ctx(Matching.OrCombinator)
                 );
     }

@@ -91,31 +91,31 @@ namespace Grace.Runtime
         }
 
         /// <inheritdoc />
-        protected override MethodNode getLazyMethod(string name)
+        protected override Method getLazyMethod(string name)
         {
             switch(name)
             {
-                case "==": return new DelegateMethodNode1(EqualsEquals);
-                case "!=": return new DelegateMethodNode1(NotEquals);
-                case "+": return new DelegateMethodNode1(Add);
-                case "*": return new DelegateMethodNode1(Multiply);
-                case "-": return new DelegateMethodNode1(Subtract);
-                case "/": return new DelegateMethodNode1Ctx(Divide);
-                case "%": return new DelegateMethodNode1(Modulus);
-                case "^": return new DelegateMethodNode1(Exponentiate);
-                case ">": return new DelegateMethodNode1(GreaterThan);
-                case ">=": return new DelegateMethodNode1(GreaterEqual);
-                case "<": return new DelegateMethodNode1(LessThan);
-                case "<=": return new DelegateMethodNode1(LessEqual);
-                case "asString": return new DelegateMethodNode0(AsString);
-                case "prefix-": return new DelegateMethodNode0(Negate);
-                case "..": return new DelegateMethodNode1Ctx(DotDot);
-                case "match": return new DelegateMethodNode1Ctx(Match);
-                case "hash": return new DelegateMethodNode0(mHash);
-                case "numerator": return new DelegateMethodNode0(mNumerator);
+                case "==": return new DelegateMethod1(EqualsEquals);
+                case "!=": return new DelegateMethod1(NotEquals);
+                case "+": return new DelegateMethod1(Add);
+                case "*": return new DelegateMethod1(Multiply);
+                case "-": return new DelegateMethod1(Subtract);
+                case "/": return new DelegateMethod1Ctx(Divide);
+                case "%": return new DelegateMethod1(Modulus);
+                case "^": return new DelegateMethod1(Exponentiate);
+                case ">": return new DelegateMethod1(GreaterThan);
+                case ">=": return new DelegateMethod1(GreaterEqual);
+                case "<": return new DelegateMethod1(LessThan);
+                case "<=": return new DelegateMethod1(LessEqual);
+                case "asString": return new DelegateMethod0(AsString);
+                case "prefix-": return new DelegateMethod0(Negate);
+                case "..": return new DelegateMethod1Ctx(DotDot);
+                case "match": return new DelegateMethod1Ctx(Match);
+                case "hash": return new DelegateMethod0(mHash);
+                case "numerator": return new DelegateMethod0(mNumerator);
                 case "denominator":
-                                  return new DelegateMethodNode0(mDenominator);
-                case "integral": return new DelegateMethodNode0(mIntegral);
+                                  return new DelegateMethod0(mDenominator);
+                case "integral": return new DelegateMethod0(mIntegral);
             }
             return base.getLazyMethod(name);
         }
@@ -378,15 +378,15 @@ namespace Grace.Runtime
             _step = step;
             AddMethod("..", null);
             AddMethod("asString", null);
-            AddMethod("do", new DelegateMethodNode1Ctx(mDo));
+            AddMethod("do", new DelegateMethod1Ctx(mDo));
         }
 
-        protected override MethodNode getLazyMethod(string name)
+        protected override Method getLazyMethod(string name)
         {
             switch(name)
             {
-                case "..": return new DelegateMethodNode1Ctx(mDotDot);
-                case "asString": return new DelegateMethodNode0Ctx(mAsString);
+                case "..": return new DelegateMethod1Ctx(mDotDot);
+                case "asString": return new DelegateMethod0Ctx(mAsString);
             }
             return base.getLazyMethod(name);
         }

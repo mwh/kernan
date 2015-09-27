@@ -67,14 +67,88 @@ namespace Grace.Runtime
     /// </remarks>
     public delegate GraceObject NativeMethodTyped0<T>(T self);
 
+    /// <summary>
+    /// A dynamic method that may be attached to an object and requested.
+    /// </summary>
+    public class Method
+    {
+        private MethodNode code;
+        private Interpreter.ScopeMemo lexicalScope;
+
+        /// <summary>
+        ///  True if this method is confidential and may only be requested
+        ///  on self.
+        /// </summary>
+        public bool Confidential { get; set; }
+
+        /// <summary>
+        /// Create an ordinary method node.
+        /// </summary>
+        /// <param name="c">
+        /// Method node with code to run for this method
+        /// </param>
+        /// <param name="scope">
+        /// Captured lexical scope
+        /// </param>
+        public Method(MethodNode c, Interpreter.ScopeMemo scope)
+        {
+            code = c;
+            if (c != null)
+                Confidential = c.Confidential;
+            lexicalScope = scope;
+        }
+
+        /// <summary>
+        /// Respond to a request of this method.
+        /// </summary>
+        /// <param name="ctx">Current interpreter</param>
+        /// <param name="receiver">Self-binding of this request</param>
+        /// <param name="req">Method request being responded to</param>
+        public virtual GraceObject Respond(EvaluationContext ctx,
+            GraceObject receiver,
+            MethodRequest req)
+        {
+            checkAccessibility(ctx, req);
+            if (lexicalScope != null)
+                ctx.Remember(lexicalScope);
+            var ret = code.Respond(ctx, receiver, req);
+            if (lexicalScope != null)
+                ctx.Forget(lexicalScope);
+            return ret;
+        }
+
+        /// <summary>Confirm that this method can be accessed through
+        /// the given request in this context</summary>
+        /// <remarks>If this method is confidential and the request is
+        /// not an interior one with privileged access, this method
+        /// will raise a Grace exception reporting an accessibility
+        /// violation.</remarks>
+        /// <param name="ctx">Current interpreter</param>
+        /// <param name="req">Request to check</param>
+        protected virtual void checkAccessibility(EvaluationContext ctx,
+                MethodRequest req)
+        {
+            if (Confidential && !req.IsInterior)
+            {
+                ErrorReporting.RaiseError(ctx, "R2003",
+                        new Dictionary<string, string>() {
+                            { "method", req.Name }
+                        },
+                        "AccessibilityError: Method ${method} is confidential"
+                );
+            }
+        }
+
+    }
+
     /// <summary>A Grace method wrapping a native method accepting
     /// a single Grace argument and an interpreter</summary>
-    public class DelegateMethodNode0Ctx : MethodNode
+    public class DelegateMethod0Ctx : Method
     {
         readonly NativeMethod0Ctx method;
 
         /// <param name="rm">Native method to wrap</param>
-        public DelegateMethodNode0Ctx(NativeMethod0Ctx rm)
+        public DelegateMethod0Ctx(NativeMethod0Ctx rm)
             : base(null, null)
         {
             method = rm;
@@ -91,12 +165,12 @@ namespace Grace.Runtime
 
     /// <summary>A Grace method wrapping a native method accepting
     /// a single Grace argument and an interpreter</summary>
-    public class DelegateMethodNode1Ctx : MethodNode
+    public class DelegateMethod1Ctx : Method
     {
         readonly NativeMethod1Ctx method;
 
         /// <param name="rm">Native method to wrap</param>
-        public DelegateMethodNode1Ctx(NativeMethod1Ctx rm)
+        public DelegateMethod1Ctx(NativeMethod1Ctx rm)
             : base(null, null)
         {
             method = rm;
@@ -115,12 +189,12 @@ namespace Grace.Runtime
     /// A Grace method wrapping a native method to be given
     /// the receiver and an interpreter.
     /// </summary>
-    public class DelegateMethodNodeReceiver0Ctx : MethodNode
+    public class DelegateMethodReceiver0Ctx : Method
     {
         readonly NativeMethodReceiver0Ctx method;
 
         /// <param name="rm">Native method to wrap</param>
-        public DelegateMethodNodeReceiver0Ctx(NativeMethodReceiver0Ctx rm)
+        public DelegateMethodReceiver0Ctx(NativeMethodReceiver0Ctx rm)
             : base(null, null)
         {
             method = rm;
@@ -136,12 +210,12 @@ namespace Grace.Runtime
 
     /// <summary>A Grace method wrapping a native method accepting
     /// a single Grace argument, the receiver, and an interpreter</summary>
-    public class DelegateMethodNodeReceiver1Ctx : MethodNode
+    public class DelegateMethodReceiver1Ctx : Method
     {
         readonly NativeMethodReceiver1Ctx method;
 
         /// <param name="rm">Native method to wrap</param>
-        public DelegateMethodNodeReceiver1Ctx(NativeMethodReceiver1Ctx rm)
+        public DelegateMethodReceiver1Ctx(NativeMethodReceiver1Ctx rm)
             : base(null, null)
         {
             method = rm;
@@ -159,12 +233,12 @@ namespace Grace.Runtime
     /// <summary>
     /// A Grace method that can be inherited from.
     /// </summary>
-    public class DelegateMethodNodeInheritable : MethodNode
+    public class DelegateMethodInheritable : Method
     {
         readonly NativeMethodInheritable method;
 
         /// <param name="rm">Native method to wrap</param>
-        public DelegateMethodNodeInheritable(NativeMethodInheritable rm)
+        public DelegateMethodInheritable(NativeMethodInheritable rm)
             : base(null, null)
         {
             method = rm;
@@ -181,12 +255,12 @@ namespace Grace.Runtime
 
     /// <summary>A Grace method wrapping a native method accepting
     /// a single Grace argument</summary>
-    public class DelegateMethodNode1 : MethodNode
+    public class DelegateMethod1 : Method
     {
         readonly NativeMethod1 method;
 
         /// <param name="rm">Native method to wrap</param>
-        public DelegateMethodNode1(NativeMethod1 rm)
+        public DelegateMethod1(NativeMethod1 rm)
             : base(null, null)
         {
             method = rm;
@@ -204,12 +278,12 @@ namespace Grace.Runtime
 
     /// <summary>A Grace method wrapping a native method accepting
     /// no arguments</summary>
-    public class DelegateMethodNode0 : MethodNode
+    public class DelegateMethod0 : Method
     {
         readonly NativeMethod0 method;
 
         /// <param name="rm">Native method to wrap</param>
-        public DelegateMethodNode0(NativeMethod0 rm)
+        public DelegateMethod0(NativeMethod0 rm)
             : base(null, null)
         {
             method = rm;
@@ -225,12 +299,12 @@ namespace Grace.Runtime
 
     /// <summary>A Grace method wrapping a native method accepting
     /// an interpreter and the raw method request</summary>
-    public class DelegateMethodNodeReq : MethodNode
+    public class DelegateMethodReq : Method
     {
         readonly NativeMethodReq method;
 
         /// <param name="rm">Native method to wrap</param>
-        public DelegateMethodNodeReq(NativeMethodReq rm)
+        public DelegateMethodReq(NativeMethodReq rm)
             : base(null, null)
         {
             method = rm;
@@ -251,13 +325,13 @@ namespace Grace.Runtime
     /// <remarks>
     /// This type of method is reusable between instances.
     /// </remarks>
-    public class DelegateMethodNodeTyped<T> : MethodNode
+    public class DelegateMethodTyped<T> : Method
         where T : GraceObject
     {
         readonly NativeMethodTyped<T> method;
 
         /// <param name="rm">Native method to wrap</param>
-        public DelegateMethodNodeTyped(NativeMethodTyped<T> rm)
+        public DelegateMethodTyped(NativeMethodTyped<T> rm)
             : base(null, null)
         {
             method = rm;
@@ -280,13 +354,13 @@ namespace Grace.Runtime
     /// <remarks>
     /// This type of method is reusable between instances.
     /// </remarks>
-    public class DelegateMethodNodeTyped0<T> : MethodNode
+    public class DelegateMethodTyped0<T> : Method
         where T : GraceObject
     {
         readonly NativeMethodTyped0<T> method;
 
         /// <param name="rm">Native method to wrap</param>
-        public DelegateMethodNodeTyped0(NativeMethodTyped0<T> rm)
+        public DelegateMethodTyped0(NativeMethodTyped0<T> rm)
             : base(null, null)
         {
             method = rm;
@@ -304,12 +378,12 @@ namespace Grace.Runtime
 
 
     /// <summary>A Grace method giving a simple constant value</summary>
-    public class ConstantMethodNode : MethodNode
+    public class ConstantMethod : Method
     {
         private GraceObject returnValue;
 
         /// <param name="ret">Value to return</param>
-        public ConstantMethodNode(GraceObject ret)
+        public ConstantMethod(GraceObject ret)
             : base(null, null)
         {
             returnValue = ret;

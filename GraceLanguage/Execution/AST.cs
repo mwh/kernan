@@ -65,8 +65,8 @@ namespace Grace.Execution
         /// </summary>
         protected abstract void addMethods();
 
-        private static MethodNode acceptMethod =
-            new DelegateMethodNodeReceiver1Ctx(mAccept);
+        private static Method acceptMethod =
+            new DelegateMethodReceiver1Ctx(mAccept);
 
         /// <summary>Represents an implicit "Done" in the source.</summary>
         protected static readonly GraceObject ImplicitDone =
@@ -197,11 +197,11 @@ namespace Grace.Execution
         }
 
         // Below exposes state as Grace methods.
-        private static Dictionary<string, MethodNode>
+        private static Dictionary<string, Method>
             sharedMethods =
-                new Dictionary<string, MethodNode> {
+                new Dictionary<string, Method> {
                     { "path",
-                        new DelegateMethodNodeTyped0<DialectNode>(mPath) },
+                        new DelegateMethodTyped0<DialectNode>(mPath) },
                 };
 
         /// <inheritdoc/>
@@ -282,15 +282,15 @@ namespace Grace.Execution
         }
 
         // Below exposes state as Grace methods.
-        private static Dictionary<string, MethodNode>
+        private static Dictionary<string, Method>
             sharedMethods =
-                new Dictionary<string, MethodNode> {
+                new Dictionary<string, Method> {
                     { "path",
-                        new DelegateMethodNodeTyped0<ImportNode>(mPath) },
+                        new DelegateMethodTyped0<ImportNode>(mPath) },
                     { "name",
-                        new DelegateMethodNodeTyped0<ImportNode>(mName) },
+                        new DelegateMethodTyped0<ImportNode>(mName) },
                     { "typeAnnotation",
-                        new DelegateMethodNodeTyped0<ImportNode>
+                        new DelegateMethodTyped0<ImportNode>
                             (mTypeAnnotation) },
                 };
 
@@ -406,11 +406,11 @@ namespace Grace.Execution
         }
 
         // Below exposes state as Grace methods.
-        private static Dictionary<string, MethodNode>
+        private static Dictionary<string, Method>
             sharedMethods =
-                new Dictionary<string, MethodNode> {
+                new Dictionary<string, Method> {
                     { "receiver",
-                        new DelegateMethodNodeTyped0
+                        new DelegateMethodTyped0
                             <ExplicitReceiverRequestNode>(mReceiver) },
                 };
 
@@ -724,11 +724,11 @@ namespace Grace.Execution
         }
 
         // Below exposes state as Grace methods.
-        private static Dictionary<string, MethodNode>
+        private static Dictionary<string, Method>
             sharedMethods =
-                new Dictionary<string, MethodNode> {
+                new Dictionary<string, Method> {
                     { "parts",
-                        new DelegateMethodNodeTyped0
+                        new DelegateMethodTyped0
                             <RequestNode>(mParts) },
                 };
 
@@ -995,20 +995,20 @@ end:
         }
 
         // Below exposes state as Grace methods.
-        private static Dictionary<string, MethodNode>
+        private static Dictionary<string, Method>
             sharedMethods =
-                new Dictionary<string, MethodNode> {
+                new Dictionary<string, Method> {
                     { "name",
-                        new DelegateMethodNodeTyped0
+                        new DelegateMethodTyped0
                             <RequestPartNode>(mName) },
                     { "arguments",
-                        new DelegateMethodNodeTyped0
+                        new DelegateMethodTyped0
                             <RequestPartNode>(mArguments) },
                     { "typeArguments",
-                        new DelegateMethodNodeTyped0
+                        new DelegateMethodTyped0
                             <RequestPartNode>(mTypeArguments) },
                     { "accept",
-                        new DelegateMethodNodeReceiver1Ctx(mAccept) },
+                        new DelegateMethodReceiver1Ctx(mAccept) },
                 };
 
         private static GraceObject mName(RequestPartNode self)
@@ -1196,11 +1196,11 @@ end:
         }
 
         // Below exposes state as Grace methods.
-        private static Dictionary<string, MethodNode>
+        private static Dictionary<string, Method>
             sharedMethods =
-                new Dictionary<string, MethodNode> {
+                new Dictionary<string, Method> {
                     { "body",
-                        new DelegateMethodNodeTyped0
+                        new DelegateMethodTyped0
                             <ObjectConstructorNode>(mBody) },
                 };
 
@@ -1312,65 +1312,6 @@ end:
             return GraceObject.Done;
         }
 
-        /// <summary>Confirm that this method can be accessed through
-        /// the given request in this context</summary>
-        /// <remarks>If this method is confidential and the request is
-        /// not an interior one with privileged access, this method
-        /// will raise a Grace exception reporting an accessibility
-        /// violation.</remarks>
-        /// <param name="ctx">Current interpreter</param>
-        /// <param name="req">Request to check</param>
-        protected virtual void checkAccessibility(EvaluationContext ctx,
-                MethodRequest req)
-        {
-            if (Confidential && !req.IsInterior)
-            {
-                ErrorReporting.RaiseError(ctx, "R2003",
-                        new Dictionary<string, string>() {
-                            { "method", req.Name }
-                        },
-                        "AccessibilityError: Method ${method} is confidential"
-                );
-            }
-        }
-
-        /// <summary>
-        /// Check that the number of arguments provided is satisfactory,
-        /// and report a runtime error if not.
-        /// </summary>
-        /// <param name="ctx">Current interpreter</param>
-        /// <param name="methodName">Name of method</param>
-        /// <param name="partName">Name of part</param>
-        /// <param name="need">Number of parameters of method</param>
-        /// <param name="variadic">Whether this method is variadic</param>
-        /// <param name="got">Number of arguments provided</param>
-        public static void CheckArgCount(EvaluationContext ctx,
-                string methodName, string partName, int need, bool variadic,
-                int got)
-        {
-            if (!variadic && got > need)
-                ErrorReporting.RaiseError(ctx, "R2006",
-                        new Dictionary<string, string> {
-                            { "method", methodName },
-                            { "part",  partName },
-                            { "need", need.ToString()},
-                            { "have", got.ToString() }
-                        },
-                        "SurplusArgumentsError: Too many arguments for method"
-                );
-            if (got < need - (variadic ? 1 : 0))
-                ErrorReporting.RaiseError(ctx, "R2004",
-                        new Dictionary<string, string> {
-                            { "method", methodName },
-                            { "part",  partName },
-                            { "need", variadic ? (need - 1) + "+"
-                                               : need.ToString() },
-                            { "have", got.ToString() }
-                        },
-                        "InsufficientArgumentsError: Not enough arguments for method"
-                );
-        }
-
         /// <summary>Respond to a given request with a given binding of the
         /// receiver</summary>
         /// <param name="ctx">Current interpreter</param>
@@ -1381,7 +1322,6 @@ end:
         public virtual GraceObject Respond(EvaluationContext ctx,
                 GraceObject self, MethodRequest req)
         {
-            checkAccessibility(ctx, req);
             GraceObject ret = GraceObject.Done;
             Interpreter.ScopeMemo memo = ctx.Memorise();
             ctx.Extend(self);
@@ -1510,18 +1450,55 @@ end:
             return ret;
         }
 
+        /// <summary>
+        /// Check that the number of arguments provided is satisfactory,
+        /// and report a runtime error if not.
+        /// </summary>
+        /// <param name="ctx">Current interpreter</param>
+        /// <param name="methodName">Name of method</param>
+        /// <param name="partName">Name of part</param>
+        /// <param name="need">Number of parameters of method</param>
+        /// <param name="variadic">Whether this method is variadic</param>
+        /// <param name="got">Number of arguments provided</param>
+        public static void CheckArgCount(EvaluationContext ctx,
+                string methodName, string partName, int need, bool variadic,
+                int got)
+        {
+            if (!variadic && got > need)
+                ErrorReporting.RaiseError(ctx, "R2006",
+                        new Dictionary<string, string> {
+                            { "method", methodName },
+                            { "part",  partName },
+                            { "need", need.ToString()},
+                            { "have", got.ToString() }
+                        },
+                        "SurplusArgumentsError: Too many arguments for method"
+                );
+            if (got < need - (variadic ? 1 : 0))
+                ErrorReporting.RaiseError(ctx, "R2004",
+                        new Dictionary<string, string> {
+                            { "method", methodName },
+                            { "part",  partName },
+                            { "need", variadic ? (need - 1) + "+"
+                                               : need.ToString() },
+                            { "have", got.ToString() }
+                        },
+                        "InsufficientArgumentsError: Not enough arguments for method"
+                );
+        }
+
         // Below exposes state as Grace methods.
-        private static Dictionary<string, MethodNode>
+        private static Dictionary<string, Method>
             sharedMethods =
-                new Dictionary<string, MethodNode> {
+                new Dictionary<string, Method> {
                     { "signature",
-                        new DelegateMethodNodeTyped0
+                        new DelegateMethodTyped0
                             <MethodNode>(mSignature) },
                     { "body",
-                        new DelegateMethodNodeTyped0
+                        new DelegateMethodTyped0
                             <MethodNode>(mBody) },
                     { "annotations",
-                        new DelegateMethodNodeTyped0
+                        new DelegateMethodTyped0
                             <MethodNode>(mAnnotations) },
                 };
 
@@ -1631,14 +1608,14 @@ end:
         }
 
         // Below exposes state as Grace methods.
-        private static Dictionary<string, MethodNode>
+        private static Dictionary<string, Method>
             sharedMethods =
-                new Dictionary<string, MethodNode> {
+                new Dictionary<string, Method> {
                     { "parameters",
-                        new DelegateMethodNodeTyped0
+                        new DelegateMethodTyped0
                             <BlockNode>(mParameters) },
                     { "body",
-                        new DelegateMethodNodeTyped0
+                        new DelegateMethodTyped0
                             <BlockNode>(mBody) },
                 };
 
@@ -1748,11 +1725,11 @@ end:
         }
 
         // Below exposes state as Grace methods.
-        private static Dictionary<string, MethodNode>
+        private static Dictionary<string, Method>
             sharedMethods =
-                new Dictionary<string, MethodNode> {
+                new Dictionary<string, Method> {
                     { "value",
-                        new DelegateMethodNodeTyped0
+                        new DelegateMethodTyped0
                             <NumberLiteralNode>(mValue) },
                 };
 
@@ -1804,11 +1781,11 @@ end:
         }
 
         // Below exposes state as Grace methods.
-        private static Dictionary<string, MethodNode>
+        private static Dictionary<string, Method>
             sharedMethods =
-                new Dictionary<string, MethodNode> {
+                new Dictionary<string, Method> {
                     { "value",
-                        new DelegateMethodNodeTyped0
+                        new DelegateMethodTyped0
                             <StringLiteralNode>(mValue) },
                 };
 
@@ -1966,20 +1943,20 @@ end:
         }
 
         // Below exposes state as Grace methods.
-        private static Dictionary<string, MethodNode>
+        private static Dictionary<string, Method>
             sharedMethods =
-                new Dictionary<string, MethodNode> {
+                new Dictionary<string, Method> {
                     { "name",
-                        new DelegateMethodNodeTyped0
+                        new DelegateMethodTyped0
                             <VarDeclarationNode>(mName) },
                     { "value",
-                        new DelegateMethodNodeTyped0
+                        new DelegateMethodTyped0
                             <VarDeclarationNode>(mValue) },
                     { "typeAnnotation",
-                        new DelegateMethodNodeTyped0
+                        new DelegateMethodTyped0
                             <VarDeclarationNode>(mTypeAnnotation) },
                     { "annotations",
-                        new DelegateMethodNodeTyped0
+                        new DelegateMethodTyped0
                             <VarDeclarationNode>(mAnnotations) },
                 };
 
@@ -2114,20 +2091,20 @@ end:
         }
 
         // Below exposes state as Grace methods.
-        private static Dictionary<string, MethodNode>
+        private static Dictionary<string, Method>
             sharedMethods =
-                new Dictionary<string, MethodNode> {
+                new Dictionary<string, Method> {
                     { "name",
-                        new DelegateMethodNodeTyped0
+                        new DelegateMethodTyped0
                             <DefDeclarationNode>(mName) },
                     { "value",
-                        new DelegateMethodNodeTyped0
+                        new DelegateMethodTyped0
                             <DefDeclarationNode>(mValue) },
                     { "typeAnnotation",
-                        new DelegateMethodNodeTyped0
+                        new DelegateMethodTyped0
                             <DefDeclarationNode>(mTypeAnnotation) },
                     { "annotations",
-                        new DelegateMethodNodeTyped0
+                        new DelegateMethodTyped0
                             <DefDeclarationNode>(mAnnotations) },
                 };
 
@@ -2206,11 +2183,11 @@ end:
         }
 
         // Below exposes state as Grace methods.
-        private static Dictionary<string, MethodNode>
+        private static Dictionary<string, Method>
             sharedMethods =
-                new Dictionary<string, MethodNode> {
+                new Dictionary<string, Method> {
                     { "value",
-                        new DelegateMethodNodeTyped0
+                        new DelegateMethodTyped0
                             <ReturnNode>(mValue) },
                 };
 
@@ -2253,8 +2230,8 @@ end:
         }
 
         // Below exposes state as Grace methods.
-        private static Dictionary<string, MethodNode>
-            sharedMethods = new Dictionary<string, MethodNode>();
+        private static Dictionary<string, Method>
+            sharedMethods = new Dictionary<string, Method>();
 
         /// <inheritdoc/>
         protected override void addMethods()
@@ -2309,11 +2286,11 @@ end:
         }
 
         // Below exposes state as Grace methods.
-        private static Dictionary<string, MethodNode>
+        private static Dictionary<string, Method>
             sharedMethods =
-                new Dictionary<string, MethodNode> {
+                new Dictionary<string, Method> {
                     { "signatures",
-                        new DelegateMethodNodeTyped0
+                        new DelegateMethodTyped0
                             <TypeNode>(mSignatures) },
                 };
 
@@ -2387,17 +2364,17 @@ end:
         }
 
         // Below exposes state as Grace methods.
-        private static Dictionary<string, MethodNode>
+        private static Dictionary<string, Method>
             sharedMethods =
-                new Dictionary<string, MethodNode> {
+                new Dictionary<string, Method> {
                     { "name",
-                        new DelegateMethodNodeTyped0
+                        new DelegateMethodTyped0
                             <ParameterNode>(mName) },
                     { "typeAnnotation",
-                        new DelegateMethodNodeTyped0
+                        new DelegateMethodTyped0
                             <ParameterNode>(mTypeAnnotation) },
                     { "isVariadic",
-                        new DelegateMethodNodeTyped0
+                        new DelegateMethodTyped0
                             <ParameterNode>(mIsVariadic) },
                 };
 
@@ -2471,14 +2448,14 @@ end:
         }
 
         // Below exposes state as Grace methods.
-        private static Dictionary<string, MethodNode>
+        private static Dictionary<string, Method>
             sharedMethods =
-                new Dictionary<string, MethodNode> {
+                new Dictionary<string, Method> {
                     { "name",
-                        new DelegateMethodNodeTyped0
+                        new DelegateMethodTyped0
                             <InheritsNode>(mName) },
                     { "request",
-                        new DelegateMethodNodeTyped0
+                        new DelegateMethodTyped0
                             <InheritsNode>(mRequest) },
                 };
 
@@ -2576,11 +2553,11 @@ end:
         }
 
         // Below exposes state as Grace methods.
-        private static Dictionary<string, MethodNode>
+        private static Dictionary<string, Method>
             sharedMethods =
-                new Dictionary<string, MethodNode> {
+                new Dictionary<string, Method> {
                     { "do",
-                        new DelegateMethodNodeTyped
+                        new DelegateMethodTyped
                             <AnnotationsNode>(mDo) },
                 };
 
@@ -2689,14 +2666,14 @@ end:
         }
 
         // Below exposes state as Grace methods.
-        private static Dictionary<string, MethodNode>
+        private static Dictionary<string, Method>
             sharedMethods =
-                new Dictionary<string, MethodNode> {
+                new Dictionary<string, Method> {
                     { "parts",
-                        new DelegateMethodNodeTyped0
+                        new DelegateMethodTyped0
                             <SignatureNode>(mParts) },
                     { "returnType",
-                        new DelegateMethodNodeTyped0
+                        new DelegateMethodTyped0
                             <SignatureNode>(mReturnType) },
                 };
 
@@ -2788,17 +2765,17 @@ end:
         }
 
         // Below exposes state as Grace methods.
-        private static Dictionary<string, MethodNode>
+        private static Dictionary<string, Method>
             sharedMethods =
-                new Dictionary<string, MethodNode> {
+                new Dictionary<string, Method> {
                     { "name",
-                        new DelegateMethodNodeTyped0
+                        new DelegateMethodTyped0
                             <OrdinarySignaturePartNode>(mName) },
                     { "typeParameters",
-                        new DelegateMethodNodeTyped0
+                        new DelegateMethodTyped0
                             <OrdinarySignaturePartNode>(mTypeParameters) },
                     { "parameters",
-                        new DelegateMethodNodeTyped0
+                        new DelegateMethodTyped0
                             <OrdinarySignaturePartNode>(mParameters) },
                 };
 
