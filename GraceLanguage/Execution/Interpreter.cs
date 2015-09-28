@@ -107,17 +107,18 @@ namespace Grace.Execution
         /// constructors</summary>
         private void initialise()
         {
-            scope.scope = new GraceObject();
-            majorScope = scope.scope;
-            scope.scope.AddMethod("print",
+            var s = new LocalScope();
+            scope.scope = s;
+            majorScope = s;
+            s.AddMethod("print",
                     new DelegateMethod1Ctx(Print));
-            scope.scope.AddLocalDef("true", GraceBoolean.True);
-            scope.scope.AddLocalDef("false", GraceBoolean.False);
-            scope.scope.AddMethod("_base_while_do",
+            s.AddLocalDef("true", GraceBoolean.True);
+            s.AddLocalDef("false", GraceBoolean.False);
+            s.AddMethod("_base_while_do",
                     new DelegateMethodReq(BaseWhileDo));
-            scope.scope.AddMethod("_base_try_catch_finally",
+            s.AddMethod("_base_try_catch_finally",
                     new DelegateMethodReq(BaseTryCatchFinally));
-            scope.scope.AddMethod("Exception",
+            s.AddMethod("Exception",
                     new ConstantMethod(
                         new GraceExceptionKind("Exception")));
         }
@@ -649,20 +650,29 @@ namespace Grace.Execution
         /// <inheritdoc />
         public ReaderWriterPair AddVar(string name, GraceObject val)
         {
-            var pair = majorScope.AddLocalVar(name, val);
+            var m = majorScope as LocalScope;
+            if (m == null)
+                return new ReaderWriterPair();
+            var pair = m.AddLocalVar(name, val);
             return pair;
         }
 
         /// <inheritdoc />
         public Method AddDef(string name, GraceObject val)
         {
-            return majorScope.AddLocalDef(name, val);
+            var m = majorScope as LocalScope;
+            if (m == null)
+                return null;
+            return m.AddLocalDef(name, val);
         }
 
         /// <inheritdoc />
         public Method AddMinorDef(string name, GraceObject val)
         {
-            return scope.scope.AddLocalDef(name, val);
+            var m = scope.scope as LocalScope;
+            if (m == null)
+                return null;
+            return m.AddLocalDef(name, val);
         }
 
         /// <inheritdoc />

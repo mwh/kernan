@@ -99,6 +99,11 @@ namespace Grace.Runtime
         }
 
         /// <summary>
+        /// A default unconfigured method for inheritors.
+        /// </summary>
+        protected Method() {}
+
+        /// <summary>
         /// Respond to a request of this method.
         /// </summary>
         /// <param name="ctx">Current interpreter</param>

@@ -299,7 +299,7 @@ namespace Grace
                 IEnumerable<string> lines)
         {
             var ls = new LocalScope("code-inner");
-            var obj = new GraceObject(ls, false);
+            var obj = new UserObject();
             interp.Extend(obj);
             ls.AddLocalDef("self", obj);
             interp.ExtendMinor(ls);
@@ -319,7 +319,7 @@ namespace Grace
         }
 
         private static int runLine(Interpreter interp,
-                GraceObject obj,
+                UserObject obj,
                 Interpreter.ScopeMemo memo,
                 string line,
                 out bool unfinished, out GraceObject result)
@@ -369,6 +369,29 @@ namespace Grace
                             if (inherits != null)
                             {
                                 inherits.Inherit(interp, obj, obj);
+                            }
+                            var v = node as VarDeclarationNode;
+                            var d = node as DefDeclarationNode;
+                            Cell cell;
+                            var meths = new Dictionary<string, Method>();
+                            if (v != null)
+                            {
+                                obj.CreateVar(v.Name, meths,
+                                        v.Readable, v.Writable, out cell);
+                                obj.AddMethods(meths);
+                                if (v.Value != null)
+                                    cell.Value = v.Value.Evaluate(interp);
+                                result = GraceObject.Done;
+                                continue;
+                            }
+                            if (d != null)
+                            {
+                                obj.CreateDef(d.Name, meths,
+                                        d.Public, out cell);
+                                obj.AddMethods(meths);
+                                cell.Value = d.Value.Evaluate(interp);
+                                result = GraceObject.Done;
+                                continue;
                             }
                             var ret = node.Evaluate(interp);
                             if (ret != null

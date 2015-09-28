@@ -18,7 +18,6 @@ namespace Grace.Runtime
             RunAtModuleEnd = 2
         }
         private Dictionary<string, Method> methods = new Dictionary<string, Method>();
-        private Dictionary<string, GraceObject> fields = new Dictionary<string, GraceObject>();
 
         /// <summary>
         /// Gives the names of all non-operator methods on
@@ -226,45 +225,6 @@ namespace Grace.Runtime
                 methods[kvp.Key] = kvp.Value;
         }
 
-        /// <summary>Add methods to this object representing a var
-        /// declaration</summary>
-        /// <param name="name">Name of the var to add</param>
-        /// <param name="val">Initial value of this var</param>
-        /// <returns>Object encapsulating the added methods</returns>
-        public virtual ReaderWriterPair AddLocalVar(string name,
-                GraceObject val)
-        {
-            if (fields.ContainsKey(name))
-            {
-                if (val != GraceObject.Uninitialised)
-                    fields[name] = val;
-                return new ReaderWriterPair
-                {
-                    Read = methods[name],
-                    Write = methods[name + " :="]
-                };
-            }
-            fields[name] = val == null ? GraceObject.Uninitialised : val;
-            var reader = new FieldReaderMethod(fields);
-            var writer = new FieldWriterMethod(fields);
-            AddMethod(name, reader);
-            AddMethod(name + " :=", writer);
-            return new ReaderWriterPair { Read = reader, Write = writer };
-        }
-
-        /// <summary>Add method to this object representing a def
-        /// declaration</summary>
-        /// <param name="name">Name of the def to add</param>
-        /// <param name="val">Value of this def</param>
-        /// <returns>Added method</returns>
-        public virtual Method AddLocalDef(string name, GraceObject val)
-        {
-            fields[name] = val;
-            var read = new FieldReaderMethod(fields);
-            AddMethod(name, read);
-            return read;
-        }
-
         /// <summary>Get all method names in this object</summary>
         public List<string> MethodNames()
         {
@@ -399,71 +359,6 @@ namespace Grace.Runtime
         /// <summary>The singleton uninherited parent object</summary>
         public static readonly GraceObject UninheritedParent =
             new GraceObject("ParentNotInheritedYet", true);
-    }
-
-    /// <summary>Reusable method reading a field of an object</summary>
-    public class FieldReaderMethod : Method
-    {
-        private Dictionary<string, GraceObject> fields;
-
-        /// <param name="fields">Field dictionary of the object</param>
-        public FieldReaderMethod(Dictionary<string, GraceObject> fields)
-            : base(null, null)
-        {
-            this.fields = fields;
-            Confidential = true;
-        }
-
-        /// <inheritdoc/>
-        /// <remarks>This method determines the field to access by the
-        /// contents of the request.</remarks>
-        public override GraceObject Respond(EvaluationContext ctx,
-                GraceObject self, MethodRequest req)
-        {
-            checkAccessibility(ctx, req);
-            MethodHelper.CheckNoInherits(ctx, req);
-            MethodNode.CheckArgCount(ctx, req.Name, req.Name,
-                    0, false,
-                    req[0].Arguments.Count);
-            string name = req.Name;
-            if (fields[name] == GraceObject.Uninitialised
-                    || fields[name] == null)
-            {
-                ErrorReporting.RaiseError(ctx, "R2008",
-                    new Dictionary<string, string> {
-                        { "name", name },
-                        { "receiver", ToString() }
-                    },
-                    "UninitialisedReadError: Cannot read from «" + name + "»"
-                );
-            }
-            return fields[name];
-        }
-    }
-
-    /// <summary>Reusable method writing a field of an object</summary>
-    public class FieldWriterMethod : Method
-    {
-        private Dictionary<string, GraceObject> fields;
-
-        /// <param name="fields">Field dictionary of the object</param>
-        public FieldWriterMethod(Dictionary<string, GraceObject> fields)
-            : base(null, null)
-        {
-            this.fields = fields;
-            Confidential = true;
-        }
-
-        /// <inheritdoc/>
-        /// <remarks>This method determines the field to access by the
-        /// contents of the request.</remarks>
-        public override GraceObject Respond(EvaluationContext ctx, GraceObject self, MethodRequest req)
-        {
-            checkAccessibility(ctx, req);
-            string name = req[0].Name;
-            fields[name] = req[1].Arguments[0];
-            return GraceObject.Done;
-        }
     }
 
 }

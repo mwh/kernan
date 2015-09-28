@@ -9,7 +9,7 @@ using Grace.Execution;
 namespace Grace.Runtime
 {
     /// <summary>Local scope of a method</summary>
-    public class LocalScope : GraceObject
+    public class LocalScope : UserObject
     {
         /// <summary>Object to redirect any requests resolved on the
         /// surrounding scope to</summary>
@@ -35,14 +35,14 @@ namespace Grace.Runtime
 
         /// <summary>Empty anonymous scope</summary>
         public LocalScope()
-            : base("LocalScope", true)
+            : base(true)
         {
         }
 
         /// <summary>Empty named scope</summary>
         /// <param name="name">Name of this scope for debugging</param>
         public LocalScope(string name)
-            : base(getName(name), true)
+            : base(true)
         {
             this.name = name;
         }
