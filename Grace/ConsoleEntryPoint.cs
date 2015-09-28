@@ -14,7 +14,6 @@ namespace Grace
 {
     class ConsoleEntryPoint
     {
-        static string builtinsFile;
         static int Main(string[] args)
         {
             var enc = new UTF8Encoding(false);
@@ -45,10 +44,6 @@ namespace Grace
                 else if (arg == "--errors-to-file")
                 {
                     errorCodeTarget = args[++i];
-                }
-                else if (arg == "--builtins-override")
-                {
-                    builtinsFile = args[++i];
                 }
                 else if (arg == "-c")
                 {
@@ -88,8 +83,6 @@ namespace Grace
                 interp.AddModuleRoot(Path.GetFullPath("."));
             interp.FailedImportHook = promptInstallModule;
             interp.LoadPrelude();
-            if (builtinsFile != null)
-                interp.LoadBuiltins(builtinsFile);
             if (runLines(interp, lines) != 0)
                 return 1;
             if (filename == null)
@@ -422,10 +415,8 @@ namespace Grace
             ParseNode module;
             var interp = new Interpreter();
             interp.LoadPrelude();
-            if (builtinsFile != null)
-                interp.LoadBuiltins(builtinsFile);
             var ls = new LocalScope("repl-inner");
-            var obj = new GraceObject(ls, false);
+            var obj = new UserObject();
             if (filename != null)
             {
                 if (!File.Exists(filename))
@@ -445,7 +436,7 @@ namespace Grace
                     Node eModule = ett.Translate(module as ObjectParseNode);
                     try
                     {
-                        obj = eModule.Evaluate(interp);
+                        obj = (UserObject)eModule.Evaluate(interp);
                     }
                     catch (GraceExceptionPacketException e)
                     {

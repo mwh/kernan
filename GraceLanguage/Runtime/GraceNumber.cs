@@ -32,16 +32,6 @@ namespace Grace.Runtime
             private set;
         }
 
-        /// <summary>
-        /// User code to extend all builtin numbers.
-        /// </summary>
-        public static ObjectConstructorNode Extension { get ; set; }
-
-        /// <summary>
-        /// Interpreter to use for creating the extension objects.
-        /// </summary>
-        public static EvaluationContext ExtensionInterpreter { get ; set; }
-
         private GraceNumber(Rational val)
             : base(true)
         {
@@ -311,36 +301,21 @@ namespace Grace.Runtime
         /// <param name="val">Number to create</param>
         public static GraceObject Create(double val)
         {
-            if (Extension == null)
-                return new GraceNumber(val);
-            var num = new GraceNumber(val);
-            var o = Extension.Evaluate(ExtensionInterpreter);
-            o.AddParent("builtin", num);
-            return o;
+            return new GraceNumber(val);
         }
 
         /// <summary>Make a Grace number</summary>
         /// <param name="val">Number to create</param>
         public static GraceObject Create(Rational val)
         {
-            if (Extension == null)
-                return new GraceNumber(val);
-            var num = new GraceNumber(val);
-            var o = Extension.Evaluate(ExtensionInterpreter);
-            o.AddParent("builtin", num);
-            return o;
+            return new GraceNumber(val);
         }
 
         /// <summary>Make a Grace number</summary>
         /// <param name="val">Number to create</param>
         public static GraceObject Create(int val)
         {
-            if (Extension == null)
-                return new GraceNumber(val);
-            var num = new GraceNumber(val);
-            var o = Extension.Evaluate(ExtensionInterpreter);
-            o.AddParent("builtin", num);
-            return o;
+            return new GraceNumber(val);
         }
 
     }

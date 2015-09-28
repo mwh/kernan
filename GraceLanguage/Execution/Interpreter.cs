@@ -140,44 +140,6 @@ namespace Grace.Execution
         }
 
         /// <summary>
-        /// Loads a builtins override file extending the methods of
-        /// numbers and strings.
-        /// </summary>
-        /// <param name="filename">Path of builtins file to load</param>
-        public void LoadBuiltins(string filename)
-        {
-            var builtinInterpreter = new Interpreter();
-            builtinInterpreter.prelude = prelude;
-            builtinInterpreter.Extend(prelude);
-            using (StreamReader builtinReader = File.OpenText(filename))
-            {
-                var parser = new Parser("builtins extension",
-                        builtinReader.ReadToEnd());
-                var pt = parser.Parse() as ObjectParseNode;
-                var eMod = new ExecutionTreeTranslator().Translate(pt);
-                var gm = (ObjectConstructorNode)eMod;
-                foreach (var n in gm.Body)
-                {
-                    var d = n as DefDeclarationNode;
-                    if (d == null)
-                        continue;
-                    if (d.Name == "number")
-                    {
-                        var o = d.Value as ObjectConstructorNode;
-                        GraceNumber.Extension = o;
-                        GraceNumber.ExtensionInterpreter = builtinInterpreter;
-                    }
-                    else if (d.Name == "string")
-                    {
-                        var o = d.Value as ObjectConstructorNode;
-                        GraceString.Extension = o;
-                        GraceString.ExtensionInterpreter = builtinInterpreter;
-                    }
-                }
-            }
-        }
-
-        /// <summary>
         /// Copy this interpreter to make a new independent one starting
         /// with the same state, configuration, and call history.
         /// </summary>
@@ -426,19 +388,6 @@ namespace Grace.Execution
             get {
                 return prelude;
             }
-        }
-
-        /// <inheritdoc/>
-        public bool IsParentName(string name)
-        {
-            var s = scope;
-            while (s != null)
-            {
-                if (s.scope.HasParent(name))
-                    return true;
-                s = s.next;
-            }
-            return false;
         }
 
         /// <inheritdoc />
@@ -892,13 +841,6 @@ namespace Grace.Execution
         /// <summary>Discard a dynamic scope</summary>
         /// <param name="sm">Currently ignored</param>
         void Forget(Interpreter.ScopeMemo sm);
-
-        /// <summary>
-        /// Check whether a name resolves to a named parent
-        /// in the current scope.
-        /// </summary>
-        /// <param name="name">Name to check</param>
-        bool IsParentName(string name);
 
         /// <summary>Get a textual backtrace of the current stack</summary>
         List<string> GetStackTrace();

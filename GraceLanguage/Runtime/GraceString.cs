@@ -9,15 +9,6 @@ namespace Grace.Runtime
     /// <summary>A Grace string object</summary>
     public class GraceString : GraceObject
     {
-        /// <summary>
-        /// User code to extend all builtin numbers.
-        /// </summary>
-        public static ObjectConstructorNode Extension { get ; set; }
-
-        /// <summary>
-        /// Interpreter to use for creating the extension objects.
-        /// </summary>
-        public static EvaluationContext ExtensionInterpreter { get ; set; }
 
         /// <summary>This string in normalization form C</summary>
         private string nfc {
@@ -387,12 +378,7 @@ namespace Grace.Runtime
         /// <param name="val">Value of string to create</param>
         public static GraceObject Create(string val)
         {
-            if (Extension == null)
-                return new GraceString(val);
-            var str = new GraceString(val);
-            var o = Extension.Evaluate(ExtensionInterpreter);
-            o.AddParent("builtin", str);
-            return o;
+            return new GraceString(val);
         }
 
     }

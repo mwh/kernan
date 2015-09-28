@@ -32,19 +32,14 @@ namespace Grace.Runtime
                 foreach (var m in methods.Keys)
                     if (Lexer.IsIdentifier(m))
                         names.Add(m);
-                foreach (var p in parents)
-                    names.UnionWith(p.DotMethods);
                 return names;
             }
         }
-
-        private Stack<GraceObject> parents = new Stack<GraceObject>();
 
         private Interpreter.ScopeMemo lexicalScope;
         private Flags flags;
 
         private string name;
-        private LocalScope _internalScope;
 
         /// <summary>Part-object with built-in default methods</summary>
         public static readonly GraceObject DefaultMethods = new GraceObject();
@@ -119,7 +114,6 @@ namespace Grace.Runtime
         public GraceObject(LocalScope scope, bool omitDefaultMethods)
         {
             initialise(!omitDefaultMethods);
-            this._internalScope = scope;
         }
 
         /// <summary>Initialisation code used by multiple constructors</summary>
@@ -138,26 +132,6 @@ namespace Grace.Runtime
             }
         }
 
-        /// <summary>Add a named superobject to this object</summary>
-        /// <param name="name">Name of parent</param>
-        /// <param name="obj">Parent part-object</param>
-        public void AddParent(string name, GraceObject obj)
-        {
-            parents.Push(obj);
-            if (_internalScope != null && name != null)
-                _internalScope.AddLocalDef(name, obj);
-        }
-
-        /// <summary>
-        /// Check for a named superobject in this object
-        /// </summary>
-        /// <param name="name">Name of parent</param>
-        public bool HasParent(string name)
-        {
-            return _internalScope != null &&
-                _internalScope.Contains(name);
-        }
-
         /// <summary>
         /// Find a Grace superobject that is an instance of the native
         /// type T.
@@ -167,21 +141,7 @@ namespace Grace.Runtime
         public T FindNativeParent<T>() where T : GraceObject
         {
             var s = this as T;
-            if (s != null)
-                return s;
-            foreach (var p in parents)
-            {
-                s = p as T;
-                if (s != null)
-                    return s;
-            }
-            foreach (var p in parents)
-            {
-                s = p.FindNativeParent<T>();
-                if (s != null)
-                    return s;
-            }
-            return null;
+            return s;
         }
 
         /// <inheritdoc/>
@@ -320,9 +280,6 @@ namespace Grace.Runtime
         {
             if (methods.ContainsKey(req.Name))
                 return true;
-            foreach (var o in parents)
-                if (o.RespondsTo(req))
-                    return true;
             return false;
         }
 
@@ -367,12 +324,6 @@ namespace Grace.Runtime
                     methods[name] = getLazyMethod(name);
                 return methods[name];
             }
-            foreach (var o in parents)
-            {
-                var m = o.FindMethod(name);
-                if (m != null)
-                    return m;
-            }
             return null;
         }
 
@@ -411,24 +362,15 @@ namespace Grace.Runtime
                 GraceObject receiver)
         {
             var m = FindMethod(req.Name);
-            if (!methods.ContainsKey(req.Name))
+            if (m == null)
             {
-                foreach (var o in parents)
-                {
-                    m = o.FindMethod(req.Name);
-                    if (m != null)
-                    {
-                        return o.Request(ctx, req, receiver);
-                    }
-                }
                 ErrorReporting.RaiseError(ctx, "R2000",
                         new Dictionary<string, string> {
                             { "method", req.Name },
                             { "receiver", ToString() }
                         },
-                        "LookupError: Method «" + req.Name
-                            + "» not found in object «" + ToString() + "»"
-                );
+                        "LookupError: Method «" + req.Name +
+                            "» not found.");
             }
             var ret = m.Respond(ctx, receiver, req);
             return ret;

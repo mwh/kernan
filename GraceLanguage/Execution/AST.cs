@@ -367,7 +367,7 @@ namespace Grace.Execution
             GraceObject rec;
             if (rirq != null)
             {
-                if (rirq.Name == "self" || ctx.IsParentName(rirq.Name))
+                if (rirq.Name == "self")
                 {
                     if (req == null)
                         return null;
@@ -716,9 +716,6 @@ namespace Grace.Execution
         {
             var req = createRequest(ctx);
             req.IsInherits = true;
-            req.InheritingObject = inheritor;
-            req.InheritingName = parentName;
-            req.InheritingSelf = self;
             var rec = GetReceiver(ctx, req);
             return performRequest(ctx, rec, req);
         }
@@ -1118,70 +1115,29 @@ end:
             }
         }
 
-        /// <summary>Evaluate this object as the return of a
-        /// fresh method being inherited</summary>
-        /// <param name="ctx">Current interpreter</param>
-        /// <param name="inheritor">Part-object immediately inheriting this one
-        /// </param>
-        /// <param name="parentName">"as" name of inherits clause</param>
-        /// <param name="self">Binding of self</param>
-        public GraceObject BeInherited(EvaluationContext ctx,
-                GraceObject inheritor,
-                string parentName,
-                GraceObject self)
-        {
-            LocalScope local = new LocalScope("object-inner");
-            GraceObject ret = new GraceObject(local, true);
-            inheritor.AddParent(parentName, ret);
-            ret.SetFlag(GraceObject.Flags.UserspaceObject);
-            ctx.Extend(ret);
-            ret.Identity = self;
-            local.AddLocalDef("self", self);
-            local.RedirectSurrounding = self;
-            return basicEvaluate(ctx, ret, local, self);
-        }
-
         /// <inheritdoc/>
         public override GraceObject Evaluate(EvaluationContext ctx)
         {
-            LocalScope local = new LocalScope("object-inner");
-            GraceObject ret = new GraceObject(local, true);
+            UserObject ret = new UserObject();
             ret.SetFlag(GraceObject.Flags.UserspaceObject);
-            ctx.Extend(ret);
-            local.AddLocalDef("self", ret);
-            return basicEvaluate(ctx, ret, local, ret);
+            return basicEvaluate(ctx, ret);
         }
 
         private GraceObject basicEvaluate(EvaluationContext ctx,
-                GraceObject ret, LocalScope local,
-                GraceObject self)
+                UserObject ret
+                )
         {
-            if (!containsInheritance)
-                ret.AddParent("super", GraceObject.DefaultMethods);
-            else
-            {
-                foreach (InheritsNode i in inheritsStatements)
-                    if (i.As != null)
-                        local.AddLocalDef(i.As, GraceObject.UninheritedParent);
-            }
             foreach (var d in defs)
-                d.Create(ctx);
+                ret.AddLocalDef(d.Name, GraceObject.Uninitialised);
             foreach (var v in vars)
-                v.Create(ctx);
-            ctx.ExtendMinor(local);
+                ret.AddLocalVar(v.Name, GraceObject.Uninitialised);
             ret.RememberScope(ctx);
             foreach (MethodNode m in methods.Values)
                 ret.AddMethod(m);
+            ctx.Extend(ret);
             foreach (Node n in statements)
             {
-                if (n is InheritsNode)
-                {
-                    var i = (InheritsNode)n;
-                    i.Inherit(ctx, ret, self);
-                }
-                else {
-                    n.Evaluate(ctx);
-                }
+                n.Evaluate(ctx);
             }
             if (ret.HasFlag(GraceObject.Flags.RunAtModuleEnd))
             {
@@ -1190,7 +1146,6 @@ end:
                 var atModuleEnd = MethodRequest.Single("atModuleEnd", ret);
                 dialect.Request(ctx, atModuleEnd);
             }
-            ctx.Unextend(local);
             ctx.Unextend(ret);
             return ret;
         }
@@ -1407,32 +1362,9 @@ end:
             ctx.Extend(myScope);
             try
             {
-                if (req.IsInherits)
+                foreach (Node n in body)
                 {
-                    for (var i=0; i<body.Count - 1; i++)
-                    {
-                        var n = body[i];
-                        ret = n.Evaluate(ctx);
-                    }
-                    var last = body[body.Count - 1] as ObjectConstructorNode;
-                    if (last == null)
-                    {
-                        ErrorReporting.RaiseError(ctx, "R2017",
-                                new Dictionary<string,string> {
-                                    { "method", req.Name }
-                                },
-                                "InheritanceError: Invalid inheritance"
-                            );
-                    }
-                    ret = last.BeInherited(ctx, req.InheritingObject,
-                            req.InheritingName, req.InheritingSelf);
-                }
-                else
-                {
-                    foreach (Node n in body)
-                    {
-                        ret = n.Evaluate(ctx);
-                    }
+                    ret = n.Evaluate(ctx);
                 }
             }
             catch (ReturnException re)
