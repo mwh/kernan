@@ -707,17 +707,17 @@ namespace Grace.Execution
         /// Make this request as the target of an inherits clause
         /// </summary>
         /// <param name="ctx">Current interpreter</param>
-        /// <param name="inheritor">Part-object immediately inheriting this one
-        /// </param>
-        /// <param name="parentName">"as" name of inherits clause</param>
         /// <param name="self">Binding of self</param>
-        public virtual GraceObject Inherit(EvaluationContext ctx,
-                GraceObject inheritor, string parentName, GraceObject self)
+        public virtual Dictionary<string, Method> Inherit(EvaluationContext ctx,
+                UserObject self
+                )
         {
             var req = createRequest(ctx);
             req.IsInherits = true;
+            req.InheritingObject = self;
             var rec = GetReceiver(ctx, req);
-            return performRequest(ctx, rec, req);
+            performRequest(ctx, rec, req);
+            return req.InheritedMethods;
         }
 
         // Below exposes state as Grace methods.
@@ -1115,10 +1115,31 @@ end:
             }
         }
 
+        /// <summary>
+        /// Inherit this object constructor into a user object,
+        /// returning the methods created at this level and setting
+        /// up the initialisation code to run when the object is
+        /// complete.
+        /// </summary>
+        /// <param name="ctx">Current interpreter</param>
+        /// <param name="ret">Object being inherited into</param>
+        public Dictionary<string, Method> BeInherited(EvaluationContext ctx,
+                UserObject ret)
+        {
+            Dictionary<string, Method> meths;
+            var init = createMethods(ctx, ret, out meths);
+            ret.AddInitialiser(init);
+            return meths;
+        }
+
         /// <inheritdoc/>
         public override GraceObject Evaluate(EvaluationContext ctx)
         {
-            UserObject ret = new UserObject();
+            UserObject ret;
+            if (containsInheritance)
+                ret = new UserObject();
+            else
+                ret = new UserObject(false);
             ret.SetFlag(GraceObject.Flags.UserspaceObject);
             Dictionary<string, Method> meths;
             var init = createMethods(ctx, ret, out meths);
@@ -1154,6 +1175,13 @@ end:
             foreach (MethodNode m in methods.Values)
             {
                 meths[m.Name] = new Method(m, scope);
+            }
+            foreach (InheritsNode i in inheritsStatements)
+            {
+                var inheritedMethods = i.Inherit(ctx, ret);
+                foreach (var kv in inheritedMethods)
+                    if (!meths.ContainsKey(kv.Key))
+                        meths[kv.Key] = kv.Value;
             }
             return new UserObjectInitialiser(this, scope, cellMap);
         }
@@ -1425,9 +1453,33 @@ end:
             ctx.Extend(myScope);
             try
             {
-                foreach (Node n in body)
+                if (req.IsInherits)
                 {
-                    ret = n.Evaluate(ctx);
+                    for (var i = 0; i < body.Count - 1; i++)
+                    {
+                        var n = body[i];
+                        ret = n.Evaluate(ctx);
+                    }
+                    var last = body[body.Count - 1] as ObjectConstructorNode;
+                    if (last == null)
+                    {
+                        ErrorReporting.RaiseError(ctx, "R2017",
+                                new Dictionary<string,string> {
+                                    { "method", req.Name }
+                                },
+                                "InheritanceError: Invalid inheritance"
+                            );
+                    }
+                    req.InheritedMethods = last.BeInherited(ctx,
+                            req.InheritingObject);
+                    return req.InheritingObject;
+                }
+                else
+                {
+                    foreach (Node n in body)
+                    {
+                        ret = n.Evaluate(ctx);
+                    }
                 }
             }
             catch (ReturnException re)
@@ -2408,35 +2460,57 @@ end:
         /// <summary>
         /// List of aliases on this inherits statement.
         /// </summary>
-        public List<AliasNode> Aliases { get; private set; }
+        public Dictionary<string, string> Aliases { get; private set; }
 
         /// <summary>
         /// List of excludes on this inherits statement.
         /// </summary>
-        public List<ExcludeNode> Excludes { get; private set; }
+        public HashSet<string> Excludes { get; private set; }
 
         internal InheritsNode(Token location, InheritsParseNode source,
                 Node from,
-                IEnumerable<AliasNode> aliases,
-                IEnumerable<ExcludeNode> excludes
+                IEnumerable<KeyValuePair<string, string>> aliases,
+                IEnumerable<string> excludes
                 )
             : base(location, source)
         {
             From = from;
-            Aliases = new List<AliasNode>(aliases);
-            Excludes = new List<ExcludeNode>(excludes);
+            Aliases = new Dictionary<string, string>();
+            ICollection<KeyValuePair<string, string>> akvp = Aliases;
+            foreach (var x in aliases)
+                akvp.Add(x);//Aliases[x.Key] = x.Value;
+            Excludes = new HashSet<string>(excludes);
         }
 
         /// <summary>Inherit this request into an object</summary>
         /// <param name="ctx">Current interpreter</param>
-        /// <param name="partObject">Inheriting object</param>
         /// <param name="self">Object identity</param>
-        public GraceObject Inherit(EvaluationContext ctx,
-                GraceObject partObject,
-                GraceObject self)
+        public Dictionary<string, Method> Inherit(EvaluationContext ctx,
+                UserObject self)
         {
             var f = From as RequestNode;
-            return f.Inherit(ctx, partObject, null /* As */, self);
+            var meths = f.Inherit(ctx, self);
+            foreach (var kv in Aliases)
+                if (meths.ContainsKey(kv.Value))
+                    meths[kv.Key] = meths[kv.Value];
+                else
+                    ErrorReporting.RaiseError(ctx, "R2019",
+                            new Dictionary<string, string> {
+                                { "method", kv.Value },
+                            },
+                            "InheritanceError: bad alias"
+                        );
+            foreach (var e in Excludes)
+                if (meths.ContainsKey(e))
+                    meths.Remove(e);
+                else
+                    ErrorReporting.RaiseError(ctx, "R2020",
+                            new Dictionary<string, string> {
+                                { "method", e },
+                            },
+                            "InheritanceError: bad exclusion"
+                        );
+            return meths;
         }
 
         /// <inheritdoc/>
@@ -2445,9 +2519,9 @@ end:
             tw.WriteLine(prefix + "Inherits: ");
             From.DebugPrint(tw, prefix + "    ");
             foreach (var a in Aliases)
-                a.DebugPrint(tw, prefix + "    ");
+                tw.WriteLine(prefix + "    alias " + a.Key + " = " + a.Value);
             foreach (var e in Excludes)
-                e.DebugPrint(tw, prefix + "    ");
+                tw.WriteLine(prefix + "    exclude " + e);
         }
 
         /// <inheritdoc/>
@@ -2483,119 +2557,6 @@ end:
         {
             return self.From;
         }
-    }
-
-    /// <summary>An alias clause</summary>
-    public class AliasNode : Node
-    {
-
-        /// <summary>New name</summary>
-        public Node NewName { get; private set; }
-
-        /// <summary>Old name</summary>
-        public Node OldName { get; private set; }
-
-        internal AliasNode(Token location, AliasParseNode source,
-                SignatureNode newName,
-                SignatureNode oldName)
-            : base(location, source)
-        {
-            NewName = newName;
-            OldName = oldName;
-        }
-
-        /// <inheritdoc/>
-        public override void DebugPrint(System.IO.TextWriter tw, string prefix)
-        {
-            tw.WriteLine(prefix + "Alias: ");
-            tw.WriteLine(prefix + "  New name:");
-            NewName.DebugPrint(tw, prefix + "    ");
-            tw.WriteLine(prefix + "  Old name:");
-            OldName.DebugPrint(tw, prefix + "    ");
-        }
-
-        /// <inheritdoc/>
-        public override GraceObject Evaluate(EvaluationContext ctx)
-        {
-            return null;
-        }
-
-        // Below exposes state as Grace methods.
-        private static Dictionary<string, Method>
-            sharedMethods =
-                new Dictionary<string, Method> {
-                    { "newName",
-                        new DelegateMethodTyped0
-                            <AliasNode>(mNewName) },
-                    { "oldName",
-                        new DelegateMethodTyped0
-                            <AliasNode>(mOldName) },
-                };
-
-        /// <inheritdoc/>
-        protected override void addMethods()
-        {
-            AddMethods(sharedMethods);
-        }
-
-        private static GraceObject mNewName(AliasNode self)
-        {
-            return self.NewName;
-        }
-
-        private static GraceObject mOldName(AliasNode self)
-        {
-            return self.OldName;
-        }
-    }
-
-    /// <summary>An exclude clause</summary>
-    public class ExcludeNode : Node
-    {
-
-        /// <summary>New name</summary>
-        public Node Name { get; private set; }
-
-        internal ExcludeNode(Token location, ExcludeParseNode source,
-                SignatureNode name)
-            : base(location, source)
-        {
-            Name = name;
-        }
-
-        /// <inheritdoc/>
-        public override void DebugPrint(System.IO.TextWriter tw, string prefix)
-        {
-            tw.WriteLine(prefix + "Exclude: ");
-            Name.DebugPrint(tw, prefix + "    ");
-        }
-
-        /// <inheritdoc/>
-        public override GraceObject Evaluate(EvaluationContext ctx)
-        {
-            return null;
-        }
-
-        // Below exposes state as Grace methods.
-        private static Dictionary<string, Method>
-            sharedMethods =
-                new Dictionary<string, Method> {
-                    { "name",
-                        new DelegateMethodTyped0
-                            <ExcludeNode>(mName) },
-                };
-
-        /// <inheritdoc/>
-        protected override void addMethods()
-        {
-            AddMethods(sharedMethods);
-        }
-
-        private static GraceObject mName(ExcludeNode self)
-        {
-            return self.Name;
-        }
-
     }
 
     /// <summary>

@@ -83,3 +83,5 @@ R2013 IndexError: ${index} is not a valid index.
 R2016 IllegalReturnError: Cannot return from top level of a module.
 R2017 InheritanceError: The method «${method}» does not return an object that can be inherited.
 R2018 IllegalReturnError: Cannot return from a finally block that an exception has already bypassed.
+R2019 InheritanceError: No such method «${method}» exists to alias.
+R2020 InheritanceError: No such method «${method}» exists to exclude.

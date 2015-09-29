@@ -368,7 +368,9 @@ namespace Grace
                             var inherits = node as InheritsNode;
                             if (inherits != null)
                             {
-                                inherits.Inherit(interp, obj, obj);
+                                var ms = inherits.Inherit(interp, obj);
+                                obj.AddMethods(ms);
+                                obj.RunInitialisers(interp);
                             }
                             var v = node as VarDeclarationNode;
                             var d = node as DefDeclarationNode;

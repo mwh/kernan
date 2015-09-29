@@ -158,6 +158,18 @@ namespace Grace.Runtime
         /// <summary>Is this method request being inherited from?</summary>
         public bool IsInherits { get; set; }
 
+        /// <summary>
+        /// The mapping of method names to methods resulting from
+        /// inheritance. Only set after inheritance requests.
+        /// </summary>
+        public Dictionary<string, Method> InheritedMethods { get; set; }
+
+        /// <summary>
+        /// Object identity performing inheritance. Only used
+        /// during inheritance requests.
+        /// </summary>
+        public UserObject InheritingObject { get; set; }
+
         /// <summary>Get an enumerator giving each part of the request
         /// in turn</summary>
         public IEnumerator<RequestPart> GetEnumerator()

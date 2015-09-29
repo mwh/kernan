@@ -47,6 +47,7 @@ namespace Grace.Runtime
         {
             foreach (var i in initialisers)
                 i.Run(ctx, this);
+            initialisers.Clear();
         }
 
         /// <summary>

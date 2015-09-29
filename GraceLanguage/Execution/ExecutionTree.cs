@@ -642,23 +642,22 @@ namespace Grace.Execution
                         },
                         "Can only inherit from method requests" );
             return new InheritsNode(ipn.Token, ipn, frm,
-                    from x in ipn.Aliases select (AliasNode)x.Visit(this),
-                    from x in ipn.Excludes select (ExcludeNode)x.Visit(this));
+                    from x in ipn.Aliases select
+                        new KeyValuePair<string, string>(x.NewName.Name,
+                            x.OldName.Name),
+                    from x in ipn.Excludes select x.Name.Name);
         }
 
         /// <inheritdoc/>
         public Node Visit(AliasParseNode ipn)
         {
-            return new AliasNode(ipn.Token, ipn,
-                    (SignatureNode)ipn.NewName.Visit(this),
-                    (SignatureNode)ipn.OldName.Visit(this));
+            return null;
         }
 
         /// <inheritdoc/>
         public Node Visit(ExcludeParseNode ipn)
         {
-            return new ExcludeNode(ipn.Token, ipn,
-                    (SignatureNode)ipn.Name.Visit(this));
+            return null;
         }
 
         /// <inheritdoc />
