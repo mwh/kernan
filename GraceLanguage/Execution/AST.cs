@@ -2460,7 +2460,7 @@ end:
         /// <summary>
         /// List of aliases on this inherits statement.
         /// </summary>
-        public Dictionary<string, string> Aliases { get; private set; }
+        public Dictionary<string, SignatureNode> Aliases { get; private set; }
 
         /// <summary>
         /// List of excludes on this inherits statement.
@@ -2469,16 +2469,16 @@ end:
 
         internal InheritsNode(Token location, InheritsParseNode source,
                 Node from,
-                IEnumerable<KeyValuePair<string, string>> aliases,
+                IEnumerable<KeyValuePair<string, SignatureNode>> aliases,
                 IEnumerable<string> excludes
                 )
             : base(location, source)
         {
             From = from;
-            Aliases = new Dictionary<string, string>();
-            ICollection<KeyValuePair<string, string>> akvp = Aliases;
+            Aliases = new Dictionary<string, SignatureNode>();
+            ICollection<KeyValuePair<string, SignatureNode>> akvp = Aliases;
             foreach (var x in aliases)
-                akvp.Add(x);//Aliases[x.Key] = x.Value;
+                Aliases[x.Key] = x.Value;
             Excludes = new HashSet<string>(excludes);
         }
 
@@ -2491,12 +2491,40 @@ end:
             var f = From as RequestNode;
             var meths = f.Inherit(ctx, self);
             foreach (var kv in Aliases)
-                if (meths.ContainsKey(kv.Value))
-                    meths[kv.Key] = meths[kv.Value];
+                if (meths.ContainsKey(kv.Value.Name))
+                {
+                    if (kv.Value.Annotations.Count == 0)
+                        meths[kv.Key] = meths[kv.Value.Name];
+                    else
+                    {
+                        // Annotations are permitted on aliasing clauses,
+                        // and can affect the resulting method, so we
+                        // need to copy the method object and make the
+                        // changes independently.
+                        var m = meths[kv.Value.Name].Copy();
+                        foreach (var a in kv.Value.Annotations)
+                        {
+                            ImplicitReceiverRequestNode irrn =
+                                a as ImplicitReceiverRequestNode;
+                            if (irrn != null)
+                            {
+                                // This assumes that a change in visibility
+                                // will always be explicit: other
+                                // interpretations are available and may be
+                                // more correct.
+                                if (irrn.Name == "confidential")
+                                    m.Confidential = true;
+                                else if (irrn.Name == "public")
+                                    m.Confidential = false;
+                            }
+                        }
+                        meths[kv.Key] = m;
+                    }
+                }
                 else
                     ErrorReporting.RaiseError(ctx, "R2019",
                             new Dictionary<string, string> {
-                                { "method", kv.Value },
+                                { "method", kv.Value.Name },
                             },
                             "InheritanceError: bad alias"
                         );

@@ -104,6 +104,17 @@ namespace Grace.Runtime
         protected Method() {}
 
         /// <summary>
+        /// Create a copy of this method with the same code
+        /// and scope associated.
+        /// </summary>
+        public Method Copy()
+        {
+            var m = new Method(code, lexicalScope);
+            m.Confidential = Confidential;
+            return m;
+        }
+
+        /// <summary>
         /// Respond to a request of this method.
         /// </summary>
         /// <param name="ctx">Current interpreter</param>
