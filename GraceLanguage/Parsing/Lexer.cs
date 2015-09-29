@@ -284,6 +284,10 @@ namespace Grace.Parsing
                 return new OuterKeywordToken(moduleName, line, column);
             if ("self" == ident)
                 return new SelfKeywordToken(moduleName, line, column);
+            if ("alias" == ident)
+                return new AliasKeywordToken(moduleName, line, column);
+            if ("exclude" == ident)
+                return new ExcludeKeywordToken(moduleName, line, column);
             return new IdentifierToken(moduleName, line, column,
                     ident.Normalize());
         }

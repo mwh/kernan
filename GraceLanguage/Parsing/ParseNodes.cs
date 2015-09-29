@@ -1525,7 +1525,6 @@ namespace Grace.Parsing
     public class InheritsParseNode : ParseNode
     {
         private ParseNode _from;
-        private IdentifierParseNode _as;
 
         /// <summary>RHS of the inherits clause</summary>
         public ParseNode From
@@ -1534,29 +1533,33 @@ namespace Grace.Parsing
             set { _from = value; }
         }
 
-        /// <summary>As clause of of inherits</summary>
-        public IdentifierParseNode As
-        {
-            get { return _as; }
-        }
+        /// <summary>Aliases on this inherits statement</summary>
+        public List<AliasParseNode> Aliases { get; private set; }
 
-        internal InheritsParseNode(Token tok, ParseNode expr,
-                IdentifierParseNode asExpr)
+        /// <summary>Exclusions on this inherits statement</summary>
+        public List<ExcludeParseNode> Excludes { get; private set; }
+
+        internal InheritsParseNode(Token tok, ParseNode expr)
             : base(tok)
         {
             _from = expr;
-            _as = asExpr;
+            Aliases = new List<AliasParseNode>();
+            Excludes = new List<ExcludeParseNode>();
         }
 
         /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
             tw.WriteLine(prefix + "Inherits:");
-            _from.DebugPrint(tw, prefix + "    ");
-            if (_as != null)
+            tw.WriteLine(prefix + "    From:");
+            _from.DebugPrint(tw, prefix + "        ");
+            foreach (var ap in Aliases)
             {
-                tw.WriteLine(prefix + "  As:");
-                _as.DebugPrint(tw, prefix + "    ");
+                ap.DebugPrint(tw, prefix + "    ");
+            }
+            foreach (var ex in Excludes)
+            {
+                ex.DebugPrint(tw, prefix + "    ");
             }
             writeComment(tw, prefix);
         }
@@ -1567,6 +1570,93 @@ namespace Grace.Parsing
             return visitor.Visit(this);
         }
 
+        /// <summary>
+        /// Add an alias to this inherits statement.
+        /// </summary>
+        /// <param name="tok">Token</param>
+        /// <param name="n">New name</param>
+        /// <param name="o">Old name</param>
+        public void AddAlias(Token tok,
+                SignatureParseNode n, SignatureParseNode o)
+        {
+            Aliases.Add(new AliasParseNode(tok, n, o));
+        }
+
+        /// <summary>
+        /// Add an exclude to this inherits statement.
+        /// </summary>
+        /// <param name="tok">Token</param>
+        /// <param name="n">Name to exclude</param>
+        public void AddExclude(Token tok,
+                SignatureParseNode n)
+        {
+            Excludes.Add(new ExcludeParseNode(tok, n));
+        }
+
+    }
+
+    /// <summary>Parse node for an alias clause</summary>
+    public class AliasParseNode : ParseNode
+    {
+
+        /// <summary>Newly-created name</summary>
+        public SignatureParseNode NewName { get; private set; }
+
+        /// <summary>Name that is aliased</summary>
+        public SignatureParseNode OldName { get; private set; }
+
+        internal AliasParseNode(Token tok,
+                SignatureParseNode n, SignatureParseNode o)
+            : base(tok)
+        {
+            NewName = n;
+            OldName = o;
+        }
+
+        /// <inheritdoc/>
+        public override void DebugPrint(System.IO.TextWriter tw, string prefix)
+        {
+            tw.WriteLine(prefix + "Alias:");
+            tw.WriteLine(prefix + "  New name:");
+            NewName.DebugPrint(tw, prefix + "    ");
+            tw.WriteLine(prefix + "  Old name:");
+            OldName.DebugPrint(tw, prefix + "    ");
+            writeComment(tw, prefix);
+        }
+
+        /// <inheritdoc/>
+        public override T Visit<T>(ParseNodeVisitor<T> visitor)
+        {
+            return visitor.Visit(this);
+        }
+    }
+
+    /// <summary>Parse node for an exclude clause</summary>
+    public class ExcludeParseNode : ParseNode
+    {
+        /// <summary>Name of excluded method</summary>
+        public SignatureParseNode Name { get; private set; }
+
+        internal ExcludeParseNode(Token tok,
+                SignatureParseNode n)
+            : base(tok)
+        {
+            Name = n;
+        }
+
+        /// <inheritdoc/>
+        public override void DebugPrint(System.IO.TextWriter tw, string prefix)
+        {
+            tw.WriteLine(prefix + "Exclude:");
+            Name.DebugPrint(tw, prefix + "    ");
+            writeComment(tw, prefix);
+        }
+
+        /// <inheritdoc/>
+        public override T Visit<T>(ParseNodeVisitor<T> visitor)
+        {
+            return visitor.Visit(this);
+        }
     }
 
     /// <summary>Parse node for an import</summary>

@@ -2405,16 +2405,26 @@ end:
         /// <summary>The request that is being inherited</summary>
         public Node From { get; private set; }
 
-        /// <summary>Name given in an "as" clause</summary>
-        public string As { get; set; }
+        /// <summary>
+        /// List of aliases on this inherits statement.
+        /// </summary>
+        public List<AliasNode> Aliases { get; private set; }
+
+        /// <summary>
+        /// List of excludes on this inherits statement.
+        /// </summary>
+        public List<ExcludeNode> Excludes { get; private set; }
 
         internal InheritsNode(Token location, InheritsParseNode source,
-                Node from)
+                Node from,
+                IEnumerable<AliasNode> aliases,
+                IEnumerable<ExcludeNode> excludes
+                )
             : base(location, source)
         {
             From = from;
-            if (source.As != null)
-                As = source.As.Name;
+            Aliases = new List<AliasNode>(aliases);
+            Excludes = new List<ExcludeNode>(excludes);
         }
 
         /// <summary>Inherit this request into an object</summary>
@@ -2426,7 +2436,7 @@ end:
                 GraceObject self)
         {
             var f = From as RequestNode;
-            return f.Inherit(ctx, partObject, As, self);
+            return f.Inherit(ctx, partObject, null /* As */, self);
         }
 
         /// <inheritdoc/>
@@ -2434,6 +2444,10 @@ end:
         {
             tw.WriteLine(prefix + "Inherits: ");
             From.DebugPrint(tw, prefix + "    ");
+            foreach (var a in Aliases)
+                a.DebugPrint(tw, prefix + "    ");
+            foreach (var e in Excludes)
+                e.DebugPrint(tw, prefix + "    ");
         }
 
         /// <inheritdoc/>
@@ -2462,8 +2476,6 @@ end:
 
         private static GraceObject mName(InheritsNode self)
         {
-            if (self.As != null)
-                return GraceString.Create(self.As);
             return GraceString.Create("");
         }
 
@@ -2471,6 +2483,119 @@ end:
         {
             return self.From;
         }
+    }
+
+    /// <summary>An alias clause</summary>
+    public class AliasNode : Node
+    {
+
+        /// <summary>New name</summary>
+        public Node NewName { get; private set; }
+
+        /// <summary>Old name</summary>
+        public Node OldName { get; private set; }
+
+        internal AliasNode(Token location, AliasParseNode source,
+                SignatureNode newName,
+                SignatureNode oldName)
+            : base(location, source)
+        {
+            NewName = newName;
+            OldName = oldName;
+        }
+
+        /// <inheritdoc/>
+        public override void DebugPrint(System.IO.TextWriter tw, string prefix)
+        {
+            tw.WriteLine(prefix + "Alias: ");
+            tw.WriteLine(prefix + "  New name:");
+            NewName.DebugPrint(tw, prefix + "    ");
+            tw.WriteLine(prefix + "  Old name:");
+            OldName.DebugPrint(tw, prefix + "    ");
+        }
+
+        /// <inheritdoc/>
+        public override GraceObject Evaluate(EvaluationContext ctx)
+        {
+            return null;
+        }
+
+        // Below exposes state as Grace methods.
+        private static Dictionary<string, Method>
+            sharedMethods =
+                new Dictionary<string, Method> {
+                    { "newName",
+                        new DelegateMethodTyped0
+                            <AliasNode>(mNewName) },
+                    { "oldName",
+                        new DelegateMethodTyped0
+                            <AliasNode>(mOldName) },
+                };
+
+        /// <inheritdoc/>
+        protected override void addMethods()
+        {
+            AddMethods(sharedMethods);
+        }
+
+        private static GraceObject mNewName(AliasNode self)
+        {
+            return self.NewName;
+        }
+
+        private static GraceObject mOldName(AliasNode self)
+        {
+            return self.OldName;
+        }
+    }
+
+    /// <summary>An exclude clause</summary>
+    public class ExcludeNode : Node
+    {
+
+        /// <summary>New name</summary>
+        public Node Name { get; private set; }
+
+        internal ExcludeNode(Token location, ExcludeParseNode source,
+                SignatureNode name)
+            : base(location, source)
+        {
+            Name = name;
+        }
+
+        /// <inheritdoc/>
+        public override void DebugPrint(System.IO.TextWriter tw, string prefix)
+        {
+            tw.WriteLine(prefix + "Exclude: ");
+            Name.DebugPrint(tw, prefix + "    ");
+        }
+
+        /// <inheritdoc/>
+        public override GraceObject Evaluate(EvaluationContext ctx)
+        {
+            return null;
+        }
+
+        // Below exposes state as Grace methods.
+        private static Dictionary<string, Method>
+            sharedMethods =
+                new Dictionary<string, Method> {
+                    { "name",
+                        new DelegateMethodTyped0
+                            <ExcludeNode>(mName) },
+                };
+
+        /// <inheritdoc/>
+        protected override void addMethods()
+        {
+            AddMethods(sharedMethods);
+        }
+
+        private static GraceObject mName(ExcludeNode self)
+        {
+            return self.Name;
+        }
+
     }
 
     /// <summary>

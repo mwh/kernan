@@ -211,8 +211,23 @@ namespace Grace.Parsing
         public virtual ParseNode Visit(InheritsParseNode ipn)
         {
             ipn.From.Visit(this);
-            if (ipn.As != null)
-                ipn.As.Visit(this);
+            foreach (var ap in ipn.Aliases)
+                ap.Visit(this);
+            return ipn;
+        }
+
+        /// <inheritdoc/>
+        public virtual ParseNode Visit(AliasParseNode ipn)
+        {
+            ipn.NewName.Visit(this);
+            ipn.OldName.Visit(this);
+            return ipn;
+        }
+
+        /// <inheritdoc/>
+        public virtual ParseNode Visit(ExcludeParseNode ipn)
+        {
+            ipn.Name.Visit(this);
             return ipn;
         }
 

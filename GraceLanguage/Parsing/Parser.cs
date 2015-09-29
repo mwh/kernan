@@ -646,22 +646,27 @@ namespace Grace.Parsing
             return null;
         }
 
-        private SignaturePartParseNode parseBindSignaturePart(Token start)
+        private SignaturePartParseNode parseBindSignaturePart(Token start,
+                bool parametersAreOptional)
         {
             var id = new IdentifierParseNode((BindToken)lexer.current);
             nextToken();
             var ret = new OrdinarySignaturePartParseNode(id);
-            expect<LParenToken>("parameter list");
-            Token lp = lexer.current;
-            nextToken();
-            parseParameterList<RParenToken>(lp, ret.Parameters);
-            expect<RParenToken>();
-            nextToken();
+            if (!parametersAreOptional || lexer.current is LParenToken)
+            {
+                expect<LParenToken>("parameter list");
+                Token lp = lexer.current;
+                nextToken();
+                parseParameterList<RParenToken>(lp, ret.Parameters);
+                expect<RParenToken>();
+                nextToken();
+            }
             ret.Final = true;
             return ret;
         }
 
-        private SignatureParseNode parseSignature(Token start)
+        private SignatureParseNode parseSignature(Token start,
+                bool parametersAreOptional)
         {
             var ret = new SignatureParseNode(start);
             var first = lexer.current;
@@ -672,7 +677,7 @@ namespace Grace.Parsing
                 if (first is IdentifierToken
                         || first is OpenBracketToken)
                 {
-                    part = parseBindSignaturePart(start);
+                    part = parseBindSignaturePart(start, parametersAreOptional);
                     ret.AddPart(part);
                 }
                 else
@@ -701,7 +706,7 @@ namespace Grace.Parsing
             Token start = lexer.current;
             nextToken();
             MethodDeclarationParseNode ret = new MethodDeclarationParseNode(start);
-            ret.Signature = parseSignature(start);
+            ret.Signature = parseSignature(start, false);
             expect<LBraceToken>();
             List<ParseNode> origComments = prepareComments();
             parseBraceDelimitedBlock(ret.Body, StatementLevel.MethodLevel);
@@ -716,7 +721,7 @@ namespace Grace.Parsing
             nextToken();
             expect<IdentifierToken>();
             ClassDeclarationParseNode ret = new ClassDeclarationParseNode(start);
-            ret.Signature = parseSignature(start);
+            ret.Signature = parseSignature(start, false);
             expect<LBraceToken>();
             List<ParseNode> origComments = prepareComments();
             parseBraceDelimitedBlock(ret.Body, StatementLevel.ObjectLevel);
@@ -731,7 +736,7 @@ namespace Grace.Parsing
             nextToken();
             expect<IdentifierToken>();
             TraitDeclarationParseNode ret = new TraitDeclarationParseNode(start);
-            ret.Signature = parseSignature(start);
+            ret.Signature = parseSignature(start, false);
             expect<LBraceToken>();
             List<ParseNode> origComments = prepareComments();
             parseBraceDelimitedBlock(ret.Body, StatementLevel.TraitLevel);
@@ -834,7 +839,7 @@ namespace Grace.Parsing
             {
                 List<ParseNode> origComments = prepareComments();
                 takeLineComments();
-                var sig = parseSignature(lexer.current);
+                var sig = parseSignature(lexer.current, false);
                 takeSemicolon();
                 ret.Add(sig);
                 attachComments(sig, comments);
@@ -932,14 +937,27 @@ namespace Grace.Parsing
             Token start = lexer.current;
             nextToken();
             ParseNode val = parseExpression();
-            IdentifierParseNode name = null;
-            if (lexer.current is AsToken)
+            var ret = new InheritsParseNode(start, val);
+            while (lexer.current is AliasKeywordToken
+                    || lexer.current is ExcludeKeywordToken)
             {
+                var tok = lexer.current;
                 nextToken();
-                expect<IdentifierToken>();
-                name = parseIdentifier();
+                if (tok is AliasKeywordToken)
+                {
+                    var newName = parseSignature(lexer.current, true);
+                    expect<SingleEqualsToken>();
+                    nextToken();
+                    var oldName = parseSignature(lexer.current, true);
+                    ret.AddAlias(tok, newName, oldName);
+                }
+                else
+                {
+                    var name = parseSignature(lexer.current, true);
+                    ret.AddExclude(tok, name);
+                }
             }
-            return new InheritsParseNode(start, val, name);
+            return ret;
         }
 
         private ParseNode parseImport()

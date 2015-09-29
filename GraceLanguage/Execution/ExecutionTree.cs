@@ -33,36 +33,11 @@ namespace Grace.Execution
             var ret = new ObjectConstructorNode(obj.Token, obj);
             if (module == null)
                 module = ret;
-            InheritsNode parent = null;
-            var parentNames = new HashSet<string>();
-            var singleParent = true;
             foreach (ParseNode p in obj.Body)
             {
                 var n = p.Visit<Node>(this);
                 if (!(p is CommentParseNode))
                     ret.Add(n);
-                var i = n as InheritsNode;
-                if (i != null)
-                {
-                    singleParent = (parent == null);
-                    parent = i;
-                    if (i.As != null)
-                    {
-                        parentNames.Add(i.As);
-                    }
-                }
-            }
-            if (singleParent && parent != null && parent.As == null)
-            {
-                parent.As = "super";
-                parentNames.Add("super");
-            }
-            if (parentNames.Count > 0)
-            {
-                var checker =
-                    new NonReceiverNameCheckingParseNodeVisitor(parentNames);
-                foreach (var n in obj.Body)
-                    n.Visit(checker);
             }
             return ret;
         }
@@ -666,8 +641,24 @@ namespace Grace.Execution
                         new Dictionary<string, string> {
                         },
                         "Can only inherit from method requests" );
+            return new InheritsNode(ipn.Token, ipn, frm,
+                    from x in ipn.Aliases select (AliasNode)x.Visit(this),
+                    from x in ipn.Excludes select (ExcludeNode)x.Visit(this));
+        }
 
-            return new InheritsNode(ipn.Token, ipn, frm);
+        /// <inheritdoc/>
+        public Node Visit(AliasParseNode ipn)
+        {
+            return new AliasNode(ipn.Token, ipn,
+                    (SignatureNode)ipn.NewName.Visit(this),
+                    (SignatureNode)ipn.OldName.Visit(this));
+        }
+
+        /// <inheritdoc/>
+        public Node Visit(ExcludeParseNode ipn)
+        {
+            return new ExcludeNode(ipn.Token, ipn,
+                    (SignatureNode)ipn.Name.Visit(this));
         }
 
         /// <inheritdoc />
