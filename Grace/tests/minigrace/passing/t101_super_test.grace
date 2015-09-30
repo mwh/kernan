@@ -9,19 +9,21 @@ class A(v') {
 }
 class B(x) {
     inherits A(x)
+        alias abaz = baz
     method bar {
         print "B's bar"
     }
     method baz {
         print "B's baz invokes..."
-        super.baz
+        abaz
     }
 }
 class C(y) {
     inherits B(y)
+        alias bbaz = baz
     method baz {
         print "C's baz invokes..."
-        super.baz
+        bbaz
     }
 }
 
