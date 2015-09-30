@@ -538,6 +538,18 @@ namespace Grace.Parsing
         }
     }
 
+    class UsesKeywordToken : KeywordToken
+    {
+        public UsesKeywordToken(string module, int line, int column)
+            : base(module, line, column)
+        { }
+
+        protected override string describe()
+        {
+            return "UsesKeyword";
+        }
+    }
+
     class DialectKeywordToken : KeywordToken
     {
         public DialectKeywordToken(string module, int line, int column)

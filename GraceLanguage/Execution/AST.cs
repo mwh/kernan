@@ -2492,7 +2492,7 @@ end:
         /// </summary>
         public HashSet<string> Excludes { get; private set; }
 
-        internal InheritsNode(Token location, InheritsParseNode source,
+        internal InheritsNode(Token location, ParseNode source,
                 Node from,
                 IEnumerable<KeyValuePair<string, SignatureNode>> aliases,
                 IEnumerable<string> excludes

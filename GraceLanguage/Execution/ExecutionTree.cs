@@ -650,6 +650,23 @@ namespace Grace.Execution
                     from x in ipn.Excludes select x.Name.Name);
         }
 
+        /// <inheritdoc />
+        public Node Visit(UsesParseNode upn)
+        {
+            var frm = upn.From.Visit(this);
+            if (!(frm is RequestNode))
+                ErrorReporting.ReportStaticError(upn.From.Token.Module,
+                        upn.From.Line, "P1045",
+                        new Dictionary<string, string> {
+                        },
+                        "Can only inherit from method requests" );
+            return new InheritsNode(upn.Token, upn, frm,
+                    from x in upn.Aliases select
+                        new KeyValuePair<string, SignatureNode>(x.NewName.Name,
+                            (SignatureNode)x.OldName.Visit(this)),
+                    from x in upn.Excludes select x.Name.Name);
+        }
+
         /// <inheritdoc/>
         public Node Visit(AliasParseNode ipn)
         {

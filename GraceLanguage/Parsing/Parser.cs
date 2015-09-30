@@ -298,6 +298,8 @@ namespace Grace.Parsing
                 ret = "trait declaration";
             else if (t is InheritsKeywordToken)
                 ret = "inherits statement";
+            else if (t is UsesKeywordToken)
+                ret = "uses statement";
             else if (t is ImportKeywordToken)
                 ret = "import statement";
             else if (t is DialectKeywordToken)
@@ -323,7 +325,9 @@ namespace Grace.Parsing
             bool notTrait = level != StatementLevel.TraitLevel;
             bool allowMethods = level != StatementLevel.MethodLevel;
             bool allowImports = level == StatementLevel.ModuleLevel;
-            bool allowInherits = level != StatementLevel.MethodLevel;
+            bool allowInherits = level == StatementLevel.ModuleLevel
+                || level == StatementLevel.ObjectLevel;
+            bool allowUses = level != StatementLevel.MethodLevel;
             bool allowReturns = level == StatementLevel.MethodLevel;
             if ((lexer.current is NewLineToken || lexer.current is EndToken
                         || lexer.current is RBraceToken)
@@ -347,6 +351,8 @@ namespace Grace.Parsing
                 ret = parseTraitDeclaration();
             else if (allowInherits && lexer.current is InheritsKeywordToken)
                 ret = parseInherits();
+            else if (allowUses && lexer.current is UsesKeywordToken)
+                ret = parseUses();
             else if (allowImports && lexer.current is ImportKeywordToken)
                 ret = parseImport();
             else if (allowImports && lexer.current is DialectKeywordToken)
@@ -938,6 +944,34 @@ namespace Grace.Parsing
             nextToken();
             ParseNode val = parseExpression();
             var ret = new InheritsParseNode(start, val);
+            while (lexer.current is AliasKeywordToken
+                    || lexer.current is ExcludeKeywordToken)
+            {
+                var tok = lexer.current;
+                nextToken();
+                if (tok is AliasKeywordToken)
+                {
+                    var newName = parseSignature(lexer.current, true);
+                    expect<SingleEqualsToken>();
+                    nextToken();
+                    var oldName = parseSignature(lexer.current, true);
+                    ret.AddAlias(tok, newName, oldName);
+                }
+                else
+                {
+                    var name = parseSignature(lexer.current, true);
+                    ret.AddExclude(tok, name);
+                }
+            }
+            return ret;
+        }
+
+        private ParseNode parseUses()
+        {
+            Token start = lexer.current;
+            nextToken();
+            ParseNode val = parseExpression();
+            var ret = new UsesParseNode(start, val);
             while (lexer.current is AliasKeywordToken
                     || lexer.current is ExcludeKeywordToken)
             {

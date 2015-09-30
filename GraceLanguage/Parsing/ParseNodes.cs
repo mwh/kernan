@@ -1595,6 +1595,80 @@ namespace Grace.Parsing
 
     }
 
+    /// <summary>Parse node for a uses statement</summary>
+    public class UsesParseNode : ParseNode
+    {
+        private ParseNode _from;
+
+        /// <summary>RHS of the uses clause</summary>
+        public ParseNode From
+        {
+            get { return _from; }
+            set { _from = value; }
+        }
+
+        /// <summary>Aliases on this uses statement</summary>
+        public List<AliasParseNode> Aliases { get; private set; }
+
+        /// <summary>Exclusions on this uses statement</summary>
+        public List<ExcludeParseNode> Excludes { get; private set; }
+
+        internal UsesParseNode(Token tok, ParseNode expr)
+            : base(tok)
+        {
+            _from = expr;
+            Aliases = new List<AliasParseNode>();
+            Excludes = new List<ExcludeParseNode>();
+        }
+
+        /// <inheritdoc/>
+        public override void DebugPrint(System.IO.TextWriter tw, string prefix)
+        {
+            tw.WriteLine(prefix + "Uses:");
+            tw.WriteLine(prefix + "    From:");
+            _from.DebugPrint(tw, prefix + "        ");
+            foreach (var ap in Aliases)
+            {
+                ap.DebugPrint(tw, prefix + "    ");
+            }
+            foreach (var ex in Excludes)
+            {
+                ex.DebugPrint(tw, prefix + "    ");
+            }
+            writeComment(tw, prefix);
+        }
+
+        /// <inheritdoc/>
+        public override T Visit<T>(ParseNodeVisitor<T> visitor)
+        {
+            return visitor.Visit(this);
+        }
+
+        /// <summary>
+        /// Add an alias to this uses statement.
+        /// </summary>
+        /// <param name="tok">Token</param>
+        /// <param name="n">New name</param>
+        /// <param name="o">Old name</param>
+        public void AddAlias(Token tok,
+                SignatureParseNode n, SignatureParseNode o)
+        {
+            Aliases.Add(new AliasParseNode(tok, n, o));
+        }
+
+        /// <summary>
+        /// Add an exclude to this uses statement.
+        /// </summary>
+        /// <param name="tok">Token</param>
+        /// <param name="n">Name to exclude</param>
+        public void AddExclude(Token tok,
+                SignatureParseNode n)
+        {
+            Excludes.Add(new ExcludeParseNode(tok, n));
+        }
+
+    }
+
     /// <summary>Parse node for an alias clause</summary>
     public class AliasParseNode : ParseNode
     {
