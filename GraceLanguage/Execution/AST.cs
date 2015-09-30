@@ -1401,7 +1401,7 @@ end:
             // Bind any local methods (types) on the scope
             foreach (var localMeth in Body.OfType<MethodNode>())
             {
-                myScope.AddMethod(localMeth);
+                myScope.AddMethod(localMeth.Name, new Method(localMeth, memo));
             }
             // Bind parameters and arguments
             foreach (var pp in Signature.Zip(req, (dp, rp) => new { mine = dp, req = rp }))

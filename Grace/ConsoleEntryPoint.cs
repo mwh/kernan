@@ -361,7 +361,8 @@ namespace Grace
                         // it's a method, statement, or expression yet.
                         foreach (var meth in mod.Methods.Values)
                         {
-                            obj.AddMethod(meth);
+                            obj.AddMethod(meth.Name,
+                                    new Method(meth, memo));
                         }
                         foreach (var node in mod.Body)
                         {

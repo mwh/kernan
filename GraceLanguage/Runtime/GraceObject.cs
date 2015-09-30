@@ -35,7 +35,6 @@ namespace Grace.Runtime
             }
         }
 
-        private Interpreter.ScopeMemo lexicalScope;
         private Flags flags;
 
         private string name;
@@ -183,26 +182,11 @@ namespace Grace.Runtime
             return GraceBoolean.Create(!object.ReferenceEquals(self, other));
         }
 
-        /// <summary>Save the current scope of this interpreter into
-        /// the object</summary>
-        /// <param name="ctx">Current interpreter</param>
-        public void RememberScope(EvaluationContext ctx)
-        {
-            lexicalScope = ctx.Memorise();
-        }
-
         /// <summary>Remove a method from this object</summary>
         /// <param name="m">Method name to remove</param>
         public virtual void RemoveMethod(string m)
         {
             methods.Remove(m);
-        }
-
-        /// <summary>Add a method to this object</summary>
-        /// <param name="m">Method to add</param>
-        public void AddMethod(MethodNode m)
-        {
-            methods[m.Name] = new Method(m, lexicalScope);
         }
 
         /// <summary>Add a method to this object with a custom name</summary>
