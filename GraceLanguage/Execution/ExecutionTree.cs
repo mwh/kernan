@@ -182,6 +182,8 @@ namespace Grace.Execution
             string name = sig.Name;
             ret.Confidential = (d.Signature.Annotations != null
                     && d.Signature.Annotations.HasAnnotation("confidential"));
+            ret.Abstract = (d.Signature.Annotations != null
+                    && d.Signature.Annotations.HasAnnotation("abstract"));
             foreach (ParseNode p in d.Body)
                 if (!(p is CommentParseNode))
                     ret.Add(p.Visit(this));

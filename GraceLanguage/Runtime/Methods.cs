@@ -82,6 +82,11 @@ namespace Grace.Runtime
         public bool Confidential { get; set; }
 
         /// <summary>
+        ///  True if this method is abstract and may not be requested.
+        /// </summary>
+        public bool Abstract { get; set; }
+
+        /// <summary>
         /// Create an ordinary method node.
         /// </summary>
         /// <param name="c">
@@ -94,7 +99,10 @@ namespace Grace.Runtime
         {
             code = c;
             if (c != null)
+            {
                 Confidential = c.Confidential;
+                Abstract = c.Abstract;
+            }
             lexicalScope = scope;
         }
 
@@ -111,6 +119,7 @@ namespace Grace.Runtime
         {
             var m = new Method(code, lexicalScope);
             m.Confidential = Confidential;
+            m.Abstract = Abstract;
             return m;
         }
 
@@ -144,6 +153,15 @@ namespace Grace.Runtime
         protected virtual void checkAccessibility(EvaluationContext ctx,
                 MethodRequest req)
         {
+            if (Abstract)
+            {
+                ErrorReporting.RaiseError(ctx, "R2021",
+                        new Dictionary<string, string>() {
+                            { "method", req.Name }
+                        },
+                        "InheritanceError: Method ${method} is abstract."
+                );
+            }
             if (Confidential && !req.IsInterior)
             {
                 ErrorReporting.RaiseError(ctx, "R2003",
@@ -155,6 +173,15 @@ namespace Grace.Runtime
             }
         }
 
+        /// <summary>
+        /// A singleton abstract method.
+        /// </summary>
+        public static readonly Method AbstractMethod = new Method();
+
+        static Method()
+        {
+            AbstractMethod.Abstract = true;
+        }
     }
 
     /// <summary>A Grace method wrapping a native method accepting

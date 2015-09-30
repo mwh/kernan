@@ -85,3 +85,4 @@ R2017 InheritanceError: The method «${method}» does not return an object that 
 R2018 IllegalReturnError: Cannot return from a finally block that an exception has already bypassed.
 R2019 InheritanceError: No such method «${method}» exists to alias.
 R2020 InheritanceError: No such method «${method}» exists to exclude.
+R2021 InheritanceError: Method «${method}» is abstract and must be given a definition or excluded.

@@ -1274,6 +1274,9 @@ end:
         /// <summary>Whether this method is confidential or not</summary>
         public bool Confidential { get; set; }
 
+        /// <summary>Whether this method is abstract or not</summary>
+        public bool Abstract { get; set; }
+
         /// <summary>Whether this method returns a fresh object or not</summary>
         public bool Fresh { get; set; }
 
