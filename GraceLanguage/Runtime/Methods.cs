@@ -87,6 +87,11 @@ namespace Grace.Runtime
         public bool Abstract { get; set; }
 
         /// <summary>
+        ///  True if this method is a conflict and may not be requested.
+        /// </summary>
+        public bool Conflict { get; set; }
+
+        /// <summary>
         /// Create an ordinary method node.
         /// </summary>
         /// <param name="c">
@@ -153,6 +158,15 @@ namespace Grace.Runtime
         protected virtual void checkAccessibility(EvaluationContext ctx,
                 MethodRequest req)
         {
+            if (Conflict)
+            {
+                ErrorReporting.RaiseError(ctx, "R2022",
+                        new Dictionary<string, string>() {
+                            { "method", req.Name }
+                        },
+                        "InheritanceError: Method ${method} is a conflict."
+                );
+            }
             if (Abstract)
             {
                 ErrorReporting.RaiseError(ctx, "R2021",
@@ -178,9 +192,15 @@ namespace Grace.Runtime
         /// </summary>
         public static readonly Method AbstractMethod = new Method();
 
+        /// <summary>
+        /// A singleton conflicted method.
+        /// </summary>
+        public static readonly Method ConflictMethod = new Method();
+
         static Method()
         {
             AbstractMethod.Abstract = true;
+            ConflictMethod.Conflict = true;
         }
     }
 

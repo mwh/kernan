@@ -1176,12 +1176,34 @@ end:
             {
                 meths[m.Name] = new Method(m, scope);
             }
+            var inheritedMethods = new HashSet<string>();
             foreach (InheritsNode i in inheritsStatements)
             {
-                var inheritedMethods = i.Inherit(ctx, ret);
-                foreach (var kv in inheritedMethods)
-                    if (!meths.ContainsKey(kv.Key))
-                        meths[kv.Key] = kv.Value;
+                var theseMethods = i.Inherit(ctx, ret);
+                foreach (var kv in theseMethods)
+                {
+                    if (!methods.ContainsKey(kv.Key))
+                    {
+                        if (inheritedMethods.Contains(kv.Key))
+                        {
+                            var current = meths[kv.Key];
+                            var incoming = kv.Value;
+                            if (current.Conflict) {}
+                                // Conflict + anything = conflict
+                            else if (current.Abstract)
+                                // Abstract + concrete = concrete
+                                meths[kv.Key] = incoming;
+                            else if (!incoming.Abstract)
+                                // Concrete + concrete = conflict
+                                meths[kv.Key] = Method.ConflictMethod;
+                            // Concrete + abstract = Concrete
+                        }
+                        else
+                            // Brand new method
+                            meths[kv.Key] = kv.Value;
+                    }
+                }
+                inheritedMethods.UnionWith(theseMethods.Keys);
             }
             return new UserObjectInitialiser(this, scope, cellMap);
         }
