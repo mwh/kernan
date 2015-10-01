@@ -1171,6 +1171,11 @@ end:
                 ret.CreateVar(v.Name, meths, v.Readable, v.Writable, out cell);
                 cellMap[v] = cell;
             }
+            // Because we don't have part-objects, a fake "redirection"
+            // object is required to provided quasi-static scoping
+            // for the binding of unqualified names locally.
+            var redirector = new SelfRedirectorObject(ret);
+            ctx.Extend(redirector);
             var scope = ctx.Memorise();
             foreach (MethodNode m in methods.Values)
             {
@@ -1205,6 +1210,8 @@ end:
                 }
                 inheritedMethods.UnionWith(theseMethods.Keys);
             }
+            redirector.SetMethods(meths.Keys);
+            ctx.Unextend(redirector);
             return new UserObjectInitialiser(this, scope, cellMap);
         }
 
@@ -1395,7 +1402,6 @@ end:
         {
             GraceObject ret = GraceObject.Done;
             Interpreter.ScopeMemo memo = ctx.Memorise();
-            ctx.Extend(self);
             var myScope = new MethodScope(req.Name);
             myScope.AddLocalDef("self", self);
             // Bind any local methods (types) on the scope

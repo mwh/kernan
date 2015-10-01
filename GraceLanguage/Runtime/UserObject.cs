@@ -195,9 +195,11 @@ namespace Grace.Runtime
                 UserObject obj)
         {
             ctx.Remember(scope);
-            ctx.Extend(obj);
+            var myScope = new LocalScope();
+            myScope.AddLocalDef("self", obj);
+            ctx.Extend(myScope);
             constructor.Initialise(ctx, obj, cellMapping);
-            ctx.Unextend(obj);
+            ctx.Unextend(myScope);
             ctx.Forget(scope);
         }
     }
@@ -281,6 +283,48 @@ namespace Grace.Runtime
         public Cell(GraceObject v)
         {
             Value = v;
+        }
+    }
+
+    /// <summary>
+    /// An artificial object to be inserted into scope stacks and
+    /// capture passing requests, redirecting them to "self". These
+    /// objects ensure that only locally-known names are sent to self,
+    /// preventing unanticipated downcalls.
+    /// </summary>
+    public class SelfRedirectorObject : GraceObject
+    {
+        GraceObject target;
+        HashSet<string> redirectedMethods = new HashSet<string>();
+
+        /// <param name="self">Target of redirections</param>
+        public SelfRedirectorObject(GraceObject self)
+        {
+            target = self;
+        }
+
+        /// <summary>
+        /// Set the methods this redirector will capture
+        /// and respond to.
+        /// </summary>
+        /// <param name="names">Enumerable of method names</param>
+        public void SetMethods(IEnumerable<string> names)
+        {
+            redirectedMethods.UnionWith(names);
+        }
+
+        /// <inheritdoc/>
+        public override GraceObject Request(EvaluationContext ctx,
+                MethodRequest req,
+                GraceObject receiver)
+        {
+            return target.Request(ctx, req, target);
+        }
+
+        /// <inheritsdoc/>
+        public override bool RespondsTo(MethodRequest req)
+        {
+            return redirectedMethods.Contains(req.Name);
         }
     }
 }
