@@ -2555,7 +2555,7 @@ end:
                         );
             foreach (var e in Excludes)
                 if (meths.ContainsKey(e))
-                    meths.Remove(e);
+                    meths[e] = Method.AbstractMethod;
                 else
                     ErrorReporting.RaiseError(ctx, "R2020",
                             new Dictionary<string, string> {
