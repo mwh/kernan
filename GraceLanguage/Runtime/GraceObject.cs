@@ -10,6 +10,7 @@ namespace Grace.Runtime
     {
         /// <summary>Certain indicators that can be embedded in an
         /// object</summary>
+        [System.FlagsAttribute]
         public enum Flags
         {
             /// <summary>Is a user-space object</summary>
@@ -17,7 +18,7 @@ namespace Grace.Runtime
             /// <summary>Dialect should run atModuleEnd method</summary>
             RunAtModuleEnd = 2
         }
-        private Dictionary<string, Method> methods = new Dictionary<string, Method>();
+        private Dictionary<string, Method> objectMethods = new Dictionary<string, Method>();
 
         /// <summary>
         /// Gives the names of all non-operator methods on
@@ -28,7 +29,7 @@ namespace Grace.Runtime
             get
             {
                 var names = new HashSet<string>();
-                foreach (var m in methods.Keys)
+                foreach (var m in objectMethods.Keys)
                     if (Lexer.IsIdentifier(m))
                         names.Add(m);
                 return names;
@@ -37,7 +38,7 @@ namespace Grace.Runtime
 
         private Flags flags;
 
-        private string name;
+        private string tagName;
 
         /// <summary>Part-object with built-in default methods</summary>
         public static readonly GraceObject DefaultMethods = new GraceObject();
@@ -48,11 +49,11 @@ namespace Grace.Runtime
         {
             get
             {
-                return name;
+                return tagName;
             }
             set
             {
-                name = value;
+                tagName = value;
             }
         }
 
@@ -88,7 +89,7 @@ namespace Grace.Runtime
         public GraceObject(string name)
         {
             initialise(true);
-            this.name = name;
+            tagName = name;
         }
 
         /// <summary>An object with a debugging name</summary>
@@ -100,7 +101,7 @@ namespace Grace.Runtime
         public GraceObject(string name, bool omitDefaultMethods)
         {
             initialise(!omitDefaultMethods);
-            this.name = name;
+            tagName = name;
         }
 
         /// <summary>An object with an internal scope</summary>
@@ -145,9 +146,9 @@ namespace Grace.Runtime
         /// <inheritdoc/>
         public override string ToString()
         {
-            if (name != null)
+            if (tagName != null)
                 return string.Format("{0}[{1:X}]",
-                        name,
+                        tagName,
                         RuntimeHelpers.GetHashCode(this));
             return string.Format("GraceObject[{0:X}]",
                     RuntimeHelpers.GetHashCode(this));
@@ -186,7 +187,7 @@ namespace Grace.Runtime
         /// <param name="m">Method name to remove</param>
         public virtual void RemoveMethod(string m)
         {
-            methods.Remove(m);
+            objectMethods.Remove(m);
         }
 
         /// <summary>Add a method to this object with a custom name</summary>
@@ -194,7 +195,7 @@ namespace Grace.Runtime
         /// <param name="m">Method to add</param>
         public void AddMethod(string name, Method m)
         {
-            methods[name] = m;
+            objectMethods[name] = m;
         }
 
         /// <summary>
@@ -206,13 +207,13 @@ namespace Grace.Runtime
         public void AddMethods(IDictionary<string, Method> meths)
         {
             foreach (var kvp in meths)
-                methods[kvp.Key] = kvp.Value;
+                objectMethods[kvp.Key] = kvp.Value;
         }
 
         /// <summary>Get all method names in this object</summary>
         public List<string> MethodNames()
         {
-            return new List<string>(methods.Keys);
+            return new List<string>(objectMethods.Keys);
         }
 
         /// <summary>Determines whether this object can respond to
@@ -222,7 +223,7 @@ namespace Grace.Runtime
         /// false otherwise</returns>
         public virtual bool RespondsTo(MethodRequest req)
         {
-            if (methods.ContainsKey(req.Name))
+            if (objectMethods.ContainsKey(req.Name))
                 return true;
             return false;
         }
@@ -262,11 +263,11 @@ namespace Grace.Runtime
         /// <param name="name">Method name to find</param>
         protected virtual Method FindMethod(string name)
         {
-            if (methods.ContainsKey(name))
+            if (objectMethods.ContainsKey(name))
             {
-                if (methods[name] == null)
-                    methods[name] = getLazyMethod(name);
-                return methods[name];
+                if (objectMethods[name] == null)
+                    objectMethods[name] = getLazyMethod(name);
+                return objectMethods[name];
             }
             return null;
         }
@@ -331,7 +332,7 @@ namespace Grace.Runtime
         /// <param name="f">Flag to check</param>
         public bool HasFlag(Flags f)
         {
-            return flags.HasFlag(f);
+            return (flags & f) == f;
         }
 
         /// <summary>The uninitialised variable object</summary>
