@@ -95,8 +95,10 @@ namespace Grace.Execution
         /// <summary>A default interpreter</summary>
         public Interpreter()
         {
-            sink = new OutputSinkWrapper(Console.Out);
-            ErrorReporting.SetSink(new OutputSinkWrapper(Console.Error));
+            sink = new StdoutOutputSinkWrapper();
+            ErrorReporting.SetSink(new StderrOutputSinkWrapper());
+            if (JSIL)
+                ErrorReporting.SetSink(sink);
             initialise();
         }
 
@@ -877,6 +879,24 @@ namespace Grace.Execution
         /// <param name="s">Line to output</param>
         void WriteLine(string s);
 
+    }
+
+    class StdoutOutputSinkWrapper : OutputSink
+    {
+        /// <inheritdoc/>
+        public void WriteLine(string s)
+        {
+            Console.WriteLine(s);
+        }
+    }
+
+    class StderrOutputSinkWrapper : OutputSink
+    {
+        /// <inheritdoc/>
+        public void WriteLine(string s)
+        {
+            Console.Error.WriteLine(s);
+        }
     }
 
     /// <summary>Wraps a <c cref="System.IO.TextWriter">TextWriter</c>
