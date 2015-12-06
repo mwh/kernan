@@ -28,7 +28,7 @@ namespace Grace.Utility
                 stream.Seek(4 * codepoint, SeekOrigin.Begin);
                 byte[] bytes = new byte[4];
                 stream.Read(bytes, 0, 4);
-                if (BitConverter.IsLittleEndian)
+                if (BitConverter.IsLittleEndian || Execution.Interpreter.JSIL)
                     Array.Reverse(bytes);
                 int offset = BitConverter.ToInt32(bytes, 0);
                 if (offset != 0)
