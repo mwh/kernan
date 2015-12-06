@@ -513,7 +513,7 @@ namespace Grace.Parsing
         {
             nextToken();
             expect<OperatorToken>();
-            var op = (OperatorToken)lexer.current;
+            var op = (OperatorToken)lexerCurrent();
             nextToken();
             var partName = new IdentifierParseNode(prefix, "prefix" + op.Name);
             var ret = new OrdinarySignaturePartParseNode(partName);
@@ -1271,7 +1271,7 @@ namespace Grace.Parsing
 
         private ParseNode parsePrefixOperator()
         {
-            OperatorToken op = lexer.current as OperatorToken;
+            OperatorToken op = lexerCurrent() as OperatorToken;
             nextToken();
             ParseNode expr;
             if (lexer.current is LParenToken)
@@ -1468,6 +1468,14 @@ namespace Grace.Parsing
             return valstack.Pop();
         }
 
+        // XXX works around JSIL bug #911
+        private Token lc { get; set; }
+        private Token lexerCurrent()
+        {
+            lc = lexer.current;
+            return lc;
+        }
+
         private void parseBraceDelimitedBlock(List<ParseNode> body,
                 StatementLevel level)
         {
@@ -1500,7 +1508,7 @@ namespace Grace.Parsing
                         { "new indent", "" + (indentColumn - 1) }
                     },
                     "Indentation must increase inside {}.");
-            Token lastToken = lexer.current;
+            Token lastToken = lexerCurrent();
             while (awaiting<RBraceToken>(start))
             {
                 if (lexer.current.column != indentColumn)
@@ -1689,7 +1697,7 @@ namespace Grace.Parsing
             {
                 consumeBlankLines();
             }
-            Token lastToken = lexer.current;
+            Token lastToken = lexerCurrent();
             indentColumn = firstBodyToken.column;
             while (!(lexer.current is RBraceToken))
             {
