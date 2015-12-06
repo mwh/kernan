@@ -130,10 +130,14 @@ namespace Grace.Execution
                         new GraceExceptionKind("Exception")));
         }
 
+        private bool loadedPrelude;
+
         /// <summary>Finds the standard prelude file, loads and
         /// interprets it, and places the created module in scope</summary>
         public void LoadPrelude()
         {
+            if (loadedPrelude)
+                return;
             string dir = Path.GetDirectoryName(typeof(Interpreter).Assembly.Location);
             string preludePath = Path.Combine(dir, "prelude.grace");
             using (StreamReader preludeReader = File.OpenText(preludePath))
@@ -143,6 +147,7 @@ namespace Grace.Execution
                 var eMod = new ExecutionTreeTranslator().Translate(pt);
                 prelude = eMod.Evaluate(this);
                 Extend(prelude);
+                loadedPrelude = true;
                 Interpreter.Debug("========== END PRELUDE ==========");
             }
         }
