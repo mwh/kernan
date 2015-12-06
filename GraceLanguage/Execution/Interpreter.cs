@@ -406,6 +406,19 @@ namespace Grace.Execution
         /// <inheritdoc />
         public List<string> GetStackTrace()
         {
+            if (JSIL)
+            {
+                var ret = new List<string>();
+                while (callStackMethod.Count > 0)
+                {
+                    var name = callStackMethod.Pop();
+                    var line = callStackLine.Pop();
+                    var module = callStackModule.Pop();
+                    ret.Add("«" + name + "», at line " + line + " of "
+                            + module);
+                }
+                return ret;
+            }
             var tmp = callStackMethod.Zip(callStackLine,
                     (name, line) =>
                         "«" + name + "», at line " + line + " of ");
