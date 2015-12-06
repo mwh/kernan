@@ -87,6 +87,11 @@ namespace Grace.Execution
             set;
         }
 
+        /// <summary>
+        /// Set to true if the code is running on JSIL.
+        /// </summary>
+        public static bool JSIL { get; set; }
+
         /// <summary>A default interpreter</summary>
         public Interpreter()
         {
