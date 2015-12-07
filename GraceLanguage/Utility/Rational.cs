@@ -341,6 +341,9 @@ namespace Grace.Utility
             // algorithm, but won't stop until the difference
             // between iterations is smaller than both 1 and one
             // ten-millionth of the value.
+            var bitLimit = 16384;
+            if (Execution.Interpreter.JSIL)
+                bitLimit = 512;
             while (!stopAtTen || i < 10)
             {
                 var xKToTheNMinusOne = xk.Exponentiate(nMinusOne);
@@ -350,14 +353,14 @@ namespace Grace.Utility
                 // These blow out very quickly, so discard
                 // bits to keep the numerators & denominators
                 // a feasible size.
-                xk1 = discardBits(xk1, 16384, 16384);
+                xk1 = discardBits(xk1, bitLimit, bitLimit);
                 if (i == 9 || !stopAtTen)
                 {
                     var diff = xk1 - xk;
                     var threshold = xk1 / 10000000;
                     if (threshold < Rational.Zero)
                         threshold = -threshold;
-                    xk1 = discardBits(xk1, 16384, 16384);
+                    xk1 = discardBits(xk1, bitLimit, bitLimit);
                     if (diff > Rational.One || -diff > Rational.One
                             || diff > threshold || -diff > threshold)
                     {
@@ -448,6 +451,10 @@ namespace Grace.Utility
             if (a.numerator == b.numerator
                     && a.denominator == b.denominator)
                 return 0;
+            if (a.numerator.Sign < 0 && b.numerator.Sign >= 0)
+                return -1;
+            if (a.numerator.Sign >= 0 && b.numerator.Sign < 0)
+                return 1;
             BigInteger remA = 0, remB = 0;
             var divA = BigInteger.DivRem(a.numerator, a.denominator,
                     out remA);
@@ -509,7 +516,8 @@ namespace Grace.Utility
             sb.Append(div);
             int integralLen = sb.Length;
             int threshold = integralLen +
-                (decimalPlaces > 0 ? decimalPlaces : 1000);
+                (decimalPlaces > 0 ? decimalPlaces :
+                    (Execution.Interpreter.JSIL ? 100 : 1000));
             if (rem != 0)
             {
                 sb.Append(CultureInfo.CurrentCulture
