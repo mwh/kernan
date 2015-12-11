@@ -22,7 +22,8 @@ namespace Grace.Runtime
 
         public ByteString(byte[] d)
         {
-            data = (byte[])d.Clone();
+            data = new byte[d.Length];
+            Array.Copy(d, data, d.Length);
             addMethods();
         }
 
