@@ -121,6 +121,7 @@ namespace ActiveLineEditor
                                 break;
                             }
                         }
+                        clearTabCompletion();
                         lastCompletions = null;
                         Console.WriteLine();
                         if (text.Length > 0)
@@ -196,7 +197,6 @@ namespace ActiveLineEditor
                                 break;
                             completionIndex = -1;
                             renderTabCompletion();
-                            completions = null;
                             break;
                     }
                 }
