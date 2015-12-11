@@ -131,6 +131,7 @@ namespace Grace.Execution
         }
 
         private bool loadedPrelude;
+        private static GraceObject loadedPreludeObject;
 
         /// <summary>Finds the standard prelude file, loads and
         /// interprets it, and places the created module in scope</summary>
@@ -138,6 +139,11 @@ namespace Grace.Execution
         {
             if (loadedPrelude)
                 return;
+            if (JSIL && loadedPreludeObject != null)
+            {
+                Extend(loadedPreludeObject);
+                return;
+            }
             string dir = Path.GetDirectoryName(typeof(Interpreter).Assembly.Location);
             string preludePath = Path.Combine(dir, "prelude.grace");
             using (StreamReader preludeReader = File.OpenText(preludePath))
@@ -148,6 +154,7 @@ namespace Grace.Execution
                 prelude = eMod.Evaluate(this);
                 Extend(prelude);
                 loadedPrelude = true;
+                loadedPreludeObject = prelude;
                 Interpreter.Debug("========== END PRELUDE ==========");
             }
         }
