@@ -69,6 +69,7 @@
     <Compile Include="Runtime\Methods.cs" />
     <Compile Include="ErrorReporting.cs" />
     <Compile Include="Utility\Rational.cs" />
+    <Compile Include="Utility\REPL.cs" />
     <Compile Include="Utility\UnicodeLookup.cs" />
   </ItemGroup>
   <ItemGroup>

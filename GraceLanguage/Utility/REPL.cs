@@ -1,0 +1,176 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using Grace.Runtime;
+using System.IO;
+using Grace.Parsing;
+using Grace.Execution;
+
+namespace Grace.Utility
+{
+    /// <summary>
+    /// Static methods for enabling REPL-like functionality.
+    /// </summary>
+    public class REPL
+    {
+
+        /// <summary>
+        /// Create a REPL-ready interpreter using a given
+        /// module object and interior scope.
+        /// </summary>
+        /// <param name="obj">
+        /// Module object
+        /// </param>
+        /// <param name="localScope">
+        /// Interior scope which holds (at least) "self".
+        /// </param>
+        public static Interpreter CreateInterpreter(UserObject obj,
+                LocalScope localScope)
+        {
+            var interp = new Interpreter();
+            interp.LoadPrelude();
+            interp.Extend(obj);
+            localScope.AddLocalDef("self", obj);
+            localScope.AddLocalDef("LAST", GraceObject.Done);
+            interp.ExtendMinor(localScope);
+            return interp;
+        }
+
+        /// <summary>
+        /// REPL-execute a given line in an interpreter,
+        /// indicating whether it was incomplete, and
+        /// restoring the interpreter afterwards.
+        /// </summary>
+        /// <param name="interp">
+        /// Interpreter to use
+        /// </param>
+        /// <param name="obj">
+        /// Module object where method declarations will be added.
+        /// </param>
+        /// <param name="memo">
+        /// Restoration point for the interpreter context.
+        /// </param>
+        /// <param name="line">
+        /// Line of code to execute.
+        /// </param>
+        /// <param name="unfinished">
+        /// Set to true if this line was incomplete and could not
+        /// be executed for that reason.
+        /// </param>
+        /// <param name="result">
+        /// Result of the executed expression.
+        /// </param>
+        public static int RunLine(Interpreter interp,
+                UserObject obj,
+                Interpreter.ScopeMemo memo,
+                string line,
+                out bool unfinished, out GraceObject result)
+        {
+            result = null;
+            ParseNode module;
+            ObjectConstructorNode mod = null;
+            try {
+                var p = new Parser("source code", line);
+                module = p.Parse();
+                var trans = new ExecutionTreeTranslator();
+                mod = (ObjectConstructorNode)trans.Translate((ObjectParseNode)module);
+            }
+            catch (StaticErrorException ex)
+            {
+                if (ex.Code == "P1001")
+                {
+                    // "Unexpected end of file" is expected in the
+                    // repl for unfinished statements.
+                    unfinished = true;
+                    return 1;
+                }
+                else
+                {
+                    // All other errors are errors.
+                    unfinished = false;
+                    return 1;
+                }
+            }
+            unfinished = false;
+            if (mod != null)
+            {
+                try
+                {
+                    // The "module" object can only really have
+                    // a single element, but we don't know whether
+                    // it's a method, statement, or expression yet.
+                    foreach (var meth in mod.Methods.Values)
+                    {
+                        obj.AddMethod(meth.Name,
+                                new Method(meth, memo));
+                    }
+                    foreach (var node in mod.Body)
+                    {
+                        var inherits = node as InheritsNode;
+                        if (inherits != null)
+                        {
+                            var ms = inherits.Inherit(interp, obj);
+                            obj.AddMethods(ms);
+                            obj.RunInitialisers(interp);
+                        }
+                        var v = node as VarDeclarationNode;
+                        var d = node as DefDeclarationNode;
+                        Cell cell;
+                        var meths = new Dictionary<string, Method>();
+                        if (v != null)
+                        {
+                            obj.CreateVar(v.Name, meths,
+                                    v.Readable, v.Writable, out cell);
+                            obj.AddMethods(meths);
+                            if (v.Value != null)
+                                cell.Value = v.Value.Evaluate(interp);
+                            result = GraceObject.Done;
+                            continue;
+                        }
+                        if (d != null)
+                        {
+                            obj.CreateDef(d.Name, meths,
+                                    d.Public, out cell);
+                            obj.AddMethods(meths);
+                            cell.Value = d.Value.Evaluate(interp);
+                            result = GraceObject.Done;
+                            continue;
+                        }
+                        var ret = node.Evaluate(interp);
+                        if (ret != null
+                                && ret != GraceObject.Done
+                                && ret != GraceObject.Uninitialised)
+                        {
+                            interp.Print(interp, ret);
+                        }
+                        result = ret;
+                    }
+                }
+                catch (GraceExceptionPacketException e)
+                {
+                    ErrorReporting.WriteLine("Uncaught exception:");
+                    ErrorReporting.WriteException(e.ExceptionPacket);
+                    if (e.ExceptionPacket.StackTrace != null)
+                    {
+                        foreach (var l in e.ExceptionPacket.StackTrace)
+                        {
+                            ErrorReporting.WriteLine("    from "
+                                    + l);
+                        }
+                    }
+                    return 1;
+                }
+                finally
+                {
+                    // No matter what happened, restore the interpreter
+                    // to as pristine a state as we can manage before
+                    // the next time.
+                    interp.RestoreExactly(memo);
+                    interp.PopCallStackTo(0);
+                    mod = null;
+                }
+            }
+            return 0;
+        }
+    }
+}

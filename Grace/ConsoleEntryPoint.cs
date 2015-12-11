@@ -8,6 +8,7 @@ using System.Net;
 using Grace.Execution;
 using Grace.Parsing;
 using Grace.Runtime;
+using Grace.Utility;
 using ActiveLineEditor;
 
 namespace Grace
@@ -308,7 +309,7 @@ namespace Grace
             GraceObject result;
             foreach (var line in lines)
             {
-                int r = runLine(interp, obj, memo, line, out unfinished,
+                int r = REPL.RunLine(interp, obj, memo, line, out unfinished,
                         out result);
                 if (r != 0)
                     return r;
@@ -318,131 +319,14 @@ namespace Grace
             return 0;
         }
 
-        private static int runLine(Interpreter interp,
-                UserObject obj,
-                Interpreter.ScopeMemo memo,
-                string line,
-                out bool unfinished, out GraceObject result)
-        {
-            result = null;
-            if (true)
-            {
-                ParseNode module;
-                ObjectConstructorNode mod = null;
-                try {
-                    var p = new Parser("source code", line);
-                    module = p.Parse();
-                    var trans = new ExecutionTreeTranslator();
-                    mod = (ObjectConstructorNode)trans.Translate((ObjectParseNode)module);
-                }
-                catch (StaticErrorException ex)
-                {
-                    if (ex.Code == "P1001")
-                    {
-                        // "Unexpected end of file" is expected in the
-                        // repl for unfinished statements.
-                        unfinished = true;
-                        return 1;
-                    }
-                    else
-                    {
-                        // All other errors are errors.
-                        unfinished = false;
-                        return 1;
-                    }
-                }
-                unfinished = false;
-                if (mod != null)
-                {
-                    try
-                    {
-                        // The "module" object can only really have
-                        // a single element, but we don't know whether
-                        // it's a method, statement, or expression yet.
-                        foreach (var meth in mod.Methods.Values)
-                        {
-                            obj.AddMethod(meth.Name,
-                                    new Method(meth, memo));
-                        }
-                        foreach (var node in mod.Body)
-                        {
-                            var inherits = node as InheritsNode;
-                            if (inherits != null)
-                            {
-                                var ms = inherits.Inherit(interp, obj);
-                                obj.AddMethods(ms);
-                                obj.RunInitialisers(interp);
-                            }
-                            var v = node as VarDeclarationNode;
-                            var d = node as DefDeclarationNode;
-                            Cell cell;
-                            var meths = new Dictionary<string, Method>();
-                            if (v != null)
-                            {
-                                obj.CreateVar(v.Name, meths,
-                                        v.Readable, v.Writable, out cell);
-                                obj.AddMethods(meths);
-                                if (v.Value != null)
-                                    cell.Value = v.Value.Evaluate(interp);
-                                result = GraceObject.Done;
-                                continue;
-                            }
-                            if (d != null)
-                            {
-                                obj.CreateDef(d.Name, meths,
-                                        d.Public, out cell);
-                                obj.AddMethods(meths);
-                                cell.Value = d.Value.Evaluate(interp);
-                                result = GraceObject.Done;
-                                continue;
-                            }
-                            var ret = node.Evaluate(interp);
-                            if (ret != null
-                                    && ret != GraceObject.Done
-                                    && ret != GraceObject.Uninitialised)
-                            {
-                                interp.Print(interp, ret);
-                            }
-                            result = ret;
-                        }
-                    }
-                    catch (GraceExceptionPacketException e)
-                    {
-                        Console.Error.WriteLine("Uncaught exception:");
-                        ErrorReporting.WriteException(e.ExceptionPacket);
-                        if (e.ExceptionPacket.StackTrace != null)
-                        {
-                            foreach (var l in e.ExceptionPacket.StackTrace)
-                            {
-                                Console.Error.WriteLine("    from "
-                                        + l);
-                            }
-                        }
-                        return 1;
-                    }
-                    finally
-                    {
-                        // No matter what happened, restore the interpreter
-                        // to as pristine a state as we can manage before
-                        // the next time.
-                        interp.RestoreExactly(memo);
-                        interp.PopCallStackTo(0);
-                        mod = null;
-                    }
-                }
-            }
-            return 0;
-        }
-
         private static int repl(string filename)
         {
             Console.WriteLine("* Grace REPL with runtime "
                     + Interpreter.GetRuntimeVersion());
             ParseNode module;
-            var interp = new Interpreter();
-            interp.LoadPrelude();
             var ls = new LocalScope("repl-inner");
             var obj = new UserObject();
+            var interp = REPL.CreateInterpreter(obj, ls);
             if (filename != null)
             {
                 if (!File.Exists(filename))
@@ -488,10 +372,6 @@ namespace Grace
             }
             Console.WriteLine("* Enter code at the prompt.\n");
             ErrorReporting.SilenceError("P1001");
-            interp.Extend(obj);
-            ls.AddLocalDef("self", obj);
-            ls.AddLocalDef("LAST", GraceObject.Done);
-            interp.ExtendMinor(ls);
             var memo = interp.Memorise();
             var edit = new Editor(s => completion(obj, s));
             string accum = String.Empty;
@@ -501,7 +381,7 @@ namespace Grace
             while (line != null)
             {
                 accum += line.Replace("\u0000", "") + "\n";
-                var r = runLine(interp, obj, memo, accum, out unfinished,
+                var r = REPL.RunLine(interp, obj, memo, accum, out unfinished,
                         out result);
                 if (result != null)
                     ls["LAST"] = result;

@@ -271,6 +271,17 @@ namespace Grace
         }
 
         /// <summary>
+        /// Write a line of text to the error sink.
+        /// </summary>
+        /// <param name="line">
+        /// Output
+        /// </param>
+        public static void WriteLine(string line)
+        {
+            sink.WriteLine(line);
+        }
+
+        /// <summary>
         /// Write out a runtime error message for a Grace exception
         /// according to the configuration provided by the front end.
         /// </summary>
