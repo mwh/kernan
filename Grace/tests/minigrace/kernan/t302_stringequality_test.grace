@@ -1,0 +1,5 @@
+print("é" == "é")
+print("bǘ" == "bǘ")
+print("bǘ" == "bǘ")
+print("kākāpō" == "kākāpō")
+print("한국" == "한국")
