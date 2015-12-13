@@ -347,6 +347,7 @@ namespace Grace.Runtime
             int endIndex = enInd < graphemeIndices.Length
                 ? graphemeIndices[enInd]
                 : Value.Length;
+            stInd = graphemeIndices[stInd];
             return GraceString.Create(Value.Substring(stInd,
                         endIndex - stInd));
         }
