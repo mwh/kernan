@@ -43,6 +43,11 @@ namespace Grace.Runtime
             get {
                 if (_decomposedGraphemeClusters == null)
                 {
+                    if (Value.Length == 0)
+                    {
+                        _decomposedGraphemeClusters = new int[0][];
+                        return _decomposedGraphemeClusters;
+                    }
                     var s = Value.Normalize(NormalizationForm.FormD);
                     var cs = StringInfo.ParseCombiningCharacters(s);
                     _decomposedGraphemeClusters = new int[cs.Length][];
