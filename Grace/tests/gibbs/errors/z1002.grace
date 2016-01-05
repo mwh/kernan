@@ -1,2 +1,3 @@
 // ERROR = P1038
-var x:=-1
+var x
+x:=-1

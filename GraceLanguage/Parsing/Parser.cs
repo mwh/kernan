@@ -427,6 +427,7 @@ namespace Grace.Parsing
             }
             var annotations = parseAnnotations();
             ParseNode val = null;
+            var op = lexer.current as OperatorToken;
             if (lexer.current is BindToken)
             {
                 nextToken();
@@ -435,6 +436,16 @@ namespace Grace.Parsing
             else if (lexer.current is SingleEqualsToken)
             {
                 reportError("P1005", "var declarations use ':='.");
+            }
+            else if (op != null && op.Name.StartsWith(":="))
+            {
+                reportError("P1038",
+                        new Dictionary<string, string>
+                        {
+                            { "rest", op.Name.Substring(2) }
+                        },
+                        ":= requires space before prefix operator"
+                    );
             }
             return new VarDeclarationParseNode(start, name, val,
                         type, annotations);
@@ -1406,12 +1417,22 @@ namespace Grace.Parsing
             while (tok != null)
             {
                 if ((!tok.SpaceBefore || !tok.SpaceAfter))
+                {
+                    if (tok.Name.StartsWith(":="))
+                        reportError("P1038",
+                                new Dictionary<string, string>
+                                {
+                                    { "rest", tok.Name.Substring(2) }
+                                },
+                                ":= needs space before prefix operator"
+                        );
                     reportError("P1020",
                             new Dictionary<string, string>()
                             {
                                 { "operator", tok.Name }
                             },
                             "Infix operators must be surrounded by spaces.");
+                }
                 nextToken();
                 if (lexer.current is CommentToken)
                 {
