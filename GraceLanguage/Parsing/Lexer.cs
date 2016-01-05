@@ -171,8 +171,6 @@ namespace Grace.Parsing
                 ret = lexIdentifier();
             if (isOperatorCharacter(c, cat))
                 ret = lexOperator();
-            if (c == ':')
-                ret = lexColon();
             if (isNumberStartCharacter(c))
                 ret = lexNumber();
             if (c == ' ')
@@ -400,6 +398,14 @@ namespace Grace.Parsing
             {
                 return new ArrowToken(moduleName, line, column);
             }
+            if (":".Equals(op))
+            {
+                return new ColonToken(moduleName, line, column);
+            }
+            if (":=".Equals(op))
+            {
+                return new BindToken(moduleName, line, column);
+            }
             if (index < code.Length && (code[index] == ' '
                         || code[index] == '\r' || code[index] == '\n'
                         || code[index] == '\u2028'))
@@ -422,19 +428,6 @@ namespace Grace.Parsing
             return ret;
         }
 
-        private Token lexColon()
-        {
-            advanceIndex();
-            if (index >= code.Length)
-                return new ColonToken(moduleName, line, column);
-            if (code[index] == '=')
-            {
-                advanceIndex();
-                return new BindToken(moduleName, line, column);
-            }
-            return new ColonToken(moduleName, line, column);
-        }
-
         private Token lexComment()
         {
             advanceIndex();
@@ -455,8 +448,8 @@ namespace Grace.Parsing
 
         private static bool isOperatorCharacter(char c, UnicodeCategory cat)
         {
-            return c != ':' && c != '"' && c != ',' && c != ';'
-                && c != '\'' &&
+            return c != '"' && c != ',' && c != ';'
+                &&
                 (
                     // Standard ASCII keyboard operators
                     c == '+' || c == '-' || c == '*' || c == '/'
@@ -464,6 +457,7 @@ namespace Grace.Parsing
                     || c == '<' || c == '@' || c == '$' || c == '?'
                     || c == '&' || c == '|' || c == '^' || c == '%'
                     || c == '#' || c == '~'
+                    || c == ':' || c == '\\'
                     // Additional individual operator codepoints
                     // From Latin-1
                     || c == '¬' || c == '±' || c == '×' || c == '÷'
