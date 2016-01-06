@@ -1722,6 +1722,17 @@ namespace Grace.Parsing
             indentColumn = firstBodyToken.column;
             while (!(lexer.current is RBraceToken))
             {
+                if (lexer.current.column != indentColumn)
+                {
+                    reportError("P1016", new Dictionary<string, string>()
+                            {
+                                { "required indentation", "" + (indentColumn - 1) },
+                                { "given indentation", "" + (lexer.current.column - 1) }
+                            },
+                            "Indentation mismatch; is "
+                            + (lexer.current.column - 1) + ", should be "
+                            + (indentColumn - 1) + ".");
+                }
                 ret.Body.Add(parseStatement(StatementLevel.MethodLevel));
                 if (lexer.current == lastToken)
                 {
