@@ -26,6 +26,7 @@ namespace Grace
             bool verbose = false;
             string errorCodeTarget = null;
             var lines = new List<string>();
+            string builtinsExtensionFile = null;
             for (int i = 0; i < args.Length; i++)
             {
                 var arg = args[i];
@@ -41,6 +42,10 @@ namespace Grace
                 {
                     Interpreter.ActivateDebuggingMessages();
                     verbose = true;
+                }
+                else if (arg == "--builtins-extension")
+                {
+                    builtinsExtensionFile = args[++i];
                 }
                 else if (arg == "--errors-to-file")
                 {
@@ -68,7 +73,7 @@ namespace Grace
                     filename = arg;
             }
             if (mode == "repl" || (mode == "run" && filename == null))
-                return repl(filename);
+                return repl(filename, builtinsExtensionFile);
             if (filename == null && lines.Count == 0) {
                 return error("Required filename argument missing.");
             }
@@ -84,6 +89,10 @@ namespace Grace
                 interp.AddModuleRoot(Path.GetFullPath("."));
             interp.FailedImportHook = promptInstallModule;
             interp.LoadPrelude();
+            if (builtinsExtensionFile != null)
+                interp.LoadExtensionFile(builtinsExtensionFile);
+            else
+                interp.LoadExtensionFile();
             if (runLines(interp, lines) != 0)
                 return 1;
             if (filename == null)
@@ -319,7 +328,7 @@ namespace Grace
             return 0;
         }
 
-        private static int repl(string filename)
+        private static int repl(string filename, string builtinsExtensionFile)
         {
             Console.WriteLine("* Grace REPL with runtime "
                     + Interpreter.GetRuntimeVersion());
@@ -327,6 +336,10 @@ namespace Grace
             var ls = new LocalScope("repl-inner");
             var obj = new UserObject();
             var interp = REPL.CreateInterpreter(obj, ls);
+            if (builtinsExtensionFile != null)
+                interp.LoadExtensionFile(builtinsExtensionFile);
+            else
+                interp.LoadExtensionFile();
             if (filename != null)
             {
                 if (!File.Exists(filename))

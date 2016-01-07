@@ -160,6 +160,63 @@ namespace Grace.Execution
         }
 
         /// <summary>
+        /// Load the builtin-extending module file, if one exists
+        /// in any of the known locations.
+        /// </summary>
+        public void LoadExtensionFile()
+        {
+            string localGrace = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                "grace");
+            var p = Path.Combine(localGrace, "BuiltinsExtension.grace");
+            if (File.Exists(p))
+            {
+                LoadExtensionFile(p);
+                return;
+            }
+            string dir = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+            p = Path.Combine(dir, "BuiltinsExtension.grace");
+            if (File.Exists(p))
+            {
+                LoadExtensionFile(p);
+                return;
+            }
+        }
+        /// <summary>
+        /// Load a file as the builtin-extending module.
+        /// </summary>
+        /// <param name="path">Path to file to load</param>
+        public void LoadExtensionFile(string path)
+        {
+            GraceObject ext;
+            using (StreamReader reader = File.OpenText(path))
+            {
+                var parser = new Parser("extension", reader.ReadToEnd());
+                var pt = parser.Parse() as ObjectParseNode;
+                var eMod = new ExecutionTreeTranslator().Translate(pt);
+                ext = eMod.Evaluate(this);
+            }
+            LoadExtensionsFromObject(ext);
+        }
+
+        /// <summary>
+        /// Load extensions to builtins from traits in an
+        /// existing object.
+        /// </summary>
+        /// <param name="ext">Object containing extension traits.</param>
+        public void LoadExtensionsFromObject(GraceObject ext)
+        {
+            var req = MethodRequest.Nullary("NumberExtension");
+            req.IsInherits = true;
+            if (ext.RespondsTo(req))
+            {
+                var uo = new UserObject();
+                req.InheritingObject = uo;
+                ext.Request(this, req);
+                GraceNumber.ExtendWith(req.InheritedMethods);
+            }
+        }
+
+        /// <summary>
         /// Copy this interpreter to make a new independent one starting
         /// with the same state, configuration, and call history.
         /// </summary>
