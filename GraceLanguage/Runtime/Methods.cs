@@ -68,6 +68,28 @@ namespace Grace.Runtime
     public delegate GraceObject NativeMethodTyped0<T>(T self);
 
     /// <summary>
+    /// A native method accepting the receiver, with its type,
+    /// and a single argument.
+    /// </summary>
+    /// <remarks>
+    /// This type of method is reusable between instances.
+    /// </remarks>
+    public delegate GraceObject NativeMethodTyped1<T>(T self,
+            GraceObject other);
+
+    /// <summary>
+    /// A native method accepting the receiver, with its type,
+    /// and a single argument, also given the context.
+    /// </summary>
+    /// <remarks>
+    /// This type of method is reusable between instances.
+    /// </remarks>
+    public delegate GraceObject NativeMethodTyped1Ctx<T>(
+            EvaluationContext ctx,
+            T self,
+            GraceObject other);
+
+    /// <summary>
     /// A dynamic method that may be attached to an object and requested.
     /// </summary>
     public class Method
@@ -439,6 +461,63 @@ namespace Grace.Runtime
         }
     }
 
+    /// <summary>
+    /// A native method accepting the receiver, with its type,
+    /// and a single arguments.
+    /// </summary>
+    /// <remarks>
+    /// This type of method is reusable between instances.
+    /// </remarks>
+    public class DelegateMethodTyped1<T> : Method
+        where T : GraceObject
+    {
+        readonly NativeMethodTyped1<T> method;
+
+        /// <param name="rm">Native method to wrap</param>
+        public DelegateMethodTyped1(NativeMethodTyped1<T> rm)
+            : base(null, null)
+        {
+            method = rm;
+        }
+
+        /// <inheritdoc/>
+        public override GraceObject Respond(EvaluationContext ctx,
+                GraceObject self,
+                MethodRequest req)
+        {
+            MethodHelper.CheckArity(ctx, req, 1);
+            return method((T)self, req[0].Arguments[0]);
+        }
+    }
+
+    /// <summary>
+    /// A native method accepting the receiver, with its type,
+    /// and a single arguments.
+    /// </summary>
+    /// <remarks>
+    /// This type of method is reusable between instances.
+    /// </remarks>
+    public class DelegateMethodTyped1Ctx<T> : Method
+        where T : GraceObject
+    {
+        readonly NativeMethodTyped1Ctx<T> method;
+
+        /// <param name="rm">Native method to wrap</param>
+        public DelegateMethodTyped1Ctx(NativeMethodTyped1Ctx<T> rm)
+            : base(null, null)
+        {
+            method = rm;
+        }
+
+        /// <inheritdoc/>
+        public override GraceObject Respond(EvaluationContext ctx,
+                GraceObject self,
+                MethodRequest req)
+        {
+            MethodHelper.CheckArity(ctx, req, 1);
+            return method(ctx, (T)self, req[0].Arguments[0]);
+        }
+    }
 
     /// <summary>A Grace method giving a simple constant value</summary>
     public class ConstantMethod : Method

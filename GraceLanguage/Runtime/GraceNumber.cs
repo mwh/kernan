@@ -14,6 +14,8 @@ namespace Grace.Runtime
     /// <summary>A Grace number object</summary>
     public class GraceNumber : GraceObject
     {
+        private static Dictionary<string, Method> sharedMethods;
+
         /// <summary>Value of this number as a double</summary>
         public double Double
         {
@@ -55,59 +57,41 @@ namespace Grace.Runtime
 
         private void addMethods()
         {
-            AddMethod("==", null);
-            AddMethod("!=", null);
-            AddMethod("+", null);
-            AddMethod("*", null);
-            AddMethod("-", null);
-            AddMethod("/", null);
-            AddMethod("%", null);
-            AddMethod("^", null);
-            AddMethod(">", null);
-            AddMethod(">=", null);
-            AddMethod("<", null);
-            AddMethod("<=", null);
-            AddMethod("asString", null);
-            AddMethod("prefix-", null);
-            AddMethod("..", null);
-            AddMethod("match", null);
-            AddMethod("|", Matching.OrMethod);
-            AddMethod("&", Matching.AndMethod);
-            AddMethod("hash", null);
-            // These methods are extensions and should not be used:
-            AddMethod("numerator", null);
-            AddMethod("denominator", null);
-            AddMethod("integral", null);
+            if (sharedMethods == null)
+                createSharedMethods();
+            AddMethods(sharedMethods);
         }
 
-        /// <inheritdoc />
-        protected override Method getLazyMethod(string name)
+        private static void createSharedMethods()
         {
-            switch(name)
+            sharedMethods = new Dictionary<string, Method>
             {
-                case "==": return new DelegateMethod1(EqualsEquals);
-                case "!=": return new DelegateMethod1(NotEquals);
-                case "+": return new DelegateMethod1(Add);
-                case "*": return new DelegateMethod1(Multiply);
-                case "-": return new DelegateMethod1(Subtract);
-                case "/": return new DelegateMethod1Ctx(Divide);
-                case "%": return new DelegateMethod1(Modulus);
-                case "^": return new DelegateMethod1(Exponentiate);
-                case ">": return new DelegateMethod1(GreaterThan);
-                case ">=": return new DelegateMethod1(GreaterEqual);
-                case "<": return new DelegateMethod1(LessThan);
-                case "<=": return new DelegateMethod1(LessEqual);
-                case "asString": return new DelegateMethod0(AsString);
-                case "prefix-": return new DelegateMethod0(Negate);
-                case "..": return new DelegateMethod1Ctx(DotDot);
-                case "match": return new DelegateMethod1Ctx(Match);
-                case "hash": return new DelegateMethod0(mHash);
-                case "numerator": return new DelegateMethod0(mNumerator);
-                case "denominator":
-                                  return new DelegateMethod0(mDenominator);
-                case "integral": return new DelegateMethod0(mIntegral);
-            }
-            return base.getLazyMethod(name);
+                { "==", new DelegateMethodTyped1<GraceNumber>(mEqualsEquals) },
+                { "!=", new DelegateMethodTyped1<GraceNumber>(mNotEquals) },
+                { "+", new DelegateMethodTyped1<GraceNumber>(mAdd) },
+                { "*", new DelegateMethodTyped1<GraceNumber>(mMultiply) },
+                { "-", new DelegateMethodTyped1<GraceNumber>(mSubtract) },
+                { "/", new DelegateMethodTyped1Ctx<GraceNumber>(mDivide) },
+                { "%", new DelegateMethodTyped1<GraceNumber>(mModulus) },
+                { "^", new DelegateMethodTyped1<GraceNumber>(mExponentiate) },
+                { ">", new DelegateMethodTyped1<GraceNumber>(mGreaterThan) },
+                { ">=", new DelegateMethodTyped1<GraceNumber>(mGreaterEqual) },
+                { "<", new DelegateMethodTyped1<GraceNumber>(mLessThan) },
+                { "<=", new DelegateMethodTyped1<GraceNumber>(mLessEqual) },
+                { "asString",
+                    new DelegateMethodTyped0<GraceNumber>(mAsString) },
+                { "prefix-", new DelegateMethodTyped0<GraceNumber>(mNegate) },
+                { "..", new DelegateMethodTyped1Ctx<GraceNumber>(mDotDot) },
+                { "match", new DelegateMethodTyped1Ctx<GraceNumber>(mMatch) },
+                { "hash", new DelegateMethodTyped0<GraceNumber>(mHash) },
+                // These methods are extensions, and should not be used.
+                { "numerator",
+                    new DelegateMethodTyped0<GraceNumber>(mNumerator) },
+                { "denominator",
+                    new DelegateMethodTyped0<GraceNumber>(mDenominator) },
+                { "integral",
+                    new DelegateMethodTyped0<GraceNumber>(mIntegral) },
+            };
         }
 
         /// <summary>Get the value of this number as an int</summary>
@@ -123,29 +107,42 @@ namespace Grace.Runtime
         }
 
         /// <summary>Native method for Grace ==</summary>
+        /// <param name="self">Receiver of the method</param>
         /// <param name="other">Argument to the method</param>
-        public GraceObject EqualsEquals(GraceObject other)
+        private static GraceObject mEqualsEquals(
+                GraceNumber self,
+                GraceObject other
+                )
         {
             var oth = other.FindNativeParent<GraceNumber>();
             if (oth == null)
                 return GraceBoolean.False;
-            return GraceBoolean.Create(this.Value == oth.Value);
+            return GraceBoolean.Create(self.Value == oth.Value);
         }
 
         /// <summary>Native method for Grace !=</summary>
+        /// <param name="self">Receiver of the method</param>
         /// <param name="other">Argument to the method</param>
-        public GraceObject NotEquals(GraceObject other)
+        private static GraceObject mNotEquals(
+                GraceNumber self,
+                GraceObject other
+                )
         {
             var oth = other.FindNativeParent<GraceNumber>();
             if (oth == null)
                 return GraceBoolean.True;
-            return GraceBoolean.Create(this.Value != oth.Value);
+            return GraceBoolean.Create(self.Value != oth.Value);
         }
 
         /// <summary>Native method for Grace ..</summary>
         /// <param name="ctx">Current interpreter</param>
+        /// <param name="self">Receiver of the method</param>
         /// <param name="other">Argument to the method</param>
-        public GraceObject DotDot(EvaluationContext ctx, GraceObject other)
+        private static GraceObject mDotDot(
+                EvaluationContext ctx,
+                GraceNumber self,
+                GraceObject other
+                )
         {
             var n = other.FindNativeParent<GraceNumber>();
             if (n == null)
@@ -158,109 +155,149 @@ namespace Grace.Runtime
                         },
                         "ArgumentTypeError: .. requires a Number argument"
                 );
-            return new GraceRange(Value, n.Value, 1);
+            return new GraceRange(self.Value, n.Value, 1);
         }
 
         /// <summary>Native method for Grace +</summary>
+        /// <param name="self">Receiver of the method</param>
         /// <param name="other">Argument to the method</param>
-        public GraceObject Add(GraceObject other)
+        private static GraceObject mAdd(GraceNumber self, GraceObject other)
         {
             var oth = other.FindNativeParent<GraceNumber>();
-            return GraceNumber.Create(this.Value + oth.Value);
+            return GraceNumber.Create(self.Value + oth.Value);
         }
 
         /// <summary>Native method for Grace *</summary>
+        /// <param name="self">Receiver of the method</param>
         /// <param name="other">Argument to the method</param>
-        public GraceObject Multiply(GraceObject other)
+        private static GraceObject mMultiply(
+                GraceNumber self,
+                GraceObject other
+                )
         {
             var oth = other.FindNativeParent<GraceNumber>();
-            return GraceNumber.Create(this.Value * oth.Value);
+            return GraceNumber.Create(self.Value * oth.Value);
         }
 
         /// <summary>Native method for Grace -</summary>
+        /// <param name="self">Receiver of the method</param>
         /// <param name="other">Argument to the method</param>
-        public GraceObject Subtract(GraceObject other)
+        private static GraceObject mSubtract(
+                GraceNumber self,
+                GraceObject other
+                )
         {
             var oth = other.FindNativeParent<GraceNumber>();
-            return GraceNumber.Create(this.Value - oth.Value);
+            return GraceNumber.Create(self.Value - oth.Value);
         }
 
         /// <summary>Native method for Grace /</summary>
         /// <param name="ctx">Current interpreter</param>
+        /// <param name="self">Receiver of the method</param>
         /// <param name="other">Argument to the method</param>
-        public GraceObject Divide(EvaluationContext ctx, GraceObject other)
+        private static GraceObject mDivide(
+                EvaluationContext ctx,
+                GraceNumber self,
+                GraceObject other
+                )
         {
             var oth = other.FindNativeParent<GraceNumber>();
             if (oth.Value == Rational.Zero)
             {
                 ErrorReporting.RaiseError(ctx, "R2012",
                         new Dictionary<string, string> {
-                            { "dividend", Value.ToString() },
+                            { "dividend", self.Value.ToString() },
                         },
                         "ZeroDivisionError: Division by zero.");
             }
-            return GraceNumber.Create(this.Value / oth.Value);
+            return GraceNumber.Create(self.Value / oth.Value);
         }
 
         /// <summary>Native method for Grace %</summary>
+        /// <param name="self">Receiver of the method</param>
         /// <param name="other">Argument to the method</param>
-        public GraceObject Modulus(GraceObject other)
+        private static GraceObject mModulus(GraceNumber self, GraceObject other)
         {
             var oth = other.FindNativeParent<GraceNumber>();
-            return GraceNumber.Create(this.Value % oth.Value);
+            return GraceNumber.Create(self.Value % oth.Value);
         }
 
         /// <summary>Native method for Grace ^</summary>
+        /// <param name="self">Receiver of the method</param>
         /// <param name="other">Argument to the method</param>
-        public GraceObject Exponentiate(GraceObject other)
+        private static GraceObject mExponentiate(
+                GraceNumber self,
+                GraceObject other
+                )
         {
             var oth = other.FindNativeParent<GraceNumber>();
-            return GraceNumber.Create(this.Value.Exponentiate(oth.Value));
+            return GraceNumber.Create(self.Value.Exponentiate(oth.Value));
         }
 
         /// <summary>Native method for Grace &gt;</summary>
+        /// <param name="self">Receiver of the method</param>
         /// <param name="other">Argument to the method</param>
-        public GraceObject GreaterThan(GraceObject other)
+        private static GraceObject mGreaterThan(
+                GraceNumber self,
+                GraceObject other
+                )
         {
             var oth = other.FindNativeParent<GraceNumber>();
-            return GraceBoolean.Create(this.Value > oth.Value);
+            return GraceBoolean.Create(self.Value > oth.Value);
         }
 
         /// <summary>Native method for Grace &gt;=</summary>
+        /// <param name="self">Receiver of the method</param>
         /// <param name="other">Argument to the method</param>
-        public GraceObject GreaterEqual(GraceObject other)
+        private static GraceObject mGreaterEqual(
+                GraceNumber self,
+                GraceObject other
+                )
         {
             var oth = other.FindNativeParent<GraceNumber>();
-            return GraceBoolean.Create(this.Value >= oth.Value);
+            return GraceBoolean.Create(self.Value >= oth.Value);
         }
 
         /// <summary>Native method for Grace &lt;</summary>
+        /// <param name="self">Receiver of the method</param>
         /// <param name="other">Argument to the method</param>
-        public GraceObject LessThan(GraceObject other)
+        private static GraceObject mLessThan(
+                GraceNumber self,
+                GraceObject other
+                )
         {
             var oth = other.FindNativeParent<GraceNumber>();
-            return GraceBoolean.Create(this.Value < oth.Value);
+            return GraceBoolean.Create(self.Value < oth.Value);
         }
 
         /// <summary>Native method for Grace &lt;=</summary>
+        /// <param name="self">Receiver of the method</param>
         /// <param name="other">Argument to the method</param>
-        public GraceObject LessEqual(GraceObject other)
+        private static GraceObject mLessEqual(
+                GraceNumber self,
+                GraceObject other
+                )
         {
             var oth = other.FindNativeParent<GraceNumber>();
-            return GraceBoolean.Create(this.Value <= oth.Value);
+            return GraceBoolean.Create(self.Value <= oth.Value);
         }
 
-        private GraceObject mHash()
+        private static GraceObject mHash(GraceNumber self)
         {
-            return GraceNumber.Create(Value.GetHashCode());
+            return GraceNumber.Create(self.Value.GetHashCode());
         }
 
         /// <summary>Native method for Grace match</summary>
         /// <param name="ctx">Current interpreter</param>
+        /// <param name="self">Receiver of the method</param>
         /// <param name="target">Target of the match</param>
-        public GraceObject Match(EvaluationContext ctx, GraceObject target)
+        private static GraceObject mMatch(
+                EvaluationContext ctx,
+                GraceNumber self,
+                GraceObject target
+                )
         {
-            if (this.EqualsEquals(target) == GraceBoolean.True)
+            if (mEqualsEquals(self, target) == GraceBoolean.True)
             {
                 return Matching.SuccessfulMatch(ctx, target);
             }
@@ -268,33 +305,33 @@ namespace Grace.Runtime
         }
 
         /// <summary>Native method for Grace numerator</summary>
-        public GraceObject mNumerator()
+        private static GraceObject mNumerator(GraceNumber self)
         {
-            return Create(Value.Numerator);
+            return Create(self.Value.Numerator);
         }
 
         /// <summary>Native method for Grace denominator</summary>
-        public GraceObject mDenominator()
+        private static GraceObject mDenominator(GraceNumber self)
         {
-            return Create(Value.Denominator);
+            return Create(self.Value.Denominator);
         }
 
         /// <summary>Native method for Grace integral</summary>
-        public GraceObject mIntegral()
+        private static GraceObject mIntegral(GraceNumber self)
         {
-            return Create(Value.Integral);
+            return Create(self.Value.Integral);
         }
 
         /// <summary>Native method for Grace unary negation</summary>
-        public GraceObject Negate()
+        private static GraceObject mNegate(GraceNumber self)
         {
-            return GraceNumber.Create(-Value);
+            return GraceNumber.Create(-self.Value);
         }
 
         /// <summary>Native method for Grace asString</summary>
-        public GraceObject AsString()
+        private static GraceObject mAsString(GraceNumber self)
         {
-            return GraceString.Create("" + Value);
+            return GraceString.Create("" + self.Value);
         }
 
         /// <summary>Make a Grace number</summary>
