@@ -18,7 +18,7 @@ namespace Grace.Runtime
             /// <summary>Dialect should run atModuleEnd method</summary>
             RunAtModuleEnd = 2
         }
-        private Dictionary<string, Method> objectMethods = new Dictionary<string, Method>();
+        private Dictionary<string, Method> objectMethods;
 
         /// <summary>
         /// Gives the names of all non-operator methods on
@@ -111,6 +111,16 @@ namespace Grace.Runtime
             tagName = name;
         }
 
+        /// <summary>An object with a provided method dictionary</summary>
+        /// <param name="methodDict">
+        /// Dictionary to be used as the actual methods of this object.
+        /// </param>
+        public GraceObject(Dictionary<string, Method> methodDict)
+        {
+            objectMethods = methodDict;
+            initialise(true);
+        }
+
         /// <summary>An object with a debugging name</summary>
         /// <param name="name">Debugging name of this object</param>
         /// <param name="omitDefaultMethods">
@@ -139,6 +149,9 @@ namespace Grace.Runtime
         {
             Identity = this;
             includeDefaults = defaults;
+            if (objectMethods != null)
+                return;
+            objectMethods = new Dictionary<string, Method>();
             if (defaults)
             {
                 // The default methods are found on all objects,
