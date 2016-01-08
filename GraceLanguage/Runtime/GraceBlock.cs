@@ -27,6 +27,7 @@ namespace Grace.Runtime
             lexicalScope = ctx.Memorise();
             AddMethod("apply", null);
             AddMethod("spawn", null);
+            AddMethod("asString", null);
             if (parameters.Count == 1)
             {
                 AddMethod("match", null);
@@ -55,6 +56,7 @@ namespace Grace.Runtime
                 case "apply": return new DelegateMethodReq(Apply);
                 case "match": return new DelegateMethodReq(Match);
                 case "spawn": return new DelegateMethod0Ctx(mSpawn);
+                case "asString": return new DelegateMethod0Ctx(mAsString);
             }
             return base.getLazyMethod(name);
         }
@@ -85,6 +87,11 @@ namespace Grace.Runtime
                 List<Node> body)
         {
             return new GraceBlock(ctx, parameters, body);
+        }
+
+        private GraceObject mAsString(EvaluationContext ctx)
+        {
+            return GraceString.Create("Block[]");
         }
 
         private GraceObject mSpawn(EvaluationContext ctx)
