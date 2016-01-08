@@ -92,7 +92,6 @@ namespace Grace.Runtime
 
         private static int[] emptyIntArray = new int[0];
         private GraceString(string val)
-            : base(true)
         {
             Value = val;
             addMethods();

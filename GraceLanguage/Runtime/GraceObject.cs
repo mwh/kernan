@@ -43,6 +43,25 @@ namespace Grace.Runtime
         /// <summary>Part-object with built-in default methods</summary>
         public static readonly GraceObject DefaultMethods = new GraceObject();
 
+        private static Dictionary<string, Method> defaultExtensions =
+            new Dictionary<string, Method>();
+
+        private bool includeDefaults;
+
+        /// <summary>
+        /// Apply an extension trait to all future objects.
+        /// </summary>
+        /// <param name="meths">
+        /// Dictionary of methods to add.
+        /// </param>
+        public static void ExtendDefaultMethods(
+                IDictionary<string, Method> meths
+                )
+        {
+            foreach (var m in meths)
+                defaultExtensions[m.Key] = m.Value;
+        }
+
         /// <summary>Name of this object for debugging</summary>
         /// <value>This property gets/sets the value of the field name</value>
         public string TagName
@@ -119,6 +138,7 @@ namespace Grace.Runtime
         private void initialise(bool defaults)
         {
             Identity = this;
+            includeDefaults = defaults;
             if (defaults)
             {
                 // The default methods are found on all objects,
@@ -225,6 +245,8 @@ namespace Grace.Runtime
         {
             if (objectMethods.ContainsKey(req.Name))
                 return true;
+            if (includeDefaults && defaultExtensions.ContainsKey(req.Name))
+                return true;
             return false;
         }
 
@@ -269,6 +291,8 @@ namespace Grace.Runtime
                     objectMethods[name] = getLazyMethod(name);
                 return objectMethods[name];
             }
+            if (includeDefaults && defaultExtensions.ContainsKey(name))
+                return defaultExtensions[name];
             return null;
         }
 

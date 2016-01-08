@@ -35,21 +35,18 @@ namespace Grace.Runtime
         }
 
         private GraceNumber(Rational val)
-            : base(true)
         {
             Value = val;
             addMethods();
         }
 
         private GraceNumber(int val)
-            : base(true)
         {
             Value = Rational.Create(val);
             addMethods();
         }
 
         private GraceNumber(double val)
-            : base(true)
         {
             Value = Rational.Create(val);
             addMethods();

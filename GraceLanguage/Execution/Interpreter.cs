@@ -205,7 +205,16 @@ namespace Grace.Execution
         /// <param name="ext">Object containing extension traits.</param>
         public void LoadExtensionsFromObject(GraceObject ext)
         {
-            var req = MethodRequest.Nullary("NumberExtension");
+            var req = MethodRequest.Nullary("ObjectExtension");
+            req.IsInherits = true;
+            if (ext.RespondsTo(req))
+            {
+                var uo = new UserObject();
+                req.InheritingObject = uo;
+                ext.Request(this, req);
+                GraceObject.ExtendDefaultMethods(req.InheritedMethods);
+            }
+            req = MethodRequest.Nullary("NumberExtension");
             req.IsInherits = true;
             if (ext.RespondsTo(req))
             {
