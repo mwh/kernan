@@ -92,20 +92,15 @@ namespace Grace.Runtime
 
         private static int[] emptyIntArray = new int[0];
         private GraceString(string val)
+            : base(createSharedMethods())
         {
             Value = val;
-            addMethods();
         }
 
-        private void addMethods()
+        private static Dictionary<string, Method> createSharedMethods()
         {
-            if (sharedMethods == null)
-                createSharedMethods();
-            AddMethods(sharedMethods);
-        }
-
-        private static void createSharedMethods()
-        {
+            if (sharedMethods != null)
+                return sharedMethods;
             sharedMethods = new Dictionary<string, Method>
             {
                 { "==", new DelegateMethodTyped1<GraceString>(mEqualsEquals) },
@@ -132,6 +127,7 @@ namespace Grace.Runtime
                 { "|", Matching.OrMethod },
                 { "&", Matching.AndMethod },
             };
+            return sharedMethods;
         }
 
         /// <summary>
