@@ -35,32 +35,27 @@ namespace Grace.Runtime
         }
 
         private GraceNumber(Rational val)
+            : base(createSharedMethods())
         {
             Value = val;
-            addMethods();
         }
 
         private GraceNumber(int val)
+            : base(createSharedMethods())
         {
             Value = Rational.Create(val);
-            addMethods();
         }
 
         private GraceNumber(double val)
+            : base(createSharedMethods())
         {
             Value = Rational.Create(val);
-            addMethods();
         }
 
-        private void addMethods()
+        private static Dictionary<string, Method> createSharedMethods()
         {
-            if (sharedMethods == null)
-                createSharedMethods();
-            AddMethods(sharedMethods);
-        }
-
-        private static void createSharedMethods()
-        {
+            if (sharedMethods != null)
+                return sharedMethods;
             sharedMethods = new Dictionary<string, Method>
             {
                 { "==", new DelegateMethodTyped1<GraceNumber>(mEqualsEquals) },
@@ -89,6 +84,7 @@ namespace Grace.Runtime
                 { "integral",
                     new DelegateMethodTyped0<GraceNumber>(mIntegral) },
             };
+            return sharedMethods;
         }
 
         /// <summary>
