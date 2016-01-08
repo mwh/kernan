@@ -10,6 +10,8 @@ namespace Grace.Runtime
     public class GraceString : GraceObject
     {
 
+        private static Dictionary<string, Method> sharedMethods;
+
         /// <summary>This string in normalization form C</summary>
         private string nfc {
             get {
@@ -93,83 +95,79 @@ namespace Grace.Runtime
             : base(true)
         {
             Value = val;
-            AddMethod("++", null);
-            AddMethod("==", null);
-            AddMethod("!=", null);
-            AddMethod("<", null);
-            AddMethod(">", null);
-            AddMethod("<=", null);
-            AddMethod(">=", null);
-            AddMethod("at", null);
-            AddMethod("[]", null);
-            AddMethod("size", null);
-            AddMethod("match", null);
-            AddMethod("asString", null);
-            AddMethod("substringFrom to", null);
-            AddMethod("codepoints", null);
-            AddMethod("do", null);
-            AddMethod("hash", null);
-            AddMethod("|", Matching.OrMethod);
-            AddMethod("&", Matching.AndMethod);
+            addMethods();
         }
 
-        /// <inheritdoc />
-        protected override Method getLazyMethod(string name)
+        private void addMethods()
         {
-            switch(name) {
-                case "++":
-                    return new DelegateMethod1Ctx(mConcatenate);
-                case "==": return new DelegateMethod1(EqualsEquals);
-                case "!=": return new DelegateMethod1(NotEquals);
-                case "<": return new DelegateMethod1(mLessThan);
-                case ">": return new DelegateMethod1(mGreaterThan);
-                case "<=": return new DelegateMethod1(mLessThanEqual);
-                case ">=": return new DelegateMethod1(mGreaterThanEqual);
-                case "at": return new DelegateMethod1Ctx(At);
-                case "[]": return new DelegateMethod1Ctx(At);
-                case "size": return new DelegateMethod0(Size);
-                case "match": return new DelegateMethod1Ctx(Match);
-                case "asString": return new DelegateMethod0(AsString);
-                case "substringFrom to":
-                                 return new DelegateMethodReq(
-                                         substringFromTo);
-                case "codepoints": return new DelegateMethod0(mCodepoints);
-                case "hash": return new DelegateMethod0(mHash);
-                case "do": return new DelegateMethod1Ctx(mDo);
-            }
-            return base.getLazyMethod(name);
+            if (sharedMethods == null)
+                createSharedMethods();
+            AddMethods(sharedMethods);
         }
 
-        private GraceObject mConcatenate(EvaluationContext ctx,
+        private static void createSharedMethods()
+        {
+            sharedMethods = new Dictionary<string, Method>
+            {
+                { "==", new DelegateMethodTyped1<GraceString>(mEqualsEquals) },
+                { "!=", new DelegateMethodTyped1<GraceString>(mNotEquals) },
+                { "++",
+                    new DelegateMethodTyped1Ctx<GraceString>(mConcatenate) },
+                { ">", new DelegateMethodTyped1<GraceString>(mGreaterThan) },
+                { ">=",
+                    new DelegateMethodTyped1<GraceString>(mGreaterThanEqual) },
+                { "<", new DelegateMethodTyped1<GraceString>(mLessThan) },
+                { "<=", new DelegateMethodTyped1<GraceString>(mLessThanEqual) },
+                { "at", new DelegateMethodTyped1Ctx<GraceString>(mAt) },
+                { "[]", new DelegateMethodTyped1Ctx<GraceString>(mAt) },
+                { "size", new DelegateMethodTyped0<GraceString>(mSize) },
+                { "do", new DelegateMethodTyped1Ctx<GraceString>(mDo) },
+                { "asString",
+                    new DelegateMethodTyped0<GraceString>(mAsString) },
+                { "substringFrom to",
+                    new DelegateMethodTyped<GraceString>(substringFromTo) },
+                { "codepoints",
+                    new DelegateMethodTyped0<GraceString>(mCodepoints) },
+                { "match", new DelegateMethodTyped1Ctx<GraceString>(mMatch) },
+                { "hash", new DelegateMethodTyped0<GraceString>(mHash) },
+                { "|", Matching.OrMethod },
+                { "&", Matching.AndMethod },
+            };
+        }
+
+        private static GraceObject mConcatenate(EvaluationContext ctx,
+                GraceString self,
                 GraceObject other)
         {
             var oth = other.FindNativeParent<GraceString>();
             if (oth != null)
-                return GraceString.Create(Value + oth.Value);
+                return GraceString.Create(self.Value + oth.Value);
             var op = other as GraceObjectProxy;
             if (op != null)
-                return GraceString.Create(Value + op.Object);
+                return GraceString.Create(self.Value + op.Object);
             other = other.Request(ctx, MethodRequest.Nullary("asString"));
             oth = other.FindNativeParent<GraceString>();
-            return GraceString.Create(Value + oth.Value);
+            return GraceString.Create(self.Value + oth.Value);
         }
 
-        /// <summary>Native method for Grace ==</summary>
-        /// <param name="other">Argument to the method</param>
-        public GraceObject EqualsEquals(GraceObject other)
+        private static GraceObject mEqualsEquals(
+                GraceString self,
+                GraceObject other
+                )
         {
             var oth = other.FindNativeParent<GraceString>();
             return (oth == null) ? GraceBoolean.False
-                                 : GraceBoolean.Create(nfc == oth.nfc);
+                                 : GraceBoolean.Create(self.nfc == oth.nfc);
         }
 
-        /// <summary>Native method for Grace !=</summary>
-        /// <param name="other">Argument to the method</param>
-        public GraceObject NotEquals(GraceObject other)
+        private static GraceObject mNotEquals(
+                GraceString self,
+                GraceObject other
+                )
         {
             var oth = other.FindNativeParent<GraceString>();
             return (oth == null) ? GraceBoolean.True
-                                 : GraceBoolean.Create(nfc != oth.nfc);
+                                 : GraceBoolean.Create(self.nfc != oth.nfc);
         }
 
         /// <summary>
@@ -211,121 +209,111 @@ namespace Grace.Runtime
             return 0;
         }
 
-        /// <summary>Native method for Grace &lt;</summary>
-        /// <param name="other">Argument to the method</param>
-        /// <remarks>
-        /// This compares strings according to the UTS #10 collation
-        /// algorithm, using the current culture taken from the
-        /// environment.
-        /// </remarks>
-        private GraceObject mLessThan(GraceObject other)
+        private static GraceObject mLessThan(
+                GraceString self,
+                GraceObject other
+                )
         {
             var oth = other.FindNativeParent<GraceString>();
             return (oth == null) ? GraceBoolean.False
                                  : GraceBoolean.Create(
-                                             compare(this, oth) < 0
+                                             compare(self, oth) < 0
                                          );
         }
 
-        /// <summary>Native method for Grace &gt;</summary>
-        /// <param name="other">Argument to the method</param>
-        /// <remarks>
-        /// This compares strings according to the UTS #10 collation
-        /// algorithm, using the current culture taken from the
-        /// environment.
-        /// </remarks>
-        private GraceObject mGreaterThan(GraceObject other)
+        private static GraceObject mGreaterThan(
+                GraceString self,
+                GraceObject other
+                )
         {
             var oth = other.FindNativeParent<GraceString>();
             return (oth == null) ? GraceBoolean.False
                                  : GraceBoolean.Create(
-                                             compare(this, oth) > 0
+                                             compare(self, oth) > 0
                                          );
         }
 
-        /// <summary>Native method for Grace &lt;</summary>
-        /// <param name="other">Argument to the method</param>
-        /// <remarks>
-        /// This compares strings according to the UTS #10 collation
-        /// algorithm, using the current culture taken from the
-        /// environment.
-        /// </remarks>
-        private GraceObject mLessThanEqual(GraceObject other)
+        private static GraceObject mLessThanEqual(
+                GraceString self,
+                GraceObject other
+                )
         {
             var oth = other.FindNativeParent<GraceString>();
             return (oth == null) ? GraceBoolean.False
                                  : GraceBoolean.Create(
-                                             compare(this, oth) <= 0
+                                             compare(self, oth) <= 0
                                          );
         }
 
-        /// <summary>Native method for Grace &gt;</summary>
-        /// <param name="other">Argument to the method</param>
-        /// <remarks>
-        /// This compares strings according to the UTS #10 collation
-        /// algorithm, using the current culture taken from the
-        /// environment.
-        /// </remarks>
-        private GraceObject mGreaterThanEqual(GraceObject other)
+        private static GraceObject mGreaterThanEqual(
+                GraceString self,
+                GraceObject other
+                )
         {
             var oth = other.FindNativeParent<GraceString>();
             return (oth == null) ? GraceBoolean.False
                                  : GraceBoolean.Create(
-                                             compare(this, oth) >= 0
+                                             compare(self, oth) >= 0
                                          );
         }
 
-        /// <summary>Native method for Grace at</summary>
-        /// <param name="ctx">Current interpreter</param>
-        /// <param name="other">Argument to the method</param>
-        public GraceObject At(EvaluationContext ctx, GraceObject other)
+        private static GraceObject mAt(
+                EvaluationContext ctx,
+                GraceString self,
+                GraceObject other
+                )
         {
             var oth = other.FindNativeParent<GraceNumber>();
             if (oth == null)
                 return GraceString.Create("bad index");
             int idx = oth.GetInt() - 1;
-            if (idx >= graphemeIndices.Length || idx < 0)
+            if (idx >= self.graphemeIndices.Length || idx < 0)
                 ErrorReporting.RaiseError(ctx, "R2013",
                         new Dictionary<string, string> {
                             { "index", "" + (idx + 1) },
-                            { "valid", graphemeIndices.Length > 0 ?
-                                "1 .. " + graphemeIndices.Length
+                            { "valid", self.graphemeIndices.Length > 0 ?
+                                "1 .. " + self.graphemeIndices.Length
                                 : "none (empty)" }
                         }, "Index must be a number");
-            int start = graphemeIndices[idx];
-            return GraceString.Create(StringInfo.GetNextTextElement(Value, start));
+            int start = self.graphemeIndices[idx];
+            return GraceString.Create(
+                    StringInfo.GetNextTextElement(self.Value, start));
         }
 
-        private GraceObject mDo(EvaluationContext ctx, GraceObject blk)
+        private static GraceObject mDo(
+                EvaluationContext ctx,
+                GraceString self,
+                GraceObject blk
+                )
         {
             var req = MethodRequest.Single("apply", null);
-            for (var i = 0; i < graphemeIndices.Length; i++)
+            for (var i = 0; i < self.graphemeIndices.Length; i++)
             {
-                int start = graphemeIndices[i];
-                string c = StringInfo.GetNextTextElement(Value, start);
+                int start = self.graphemeIndices[i];
+                string c = StringInfo.GetNextTextElement(self.Value, start);
                 req[0].Arguments[0] = GraceString.Create(c);
                 blk.Request(ctx, req);
             }
             return GraceObject.Done;
         }
 
-        private GraceObject mHash()
+        private static GraceObject mHash(GraceString self)
         {
-            return GraceNumber.Create(nfc.GetHashCode());
+            return GraceNumber.Create(self.nfc.GetHashCode());
         }
 
-        private GraceObject mCodepoints()
+        private static GraceObject mCodepoints(GraceString self)
         {
-            if (codepointsObject == null)
-                codepointsObject = new StringCodepoints(Value);
-            return codepointsObject;
+            if (self.codepointsObject == null)
+                self.codepointsObject = new StringCodepoints(self.Value);
+            return self.codepointsObject;
         }
 
-        /// <summary>Native method for Grace substringFrom To</summary>
-        /// <param name="ctx">Current interpreter</param>
-        /// <param name="req">Request arriving at this method</param>
-        private GraceObject substringFromTo(EvaluationContext ctx,
-                MethodRequest req)
+        private static GraceObject substringFromTo(
+                EvaluationContext ctx,
+                MethodRequest req,
+                GraceString self
+                )
         {
             MethodHelper.CheckArity(ctx, req, 1, 1);
             // Index of first grapheme to include.
@@ -357,36 +345,34 @@ namespace Grace.Runtime
                 stInd = 0;
             if (enInd < 0)
                 enInd = 0;
-            if (enInd >= graphemeIndices.Length)
-                enInd = graphemeIndices.Length;
-            int endIndex = enInd < graphemeIndices.Length
-                ? graphemeIndices[enInd]
-                : Value.Length;
-            stInd = graphemeIndices[stInd];
-            return GraceString.Create(Value.Substring(stInd,
+            if (enInd >= self.graphemeIndices.Length)
+                enInd = self.graphemeIndices.Length;
+            int endIndex = enInd < self.graphemeIndices.Length
+                ? self.graphemeIndices[enInd]
+                : self.Value.Length;
+            stInd = self.graphemeIndices[stInd];
+            return GraceString.Create(self.Value.Substring(stInd,
                         endIndex - stInd));
         }
 
-        /// <summary>Native method for Grace size</summary>
-        public GraceObject Size()
+        private static GraceObject mSize(GraceString self)
         {
-            return GraceNumber.Create(graphemeIndices.Length);
+            return GraceNumber.Create(self.graphemeIndices.Length);
         }
 
-        /// <summary>Native method for Grace match</summary>
-        /// <param name="ctx">Current interpreter</param>
-        /// <param name="target">Target of the match</param>
-        public GraceObject Match(EvaluationContext ctx, GraceObject target)
+        private static GraceObject mMatch(
+                EvaluationContext ctx,
+                GraceString self,
+                GraceObject target)
         {
-            return (EqualsEquals(target) == GraceBoolean.True)
+            return (mEqualsEquals(self, target) == GraceBoolean.True)
                 ? Matching.SuccessfulMatch(ctx, target)
                 : Matching.FailedMatch(ctx, target);
         }
 
-        /// <summary>Native method for Grace asString</summary>
-        public GraceObject AsString()
+        private static GraceObject mAsString(GraceString self)
         {
-            return this;
+            return self;
         }
 
         /// <inheritdoc/>
