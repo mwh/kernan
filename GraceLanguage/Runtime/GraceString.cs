@@ -135,6 +135,20 @@ namespace Grace.Runtime
             };
         }
 
+        /// <summary>
+        /// Apply an extension trait to all future instances of this type.
+        /// </summary>
+        /// <param name="meths">
+        /// Dictionary of methods to add.
+        /// </param>
+        public static void ExtendWith(IDictionary<string, Method> meths)
+        {
+            if (sharedMethods == null)
+                createSharedMethods();
+            foreach (var m in meths)
+                sharedMethods[m.Key] = m.Value; 
+        }
+
         private static GraceObject mConcatenate(EvaluationContext ctx,
                 GraceString self,
                 GraceObject other)

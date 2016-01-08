@@ -214,6 +214,15 @@ namespace Grace.Execution
                 ext.Request(this, req);
                 GraceNumber.ExtendWith(req.InheritedMethods);
             }
+            req = MethodRequest.Nullary("StringExtension");
+            req.IsInherits = true;
+            if (ext.RespondsTo(req))
+            {
+                var uo = new UserObject();
+                req.InheritingObject = uo;
+                ext.Request(this, req);
+                GraceString.ExtendWith(req.InheritedMethods);
+            }
         }
 
         /// <summary>
