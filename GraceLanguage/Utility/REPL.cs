@@ -69,11 +69,20 @@ namespace Grace.Utility
             result = null;
             ParseNode module;
             ObjectConstructorNode mod = null;
+            var isExtensionTrait = false;
             try {
                 var p = new Parser("source code", line);
                 module = p.Parse();
+                var opm = (ObjectParseNode)module;
+                if (opm.Body.Count == 1)
+                {
+                    // Tricky hack to let extensions be defined interactively.
+                    var trait = opm.Body[0] as TraitDeclarationParseNode;
+                    isExtensionTrait = (trait != null
+                            && trait.Signature.Name.EndsWith("Extension"));
+                }
                 var trans = new ExecutionTreeTranslator();
-                mod = (ObjectConstructorNode)trans.Translate((ObjectParseNode)module);
+                mod = (ObjectConstructorNode)trans.Translate(opm);
             }
             catch (StaticErrorException ex)
             {
@@ -145,6 +154,8 @@ namespace Grace.Utility
                         }
                         result = ret;
                     }
+                    if (isExtensionTrait)
+                        interp.LoadExtensionsFromObject(obj);
                 }
                 catch (GraceExceptionPacketException e)
                 {
