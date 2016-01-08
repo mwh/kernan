@@ -1720,11 +1720,11 @@ namespace Grace.Parsing
             }
             Token lastToken = lexerCurrent();
             indentColumn = firstBodyToken.column;
-            while (!(lexer.current is RBraceToken))
+            while (awaiting<RBraceToken>(start))
             {
                 if (lexer.current.column != indentColumn)
                 {
-                    reportError("P1016", new Dictionary<string, string>()
+                    reportError("P1016", new Dictionary<string, string>
                             {
                                 { "required indentation", "" + (indentColumn - 1) },
                                 { "given indentation", "" + (lexer.current.column - 1) }
