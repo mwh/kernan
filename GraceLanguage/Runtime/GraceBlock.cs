@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Grace.Execution;
+using Grace.Parsing;
 
 namespace Grace.Runtime
 {
@@ -16,6 +17,7 @@ namespace Grace.Runtime
         private GraceObject Pattern;
         private bool explicitPattern;
         private BlockNode node;
+        private GraceString stringification;
 
         /// <summary>Whether this block is variadic or not</summary>
         public bool Variadic { get; set; }
@@ -95,7 +97,34 @@ namespace Grace.Runtime
 
         private GraceObject mAsString(EvaluationContext ctx)
         {
-            return GraceString.Create("Block[]");
+            if (stringification != null)
+                return stringification;
+            var p = ParseNodeMeta.PrettyPrint(ctx, node.Origin);
+            if (p.LastIndexOf(Environment.NewLine) != -1
+                    && node.Body.Count != 1)
+            {
+                var last = "...";
+                if (node.Body.Count > 0)
+                {
+                    last = "... " + ParseNodeMeta.PrettyPrint(ctx,
+                            node.Body.Last().Origin);
+                }
+                var bpn = node.Origin as BlockParseNode;
+                if (bpn == null)
+                    p = String.Join(", ",
+                            from x in parameters
+                            select ParseNodeMeta.PrettyPrint(ctx, x.Origin))
+                        + " -> " + last;
+                else
+                    p = String.Join(", ",
+                            from x in bpn.Parameters
+                            select ParseNodeMeta.PrettyPrint(ctx, x))
+                        + " -> " + last;
+            }
+            stringification = GraceString.Create("Block["
+                    + p
+                    + "]");
+            return stringification;
         }
 
         private GraceObject mSpawn(EvaluationContext ctx)

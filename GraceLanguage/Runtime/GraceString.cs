@@ -392,7 +392,7 @@ namespace Grace.Runtime
 
         /// <summary>Create a Grace string</summary>
         /// <param name="val">Value of string to create</param>
-        public static GraceObject Create(string val)
+        public static GraceString Create(string val)
         {
             return new GraceString(val);
         }
