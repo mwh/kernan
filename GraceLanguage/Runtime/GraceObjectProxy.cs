@@ -86,6 +86,15 @@ namespace Grace.Runtime
                 case "prefix!":
                     return GraceObjectProxy.Create(!(dynamic)obj);
                 case "[]":
+                    if (Interpreter.JSIL)
+                        // Calling get_Item directly is iffy, but
+                        // works on JSIL where accessing Item fails,
+                        // and [] uses native (the wrong) [].
+                        return GraceObjectProxy.Create(
+                            ((dynamic)obj)
+                                .get_Item(
+                                    (dynamic)viewAsNative(req[0].Arguments[0]))
+                            );
                     return GraceObjectProxy.Create(
                             ((dynamic)obj)[
                                 (dynamic)viewAsNative(req[0].Arguments[0])]);
