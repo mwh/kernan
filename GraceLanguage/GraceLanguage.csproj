@@ -58,6 +58,7 @@
     <Compile Include="Runtime\GraceType.cs" />
     <Compile Include="Runtime\MethodRequest.cs" />
     <Compile Include="Runtime\GraceBlock.cs" />
+    <Compile Include="Runtime\Matching.cs" />
     <Compile Include="Runtime\GraceThread.cs" />
     <Compile Include="Runtime\GraceBoolean.cs" />
     <Compile Include="Runtime\GraceNumber.cs" />
