@@ -1676,7 +1676,7 @@ end:
         /// <inheritdoc/>
         public override GraceObject Evaluate(EvaluationContext ctx)
         {
-            GraceBlock ret = GraceBlock.Create(ctx, parameters, body);
+            GraceBlock ret = GraceBlock.Create(ctx, parameters, body, this);
             if (_forcedPattern != null)
             {
                 ret.ForcePattern(_forcedPattern.Evaluate(ctx));

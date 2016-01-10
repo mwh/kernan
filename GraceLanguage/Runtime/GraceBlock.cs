@@ -15,15 +15,17 @@ namespace Grace.Runtime
         private readonly Interpreter.ScopeMemo lexicalScope;
         private GraceObject Pattern;
         private bool explicitPattern;
+        private BlockNode node;
 
         /// <summary>Whether this block is variadic or not</summary>
         public bool Variadic { get; set; }
 
         private GraceBlock(EvaluationContext ctx, List<Node> parameters,
-                List<Node> body)
+                List<Node> body, BlockNode node)
         {
             this.parameters = parameters;
             this.body = body;
+            this.node = node;
             lexicalScope = ctx.Memorise();
             AddMethod("apply", null);
             AddMethod("spawn", null);
@@ -82,11 +84,13 @@ namespace Grace.Runtime
         /// <param name="ctx">Current interpreter</param>
         /// <param name="parameters">Parameter list</param>
         /// <param name="body">Nodes in the body of the block</param>
+        /// <param name="node">AST node of this block</param>
         public static GraceBlock Create(EvaluationContext ctx,
                 List<Node> parameters,
-                List<Node> body)
+                List<Node> body,
+                BlockNode node)
         {
-            return new GraceBlock(ctx, parameters, body);
+            return new GraceBlock(ctx, parameters, body, node);
         }
 
         private GraceObject mAsString(EvaluationContext ctx)
