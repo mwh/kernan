@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.IO;
+using Grace.Runtime;
+using Grace.Execution;
 
 namespace Grace.Parsing
 {
@@ -1936,4 +1939,130 @@ namespace Grace.Parsing
 
     }
 
+    /// <summary>
+    /// Encapsulates access to Grace patterns matching parse nodes
+    /// exposed through proxies.
+    /// </summary>
+    public static class ParseNodeMeta
+    {
+        private static Dictionary<string, GraceObject> parseNodes;
+
+        /// <summary>
+        /// Get dictionary of parse node names to patterns.
+        /// </summary>
+        public static Dictionary<string, GraceObject> GetPatternDict()
+        {
+            if (parseNodes == null)
+                parseNodes = new Dictionary<string, GraceObject> {
+                    { "Object", new NativeTypePattern<ObjectParseNode>() },
+                    { "MethodDeclaration",
+                        new NativeTypePattern<MethodDeclarationParseNode>() },
+                    { "ClassDeclaration",
+                        new NativeTypePattern<ClassDeclarationParseNode>() },
+                    { "TraitDeclaration",
+                        new NativeTypePattern<TraitDeclarationParseNode>() },
+                    { "TypeStatement",
+                        new NativeTypePattern<TypeStatementParseNode>() },
+                    { "Type", new NativeTypePattern<TypeParseNode>() },
+                    { "Signature",
+                        new NativeTypePattern<SignatureParseNode>() },
+                    { "SignaturePart",
+                        new NativeTypePattern<SignaturePartParseNode>() },
+                    { "Block", new NativeTypePattern<BlockParseNode>() },
+                    { "VarArgsParameter",
+                        new NativeTypePattern<VarArgsParameterParseNode>() },
+                    { "TypedParameter",
+                        new NativeTypePattern<TypedParameterParseNode>() },
+                    { "VarDeclaration",
+                        new NativeTypePattern<VarDeclarationParseNode>() },
+                    { "DefDeclaration",
+                        new NativeTypePattern<DefDeclarationParseNode>() },
+                    { "Annotations",
+                        new NativeTypePattern<AnnotationsParseNode>() },
+                    { "Operator", new NativeTypePattern<OperatorParseNode>() },
+                    { "PrefixOperator",
+                        new NativeTypePattern<PrefixOperatorParseNode>() },
+                    { "Bind", new NativeTypePattern<BindParseNode>() },
+                    { "Number", new NativeTypePattern<NumberParseNode>() },
+                    { "Identifier",
+                        new NativeTypePattern<IdentifierParseNode>() },
+                    { "StringLiteral",
+                        new NativeTypePattern<StringLiteralParseNode>() },
+                    { "InterpolatedString",
+                        new NativeTypePattern<InterpolatedStringParseNode>() },
+                    { "ImplicitBracketRequest",
+                        new NativeTypePattern
+                            <ImplicitBracketRequestParseNode>() },
+                    { "ExplicitBracketRequest",
+                        new NativeTypePattern
+                            <ExplicitBracketRequestParseNode>() },
+                    { "ImplicitReceiverRequest",
+                        new NativeTypePattern
+                            <ImplicitReceiverRequestParseNode>() },
+                    { "ExplicitReceiverRequest",
+                        new NativeTypePattern
+                            <ExplicitReceiverRequestParseNode>() },
+                    { "Inherits", new NativeTypePattern<InheritsParseNode>() },
+                    { "Uses", new NativeTypePattern<UsesParseNode>() },
+                    { "Alias", new NativeTypePattern<AliasParseNode>() },
+                    { "Exclude", new NativeTypePattern<ExcludeParseNode>() },
+                    { "Import", new NativeTypePattern<ImportParseNode>() },
+                    { "Dialect", new NativeTypePattern<DialectParseNode>() },
+                    { "Return", new NativeTypePattern<ReturnParseNode>() },
+                    { "Parenthesised",
+                        new NativeTypePattern<ParenthesisedParseNode>() },
+                    { "Comment", new NativeTypePattern<CommentParseNode>() },
+
+                };
+            return parseNodes;
+        }
+
+        private static GraceObject prettyPrinter;
+
+        private static GraceObject getPrettyPrinter(EvaluationContext ctx)
+        {
+            string dir = Path.GetDirectoryName(typeof(Interpreter).Assembly.Location);
+            string path = Path.Combine(dir, "pretty_printer.grace");
+            GraceObject ret;
+            LocalScope surrounding = new LocalScope();
+            surrounding.AddLocalDef("parseNodes",
+                    new DictionaryDataObject(GetPatternDict()));
+            ctx.Extend(surrounding);
+            using (StreamReader reader = File.OpenText(path))
+            {
+                var parser = new Parser("pretty_printer", reader.ReadToEnd());
+                var pt = parser.Parse() as ObjectParseNode;
+                var eMod = new ExecutionTreeTranslator().Translate(pt);
+                ret = eMod.Evaluate(ctx);
+            }
+            ctx.Unextend(surrounding);
+            return ret;
+        }
+
+        /// <summary>
+        /// Format a parse node into a string of Grace source code
+        /// that generates that parse tree.
+        /// </summary>
+        /// <param name="ctx">
+        /// Interpreter in which to execute the pretty-printer.
+        /// </param>
+        /// <param name="p">
+        /// Parse node to pretty-print.
+        /// </param>
+        public static string PrettyPrint(
+                EvaluationContext ctx,
+                ParseNode p
+                )
+        {
+            if (prettyPrinter == null)
+                prettyPrinter = getPrettyPrinter(ctx);
+            var req = MethodRequest.Single("formatParseNode",
+                    new GraceObjectProxy(p));
+            var r = prettyPrinter.Request(ctx, req);
+            var gs = r as GraceString;
+            if (gs == null)
+                return "";
+            return gs.Value.Replace("\u2028", Environment.NewLine);
+        }
+    }
 }

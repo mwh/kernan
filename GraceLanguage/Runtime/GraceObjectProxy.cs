@@ -80,6 +80,8 @@ namespace Grace.Runtime
                 case "^":
                     return GraceObjectProxy.Create(Math.Pow((dynamic)obj, (dynamic)viewAsNative(req[0].Arguments[0])));
                 case "asString":
+                    if (obj == null)
+                        return GraceString.Create("(null)");
                     return GraceString.Create(obj.ToString());
                 case "prefix!":
                     return GraceObjectProxy.Create(!(dynamic)obj);
