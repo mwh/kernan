@@ -62,6 +62,7 @@
     <Compile Include="Runtime\GraceBoolean.cs" />
     <Compile Include="Runtime\GraceNumber.cs" />
     <Compile Include="Runtime\GraceObject.cs" />
+    <Compile Include="Runtime\DictionaryDataObject.cs" />
     <Compile Include="Runtime\GraceObjectProxy.cs" />
     <Compile Include="Runtime\GraceString.cs" />
     <Compile Include="Runtime\Encoding.cs" />
