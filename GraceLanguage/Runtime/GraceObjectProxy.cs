@@ -134,6 +134,9 @@ namespace Grace.Runtime
             }
             if (o is int)
                 return GraceNumber.Create((dynamic)o);
+            var s = o as string;
+            if (s != null)
+                return GraceString.Create(s);
             return new GraceObjectProxy(o);
         }
     }
