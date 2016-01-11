@@ -47,6 +47,15 @@ def pnTypeStatement = parseNodes.TypeStatement
 
 def breakLines = false
 
+var useSemicolons := false
+
+method prettyPrintObjectBodyWithSemicolons(obj) {
+    useSemicolons := true
+    def ret = prettyPrintObjectBody(obj, "")
+    useSemicolons := false
+    ret
+}
+
 method formatParseNode(obj) {
     return prettyPrint(obj, "")
 }
@@ -130,7 +139,11 @@ method prettyPrintStatement(o, indent) {
         case { m : pnMethodDeclaration | pnClassDeclaration | pnTraitDeclaration
                 -> }
         case { m : pnComment -> ret := ret ++ "\n" }
-        case { _ -> ret := ret ++ ";" }
+        case { _ ->
+            if (useSemicolons) then {
+                ret := ret ++ ";"
+            }
+        }
     "{ret}\n"
 }
 

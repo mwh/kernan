@@ -23,6 +23,7 @@ namespace Grace
             ParseNode module;
             string filename = null;
             string mode = "run";
+            string prettyOption = "";
             bool verbose = false;
             string errorCodeTarget = null;
             var lines = new List<string>();
@@ -32,6 +33,13 @@ namespace Grace
                 var arg = args[i];
                 if (arg == "--parse-tree")
                     mode = "parse-tree";
+                else if (arg.StartsWith("--pretty-print="))
+                {
+                    mode = "pretty-print";
+                    prettyOption = arg.Substring(15);
+                }
+                else if (arg == "--pretty-print")
+                    mode = "pretty-print";
                 else if (arg == "--execution-tree")
                     mode = "execution-tree";
                 else if (arg == "--no-run")
@@ -109,6 +117,15 @@ namespace Grace
                     if (mode == "parse-tree")
                     {
                         module.DebugPrint(System.Console.Out, "");
+                        return 0;
+                    }
+                    if (mode == "pretty-print")
+                    {
+                        Console.Write(
+                                ParseNodeMeta.PrettyPrintModule(
+                                    interp,
+                                    (ObjectParseNode)module,
+                                    prettyOption == "semicolons"));
                         return 0;
                     }
                     //Console.WriteLine("========== TRANSLATING ==========");

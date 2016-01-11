@@ -2064,5 +2064,46 @@ namespace Grace.Parsing
                 return "";
             return gs.Value.Replace("\u2028", Environment.NewLine);
         }
+
+        /// <summary>
+        /// Format the body of an object parse node into a string of
+        /// Grace source code that generates that parse tree.
+        /// </summary>
+        /// <param name="ctx">
+        /// Interpreter in which to execute the pretty-printer.
+        /// </param>
+        /// <param name="p">
+        /// Object to pretty-print.
+        /// </param>
+        /// <param name="useSemicolons">
+        /// True to insert semicolons after every statement.
+        /// </param>
+        public static string PrettyPrintModule(
+                EvaluationContext ctx,
+                ObjectParseNode p,
+                bool useSemicolons
+                )
+        {
+            if (prettyPrinter == null)
+                prettyPrinter = getPrettyPrinter(ctx);
+            MethodRequest req;
+            if (useSemicolons)
+            {
+                req = MethodRequest.Single(
+                        "prettyPrintObjectBodyWithSemicolons",
+                    new GraceObjectProxy(p.Body));
+            }
+            else
+            {
+                req = MethodRequest.Single("prettyPrintObjectBody",
+                        new GraceObjectProxy(p.Body));
+                req[0].Arguments.Add(GraceString.Create(""));
+            }
+            var r = prettyPrinter.Request(ctx, req);
+            var gs = r as GraceString;
+            if (gs == null)
+                return "";
+            return gs.Value.Replace("\u2028", Environment.NewLine);
+        }
     }
 }
