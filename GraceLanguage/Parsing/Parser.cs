@@ -1620,12 +1620,14 @@ namespace Grace.Parsing
                 }
                 else if (lexer.current is ColonToken)
                 {
+                    indentColumn = indentStart;
                     // Definitely a parameter of some sort, has a type.
                     ParseNode type = parseTypeAnnotation();
                     ret.Parameters.Add(new TypedParameterParseNode(expr, type));
                 }
                 else if (lexer.current is CommaToken)
                 {
+                    indentColumn = indentStart;
                     // Can only be a parameter.
                     ret.Parameters.Add(expr);
                 }
