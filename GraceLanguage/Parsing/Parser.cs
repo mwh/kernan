@@ -73,6 +73,16 @@ namespace Grace.Parsing
                     localDescription);
         }
 
+        private void reportError(string code, Token t1,
+                Dictionary<string, string> vars,
+                string localDescription)
+        {
+            ErrorReporting.ReportStaticError(moduleName, t1.line,
+                    code,
+                    vars,
+                    localDescription);
+        }
+
         private void reportError(string code, Token t1, string localDescription)
         {
             var vars =
@@ -514,6 +524,14 @@ namespace Grace.Parsing
                 parseParameterList<RParenToken>(lp, theseParameters);
                 expect<RParenToken>();
                 nextToken();
+            }
+            if (theseParameters.Count != 1)
+            {
+                reportError("P1047", op,
+                        new Dictionary<string, string> {
+                            { "op", op.Name },
+                        },
+                        "Operator needs a parameter.");
             }
             ret.Final = true;
             return ret;
