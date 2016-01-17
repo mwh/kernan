@@ -754,7 +754,9 @@ namespace Grace.Parsing
         {
             Token start = lexer.current;
             nextToken();
-            expect<IdentifierToken>();
+            if (!(lexer.current is IdentifierToken
+                        || lexer.current is OperatorToken))
+                expect<IdentifierToken>();
             ClassDeclarationParseNode ret = new ClassDeclarationParseNode(start);
             ret.Signature = parseSignature(start, false);
             expect<LBraceToken>();
