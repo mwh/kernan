@@ -1044,6 +1044,8 @@ end:
         private List<DefDeclarationNode> defs = new List<DefDeclarationNode>();
         private List<VarDeclarationNode> vars = new List<VarDeclarationNode>();
 
+        private HashSet<string> fieldNames = new HashSet<string>();
+
         private List<Node> statements = new List<Node>();
 
         internal ObjectConstructorNode(Token token, ParseNode source)
@@ -1067,9 +1069,16 @@ end:
                 inheritsStatements.Add(i);
             }
             if (d != null)
+            {
                 defs.Add(d);
+                fieldNames.Add(d.Name);
+            }
             if (v != null)
+            {
                 vars.Add(v);
+                fieldNames.Add(v.Name);
+                fieldNames.Add(v.Name + " :=");
+            }
             body.Add(node);
             if (meth == null)
                 statements.Add(node);
@@ -1187,7 +1196,8 @@ end:
                 var theseMethods = i.Inherit(ctx, ret);
                 foreach (var kv in theseMethods)
                 {
-                    if (!methods.ContainsKey(kv.Key))
+                    if (!methods.ContainsKey(kv.Key)
+                            && !fieldNames.Contains(kv.Key))
                     {
                         if (inheritedMethods.Contains(kv.Key))
                         {
