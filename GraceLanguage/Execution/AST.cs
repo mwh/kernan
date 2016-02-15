@@ -262,7 +262,7 @@ namespace Grace.Execution
         public override GraceObject Evaluate(EvaluationContext ctx)
         {
             var mod = ctx.LoadModule(Path);
-            ctx.AddDef(Name, mod);
+            ctx.AddMinorDef(Name, mod);
             return GraceObject.Done;
         }
 
