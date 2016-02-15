@@ -1185,6 +1185,11 @@ end:
             // for the binding of unqualified names locally.
             var redirector = new SelfRedirectorObject(ret);
             ctx.Extend(redirector);
+            // An interior scope is used for the binding of "self"
+            // and any imported modules.
+            LocalScope interiorScope = new LocalScope("interior object scope");
+            interiorScope.AddLocalDef("self", ret);
+            ctx.ExtendMinor(interiorScope);
             var scope = ctx.Memorise();
             foreach (MethodNode m in methods.Values)
             {
@@ -1221,6 +1226,7 @@ end:
                 inheritedMethods.UnionWith(theseMethods.Keys);
             }
             redirector.SetMethods(meths.Keys);
+            ctx.Unextend(interiorScope);
             ctx.Unextend(redirector);
             return new UserObjectInitialiser(this, scope, cellMap);
         }
@@ -1400,20 +1406,19 @@ end:
             return GraceObject.Done;
         }
 
-        /// <summary>Respond to a given request with a given binding of the
-        /// receiver</summary>
+        /// <summary>
+        /// Respond to a given request.
+        /// </summary>
         /// <param name="ctx">Current interpreter</param>
-        /// <param name="self">Receiver of the request</param>
         /// <param name="req">Request that accessed this method</param>
         /// <returns>The return value of this method within
         /// this context and with these arguments.</returns>
         public virtual GraceObject Respond(EvaluationContext ctx,
-                GraceObject self, MethodRequest req)
+                MethodRequest req)
         {
             GraceObject ret = GraceObject.Done;
             Interpreter.ScopeMemo memo = ctx.Memorise();
             var myScope = new MethodScope(req.Name);
-            myScope.AddLocalDef("self", self);
             // Bind any local methods (types) on the scope
             foreach (var localMeth in Body.OfType<MethodNode>())
             {

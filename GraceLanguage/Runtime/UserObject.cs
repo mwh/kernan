@@ -195,11 +195,7 @@ namespace Grace.Runtime
                 UserObject obj)
         {
             ctx.Remember(scope);
-            var myScope = new LocalScope();
-            myScope.AddLocalDef("self", obj);
-            ctx.Extend(myScope);
             constructor.Initialise(ctx, obj, cellMapping);
-            ctx.Unextend(myScope);
             ctx.Forget(scope);
         }
     }

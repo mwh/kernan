@@ -163,7 +163,7 @@ namespace Grace.Runtime
             checkAccessibility(ctx, req);
             if (lexicalScope != null)
                 ctx.Remember(lexicalScope);
-            var ret = code.Respond(ctx, receiver, req);
+            var ret = code.Respond(ctx, req);
             if (lexicalScope != null)
                 ctx.Forget(lexicalScope);
             return ret;
