@@ -189,6 +189,8 @@ namespace Grace.Parsing
         {
             if (lexer.current is T)
                 return;
+            if (lexer.current is EndToken)
+                code = "P1001";
             ErrorReporting.ReportStaticError(moduleName, lexer.current.line,
                     code,
                     new Dictionary<string, string>() {
@@ -872,10 +874,20 @@ namespace Grace.Parsing
                     },
                     "Indentation must increase inside {}.");
             List<ParseNode> ret = new List<ParseNode>();
+            SignatureParseNode lastSig = null;
             while (awaiting<RBraceToken>(start))
             {
                 List<ParseNode> origComments = prepareComments();
                 takeLineComments();
+                if (lexer.current is RBraceToken && comments.Count > 0)
+                {
+                    // These can't just be dropped inline into
+                    // a type, so stick them on the last element
+                    // of the list.
+                    attachComments(lastSig, comments);
+                    restoreComments(origComments);
+                    break;
+                }
                 var sig = parseSignature(lexer.current, false);
                 takeSemicolon();
                 ret.Add(sig);
@@ -886,6 +898,7 @@ namespace Grace.Parsing
                         && lexer.current.line != start.line)
                     reportError("P1004", lexer.current,
                             "Unexpected token after statement.");
+                lastSig = sig;
             }
             lexer.NextToken();
             indentColumn = indentBefore;
