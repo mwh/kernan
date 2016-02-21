@@ -47,10 +47,27 @@ namespace Grace.Platform.Memory
             AddMethod("size", new DelegateMethod0(mSize));
         }
 
+        private static void checkIndex(
+                EvaluationContext ctx,
+                int i,
+                GraceObject[] data
+            )
+        {
+            if (i < 0 || i >= data.Length)
+                ErrorReporting.RaiseError(ctx, "R2013",
+                    new Dictionary<string, string> {
+                        { "index", "" + i },
+                        { "valid", "0.." + (data.Length - 1) }
+                    },
+                    "IndexError: Invalid index " + i
+                );
+        }
+
         private GraceObject mAt(EvaluationContext ctx, GraceObject index)
         {
             var num = index.FindNativeParent<GraceNumber>();
             var i = (int)num.Double;
+            checkIndex(ctx, i, data);
             var ret = data[i];
             if (ret == null)
             {
@@ -71,6 +88,7 @@ namespace Grace.Platform.Memory
             var val = req[1].Arguments[0];
             var num = index.FindNativeParent<GraceNumber>();
             var i = (int)num.Double;
+            checkIndex(ctx, i, data);
             data[i] = val;
             return GraceObject.Done;
         }
