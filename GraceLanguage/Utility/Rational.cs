@@ -594,8 +594,7 @@ namespace Grace.Utility
                         n = -n;
                         flip = true;
                     }
-                    while (n > d)
-                        n -= d;
+                    n = n % d;
                     if (flip)
                         n *= BigInteger.MinusOne;
                     fractional = new Rational(n, d);
