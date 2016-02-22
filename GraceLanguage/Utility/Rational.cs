@@ -160,6 +160,10 @@ namespace Grace.Utility
         {
             var quotient = a / b;
             var frac = quotient.Fractional;
+            if (frac < 0 && b > 0)
+                frac += 1;
+            else if (frac > 0 && b < 0)
+                frac -= 1;
             return frac * b;
         }
 
