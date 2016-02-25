@@ -349,7 +349,7 @@ namespace Grace.Execution
         }
 
         private Node createDestructuringPattern(ParseNode n,
-                List<Node> parameters)
+                List<Node> parameters, bool rhs)
         {
             if (n is NumberParseNode
                     || n is StringLiteralParseNode
@@ -359,13 +359,17 @@ namespace Grace.Execution
             }
             var id = n as IdentifierParseNode;
             var tppn = n as TypedParameterParseNode;
-            if (id != null)
+            if (id != null && !rhs)
             {
                 parameters.Add(new ParameterNode(id.Token, id));
                 var ret = new PreludeRequestNode(id.Token, id);
                 ret.AddPart(new RequestPartNode("_VariablePattern",
                             new List<Node>(), new List<Node>()));
                 return ret;
+            }
+            else if (id != null)
+            {
+                return id.Visit(this);
             }
             if (tppn != null)
             {
@@ -380,7 +384,7 @@ namespace Grace.Execution
                             {
                                 varPattern,
                                 createDestructuringPattern(tppn.Type,
-                                        parameters)
+                                        parameters, true)
                             }));
                 return ret;
             }
@@ -416,7 +420,8 @@ namespace Grace.Execution
                 }
                 foreach (var a in args)
                 {
-                    madpArgs.Add(createDestructuringPattern(a, parameters));
+                    madpArgs.Add(createDestructuringPattern(a, parameters,
+                                false));
                 }
                 var ret = new PreludeRequestNode(n.Token, n);
                 ret.AddPart(new RequestPartNode("_MatchAndDestructuringPattern",
@@ -463,7 +468,8 @@ namespace Grace.Execution
                     return null;
                 }
                 // At this point, we know it is a destructuring match
-                return createDestructuringPattern(tppn, parameters);
+                return createDestructuringPattern(tppn, parameters,
+                        false);
             }
             parameters.Add(
                     new ParameterNode(tppn.Token,
@@ -683,6 +689,18 @@ namespace Grace.Execution
         public Node Visit(ParenthesisedParseNode ppn)
         {
             return ppn.Expression.Visit(this);
+        }
+
+        /// <inheritdoc />
+        public Node Visit(TypedParameterParseNode tppn)
+        {
+            ErrorReporting.ReportStaticError(tppn.Token.Module,
+                    tppn.Line, "P1023",
+                    new Dictionary<string, string> {
+                        { "token", "" + tppn.Token }
+                    },
+                    "Unexpected ':' in argument list" );
+            return null;
         }
 
         /// <inheritdoc />

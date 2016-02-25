@@ -34,6 +34,9 @@ namespace Grace.Parsing
         /// <summary>Visit an OperatorParseNode</summary>
         /// <param name="opn">OperatorParseNode to visit</param>
         T Visit(OperatorParseNode opn);
+        /// <summary>Visit a TypedParameterParseNode</summary>
+        /// <param name="tppn">TypedParameterParseNode to visit</param>
+        T Visit(TypedParameterParseNode tppn);
         /// <summary>Visit a StringLiteralParseNode</summary>
         /// <param name="slpn">StringLiteralParseNode to visit</param>
         T Visit(StringLiteralParseNode slpn);

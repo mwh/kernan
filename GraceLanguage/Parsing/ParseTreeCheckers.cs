@@ -80,6 +80,13 @@ namespace Grace.Parsing
         }
 
         /// <inheritdoc/>
+        public virtual ParseNode Visit(TypedParameterParseNode tppn)
+        {
+            tppn.Type.Visit(this);
+            return tppn;
+        }
+
+        /// <inheritdoc/>
         public virtual ParseNode Visit(StringLiteralParseNode slpn)
         {
             return slpn;

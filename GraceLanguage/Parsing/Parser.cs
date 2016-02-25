@@ -1781,8 +1781,9 @@ namespace Grace.Parsing
             return ret;
         }
 
-        private void parseArgumentList(List<ParseNode> arguments)
+        private bool parseArgumentList(List<ParseNode> arguments)
         {
+            var ret = false;
             if (lexer.current is LParenToken)
             {
                 Token start = lexer.current;
@@ -1790,6 +1791,15 @@ namespace Grace.Parsing
                 while (awaiting<RParenToken>(start))
                 {
                     ParseNode expr = parseExpression();
+                    if (lexer.current is ColonToken)
+                    {
+                        ret = true;
+                        var colon = lexer.current;
+                        nextToken();
+                        ParseNode pat = parseExpression();
+                        expr = new TypedParameterParseNode(expr, pat,
+                                colon);
+                    }
                     arguments.Add(expr);
                     consumeBlankLines();
                     if (lexer.current is CommaToken)
@@ -1813,6 +1823,7 @@ namespace Grace.Parsing
             {
                 arguments.Add(parseTerm());
             }
+            return ret;
         }
 
         private void parseGenericArgumentList(List<ParseNode> arguments)

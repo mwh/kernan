@@ -676,6 +676,14 @@ namespace Grace.Parsing
             this._type = type;
         }
 
+        internal TypedParameterParseNode(ParseNode name, ParseNode type,
+                Token token)
+            : base(token)
+        {
+            this._name = name;
+            this._type = type;
+        }
+
         /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
