@@ -352,8 +352,7 @@ namespace Grace.Execution
                 List<Node> parameters, bool rhs)
         {
             if (n is NumberParseNode
-                    || n is StringLiteralParseNode
-                    || n is OperatorParseNode)
+                    || n is StringLiteralParseNode)
             {
                 return n.Visit(this);
             }
@@ -370,6 +369,51 @@ namespace Grace.Execution
             else if (id != null)
             {
                 return id.Visit(this);
+            }
+            var op = n as OperatorParseNode;
+            if (op != null)
+            {
+                if (op.Name == "&")
+                {
+                    var ret = new PreludeRequestNode(op.Token, op);
+                    var left = createDestructuringPattern(
+                            op.Left, parameters, true);
+                    var right = createDestructuringPattern(
+                            op.Right, parameters, true);
+                    ret.AddPart(new RequestPartNode("_AndPattern",
+                                new List<Node>(), new List<Node>
+                                {
+                                    left,
+                                    right
+                                }));
+                    return ret;
+                }
+                else if (op.Name == "|")
+                {
+                    // The | combinator does *not* get parameters
+                    // bound out of it, since either side could
+                    // have matched. Further destructuring can
+                    // still occur, however, so we create a junk
+                    // parameters list for any bound names to be
+                    // put into during the recursion.
+                    var junk = new List<Node>();
+                    var ret = new PreludeRequestNode(op.Token, op);
+                    var left = createDestructuringPattern(
+                            op.Left, junk, true);
+                    var right = createDestructuringPattern(
+                            op.Right, junk, true);
+                    ret.AddPart(new RequestPartNode("_OrPattern",
+                                new List<Node>(), new List<Node>
+                                {
+                                    left,
+                                    right
+                                }));
+                    return ret;
+                }
+                else
+                {
+                    return n.Visit(this);
+                }
             }
             if (tppn != null)
             {
@@ -436,14 +480,18 @@ namespace Grace.Execution
         {
             var typeNode = tppn.Type;
             if (typeNode is NumberParseNode
-                    || typeNode is StringLiteralParseNode
-                    || typeNode is OperatorParseNode)
+                    || typeNode is StringLiteralParseNode)
             {
                 parameters.Add(
                         new ParameterNode(tppn.Token,
                             tppn.Name as IdentifierParseNode,
                             typeNode.Visit(this)));
                 return null;
+            }
+            var opn = typeNode as OperatorParseNode;
+            if (opn != null)
+            {
+                return createDestructuringPattern(tppn, parameters, false);
             }
             var irrpn = typeNode as ImplicitReceiverRequestParseNode;
             var errpn = typeNode as ExplicitReceiverRequestParseNode;
