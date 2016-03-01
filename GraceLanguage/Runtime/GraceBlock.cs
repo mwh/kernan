@@ -222,6 +222,21 @@ namespace Grace.Runtime
             var bindings = matchResult.Request(ctx,
                     MethodRequest.Nullary("bindings"));
             bindings.Request(ctx, doReq);
+            if (args.Count != parameters.Count)
+            {
+                ErrorReporting.RaiseError(ctx, "R2023",
+                        new Dictionary<string,string>
+                        {
+                            { "parameter count", "" + parameters.Count },
+                            { "binding count", "" + args.Count },
+                            { "parameters", String.Join(", ",
+                                    from x in parameters.OfType<ParameterNode>()
+                                    select x.Name
+                                    ) }
+                        },
+                        "MatchingError: Wrong number of bindings"
+                    );
+            }
             var mReq = new MethodRequest();
             var rpn = new RequestPart("apply", new List<GraceObject>(),
                     args);
