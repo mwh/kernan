@@ -819,21 +819,20 @@ namespace Grace.Parsing
             nextToken();
             Token ts = lexer.current;
             ParseNode type = null;
-            if (lexer.current is TypeKeywordToken)
+            if (lexer.current is TypeKeywordToken
+                    || lexer.current is LBraceToken)
             {
-                nextToken();
-            }
-            else if (lexer.current is IdentifierToken)
-            {
-                type = parseExpression();
-            }
-            if (type == null)
-            {
+                if (lexer.current is TypeKeywordToken)
+                    nextToken();
                 List<ParseNode> origComments = prepareComments();
                 List<ParseNode> body = parseTypeBody();
                 type = new TypeParseNode(ts, body);
                 attachComments(type, comments);
                 restoreComments(origComments);
+            }
+            else
+            {
+                type = parseExpression();
             }
             type = expressionRest(type);
             return new TypeStatementParseNode(start, name, type, genericParameters);
