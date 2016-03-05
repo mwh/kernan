@@ -1150,6 +1150,7 @@ end:
             else
                 ret = new UserObject(false);
             ret.SetFlag(GraceObject.Flags.UserspaceObject);
+            ret.SetFlag(GraceObject.Flags.ObjectConstructor);
             Dictionary<string, Method> meths;
             var init = createMethods(ctx, ret, out meths);
             ret.AddInitialiser(init);

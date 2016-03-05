@@ -718,7 +718,7 @@ namespace Grace.Execution
             while (sl != null && sl.scope != null)
             {
                 if (skipRedirects > 0 &&
-                        sl.scope.HasFlag(GraceObject.Flags.UserspaceObject))
+                        sl.scope.HasFlag(GraceObject.Flags.ObjectConstructor))
                 {
                     sl = sl.next;
                     skipRedirects--;

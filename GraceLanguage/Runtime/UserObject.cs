@@ -297,6 +297,7 @@ namespace Grace.Runtime
         public SelfRedirectorObject(GraceObject self)
         {
             target = self;
+            SetFlag(GraceObject.Flags.ObjectConstructor);
         }
 
         /// <summary>

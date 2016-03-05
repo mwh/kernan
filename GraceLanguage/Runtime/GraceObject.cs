@@ -16,7 +16,9 @@ namespace Grace.Runtime
             /// <summary>Is a user-space object</summary>
             UserspaceObject = 1,
             /// <summary>Dialect should run atModuleEnd method</summary>
-            RunAtModuleEnd = 2
+            RunAtModuleEnd = 2,
+            /// <summary>Came from an object constructor</summary>
+            ObjectConstructor = 4
         }
         private Dictionary<string, Method> objectMethods;
 
