@@ -1043,6 +1043,7 @@ end:
             new List<InheritsNode>();
         private List<DefDeclarationNode> defs = new List<DefDeclarationNode>();
         private List<VarDeclarationNode> vars = new List<VarDeclarationNode>();
+        private List<ImportNode> imports;
 
         private HashSet<string> fieldNames = new HashSet<string>();
 
@@ -1063,6 +1064,7 @@ end:
             var i = node as InheritsNode;
             var d = node as DefDeclarationNode;
             var v = node as VarDeclarationNode;
+            var imp = node as ImportNode;
             if (i != null)
             {
                 containsInheritance = true;
@@ -1080,6 +1082,13 @@ end:
                 fieldNames.Add(v.Name + " :=");
             }
             body.Add(node);
+            if (imp != null)
+            {
+                if (imports == null)
+                    imports = new List<ImportNode>();
+                imports.Add(imp);
+                return;
+            }
             if (meth == null)
                 statements.Add(node);
             else
@@ -1191,6 +1200,13 @@ end:
             LocalScope interiorScope = new LocalScope("interior object scope");
             interiorScope.AddLocalDef("self", ret);
             ctx.ExtendMinor(interiorScope);
+            if (imports != null)
+            {
+                foreach (var imp in imports)
+                {
+                    imp.Evaluate(ctx);
+                }
+            }
             var scope = ctx.Memorise();
             foreach (MethodNode m in methods.Values)
             {

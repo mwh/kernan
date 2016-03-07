@@ -830,7 +830,7 @@ namespace Grace.Execution
                 return;
             if (!Console.IsErrorRedirected)
             {
-                Console.ForegroundColor = ConsoleColor.DarkGray;
+                Console.ForegroundColor = ConsoleColor.DarkBlue;
             }
             Console.Error.WriteLine(message);
             if (!Console.IsErrorRedirected)
