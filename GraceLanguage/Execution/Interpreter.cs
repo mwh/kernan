@@ -464,7 +464,7 @@ namespace Grace.Execution
             var s = scope;
             while (s != null)
             {
-                if (s.scope.HasFlag(GraceObject.Flags.UserspaceObject))
+                if (s.scope.HasFlag(GraceObject.Flags.ObjectConstructor))
                     break;
                 s = s.next;
             }

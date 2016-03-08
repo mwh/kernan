@@ -1043,7 +1043,7 @@ end:
             new List<InheritsNode>();
         private List<DefDeclarationNode> defs = new List<DefDeclarationNode>();
         private List<VarDeclarationNode> vars = new List<VarDeclarationNode>();
-        private List<ImportNode> imports;
+        private List<Node> imports;
 
         private HashSet<string> fieldNames = new HashSet<string>();
 
@@ -1065,6 +1065,7 @@ end:
             var d = node as DefDeclarationNode;
             var v = node as VarDeclarationNode;
             var imp = node as ImportNode;
+            var dialect = node as DialectNode;
             if (i != null)
             {
                 containsInheritance = true;
@@ -1085,8 +1086,15 @@ end:
             if (imp != null)
             {
                 if (imports == null)
-                    imports = new List<ImportNode>();
+                    imports = new List<Node>();
                 imports.Add(imp);
+                return;
+            }
+            if (dialect != null)
+            {
+                if (imports == null)
+                    imports = new List<Node>();
+                imports.Add(dialect);
                 return;
             }
             if (meth == null)
