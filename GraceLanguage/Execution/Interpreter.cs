@@ -72,6 +72,16 @@ namespace Grace.Execution
         private GraceObject majorScope;
         private OutputSink sink;
 
+        /// <summary>
+        /// Sink used for output from this interpreter.
+        /// </summary>
+        /// <value>Retrieves the value of the field "sink".</value>
+        public OutputSink Sink {
+            get {
+                return sink;
+            }
+        }
+
         private List<string> additionalModuleRoots =
             new List<string>();
 
@@ -416,13 +426,29 @@ namespace Grace.Execution
             Interpreter.Debug("========== LOAD " + filePath + " ==========");
             using (StreamReader reader = File.OpenText(filePath))
             {
-                var parser = new Parser(importPath, reader.ReadToEnd());
-                var pt = parser.Parse() as ObjectParseNode;
-                var eMod = new ExecutionTreeTranslator().Translate(pt);
-                var ret = eMod.Evaluate(this);
-                Interpreter.Debug("========== END " + filePath + " ==========");
-                return ret;
+                return LoadModuleString(importPath, reader.ReadToEnd());
             }
+        }
+
+        /// <summary>
+        /// Load a string containing Grace code under a given
+        /// module name.
+        /// </summary>
+        /// <param name="importPath">
+        /// Module name to treat this code as belonging to.
+        /// </param>
+        /// <param name="code">
+        /// Source code to load.
+        /// </param>
+        public GraceObject LoadModuleString(string importPath,
+                string code)
+        {
+            var parser = new Parser(importPath, code);
+            var pt = parser.Parse() as ObjectParseNode;
+            var eMod = new ExecutionTreeTranslator().Translate(pt);
+            var ret = eMod.Evaluate(this);
+            modules[importPath] = ret;
+            return ret;
         }
 
         /// <summary>Load a module file</summary>

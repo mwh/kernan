@@ -151,4 +151,24 @@ namespace Grace.Runtime
             return new GraceObjectProxy(o);
         }
     }
+
+    /// <summary>
+    /// A behaviourless representation of an opaque object identity
+    /// in a foreign system.
+    /// </summary>
+    public class GraceForeignObject : GraceObject
+    {
+        /// <summary>
+        /// An object identifying the foreign object.
+        /// </summary>
+        public object IdentifyingData { get ; private set; }
+
+        /// <param name="data">
+        /// An object identifying the foreign object.
+        /// </param>
+        public GraceForeignObject(object data)
+        {
+            IdentifyingData = data;
+        }
+    }
 }

@@ -46,6 +46,8 @@ namespace Grace
                     mode = "no-run";
                 else if (arg == "--repl")
                     mode = "repl";
+                else if (arg == "--ws")
+                    mode = "ws";
                 else if (arg == "--verbose")
                 {
                     Interpreter.ActivateDebuggingMessages();
@@ -82,6 +84,8 @@ namespace Grace
             }
             if (mode == "repl" || (mode == "run" && filename == null))
                 return repl(filename, builtinsExtensionFile);
+            if (mode == "ws")
+                return WebSocketEndpoint.WSServe();
             if (filename == null && lines.Count == 0) {
                 return error("Required filename argument missing.");
             }

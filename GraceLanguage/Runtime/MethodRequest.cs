@@ -207,5 +207,19 @@ namespace Grace.Runtime
             ret.AddPart(RequestPart.Single(name, arg));
             return ret;
         }
+
+        /// <summary>Create a method request with a single part and
+        /// a list of arguments</summary>
+        /// <param name="name">Name of method</param>
+        /// <param name="args">List of arguments</param>
+        public static MethodRequest WithArgs(string name,
+                IList<GraceObject> args)
+        {
+            var ret = new MethodRequest();
+            var rp = new RequestPart(name, RequestPart.EmptyList,
+                    args);
+            ret.AddPart(rp);
+            return ret;
+        }
     }
 }

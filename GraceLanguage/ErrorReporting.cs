@@ -210,7 +210,8 @@ namespace Grace
             string formattedMessage = FormatMessage(baseMessage, vars);
             if (!SilencedErrors.Contains(code) && !SuppressAllErrors)
                 WriteError(module, line, code, formattedMessage);
-            throw new StaticErrorException(code);
+            throw new StaticErrorException(code, line, module,
+                    formattedMessage);
         }
 
         /// <summary>
@@ -267,7 +268,7 @@ namespace Grace
             {
                 Console.ResetColor();
             }
-            throw new StaticErrorException(code);
+            throw new StaticErrorException(code, line, module, message);
         }
 
         /// <summary>
@@ -360,10 +361,28 @@ namespace Grace
         /// <summary>Error code (X####) of this error</summary>
         public string Code { get; private set; }
 
+        /// <summary>Line number of this error</summary>
+        public int Line { get; private set; }
+
+        /// <summary>Module of this error</summary>
+        public string Module { get; private set; }
+
+        /// <summary>Message of this error</summary>
+        new public string Message { get; private set; }
+
         /// <param name="code">Error code (X####) of this error</param>
-        public StaticErrorException(string code)
+        /// <param name="line">Line number of this error</param>
+        /// <param name="module">Module of this error</param>
+        /// <param name="message">Message of this error</param>
+        public StaticErrorException(string code,
+                int line,
+                string module,
+                string message)
         {
             Code = code;
+            Line = line;
+            Module = module;
+            Message = message;
         }
     }
 

@@ -28,12 +28,40 @@ namespace Grace.Utility
                 LocalScope localScope)
         {
             var interp = new Interpreter();
+            configureInterpreter(interp, obj, localScope);
+            return interp;
+        }
+
+        /// <summary>
+        /// Create a REPL-ready interpreter using a given
+        /// module object, interior scope, and sink.
+        /// </summary>
+        /// <param name="obj">
+        /// Module object
+        /// </param>
+        /// <param name="localScope">
+        /// Interior scope which holds (at least) "self".
+        /// </param>
+        /// <param name="sink">
+        /// Output sink for this interpreter.
+        /// </param>
+        public static Interpreter CreateInterpreter(UserObject obj,
+                LocalScope localScope,
+                OutputSink sink)
+        {
+            var interp = new Interpreter(sink);
+            configureInterpreter(interp, obj, localScope);
+            return interp;
+        }
+
+        private static void configureInterpreter(Interpreter interp,
+                UserObject obj, LocalScope localScope)
+        {
             interp.LoadPrelude();
             interp.Extend(obj);
             localScope.AddLocalDef("self", obj);
             localScope.AddLocalDef("LAST", GraceObject.Done);
             interp.ExtendMinor(localScope);
-            return interp;
         }
 
         /// <summary>
