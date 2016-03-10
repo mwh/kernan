@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="utf-8">
+    <title>WebSocket client</title>
+    <script src="minigrace.js"></script>
+    <script type="text/javascript">
+        minigrace.running = true;
+    </script>
+    <style type="text/css">
+        #status {
+            border: 3px black outset;
+            padding: 2em 4em;
+            background: darkred;
+            color: white;
+            width: 12em;
+        }
+        #status.connected {
+            background: darkgreen;
+            color: white;
+        }
+    </style>
+  </head>
+
+  <body>
+    <div id="status">Loading...</div>
+    <input type="checkbox" id="enabled" checked="checked" onclick="tryReconnect()" /><label for="enabled"> Automatically reconnect</label>
+    <script type="text/javascript">createSock();</script>
+  </body>
+
+</html>

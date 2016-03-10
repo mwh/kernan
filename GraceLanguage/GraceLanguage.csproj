@@ -74,6 +74,7 @@
     <Compile Include="ErrorReporting.cs" />
     <Compile Include="Utility\Rational.cs" />
     <Compile Include="Utility\REPL.cs" />
+    <Compile Include="Utility\WebSocketEndpoint.cs" />
     <Compile Include="Utility\UnicodeLookup.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -93,6 +94,7 @@
   <ItemGroup>
     <NativeModule Include="modules/platform\memory.cs" />
     <NativeModule Include="modules/websocket\dom.cs" />
+    <NativeModule Include="modules/websocket\serve.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="BeforeCompile">

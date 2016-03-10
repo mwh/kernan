@@ -190,6 +190,16 @@ namespace Grace.Execution
             stream = _stream;
         }
 
+        private bool stop = false;
+        /// <summary>
+        /// Stop this stream after the completion of the next event to
+        /// finish.
+        /// </summary>
+        public void Stop()
+        {
+            stop = true;
+        }
+
         /// <summary>
         /// Consume incoming events from this stream and
         /// perform the appropriate callbacks.
@@ -197,7 +207,7 @@ namespace Grace.Execution
         public void Run()
         {
             byte[] buffer = new byte[2048];
-            while (true)
+            while (!stop)
             {
                 stream.Read(buffer, 0, 2);
                 ReceivedFrames++;
@@ -423,5 +433,29 @@ namespace Grace.Execution
         /// </param>
         bool AwaitRemoteCallback(int time,
                 out GraceObject block, out object[] args);
+
+        /// <summary>
+        /// Terminate this RPC connection.
+        /// </summary>
+        void Stop();
+
+        /// <summary>
+        /// Terminate this RPC connection, harder.
+        /// </summary>
+        void HardStop();
+
+        /// <summary>
+        /// Send a generic event over the wire.
+        /// </summary>
+        /// <param name="eventName">
+        /// Identifying name of the event.
+        /// </param>
+        /// <param name="key">
+        /// Key to identify event.
+        /// </param>
+        void SendEvent(string eventName, string key);
+
+        /// <summary>True if this RPC sink has stopped</summary>
+        bool Stopped { get; }
     }
 }

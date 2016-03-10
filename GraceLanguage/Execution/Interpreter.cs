@@ -82,6 +82,11 @@ namespace Grace.Execution
             }
         }
 
+        /// <summary>
+        /// Sink used for RPC from this interpreter. Usually null.
+        /// </summary>
+        public RPCSink RPCSink { get; set; }
+
         private List<string> additionalModuleRoots =
             new List<string>();
 

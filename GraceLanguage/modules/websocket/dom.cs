@@ -7,7 +7,7 @@ using Grace.Parsing;
 using Grace.Execution;
 using Grace.Runtime;
 
-namespace Grace.Dom
+namespace WebSocketModules
 {
     [ModuleEntryPoint]
     public class Dom : GraceObject
@@ -24,10 +24,10 @@ namespace Grace.Dom
             return new Dom(ctx);
         }
 
-        public Dom(EvaluationContext ctx) : base("websocket/dom")
+        private Dom(EvaluationContext ctx) : base("websocket/dom")
         {
             var interp = (Interpreter)ctx;
-            sink = (RPCSink)interp.Sink;
+            sink = interp.RPCSink;
             var gfo = sink.SendRPC(-1, "init", noArgs) as GraceForeignObject;
             var win = new DomObject((int)gfo.IdentifyingData, sink);
             AddMethod("window", new ConstantMethod(win));
@@ -72,10 +72,11 @@ namespace Grace.Dom
             endRun = false;
             GraceObject block;
             object[] args;
-            while (sink.AwaitRemoteCallback(-1, out block, out args))
+            while (true)
             {
-                processCallback(ctx, block, args);
-                if (endRun)
+                if (sink.AwaitRemoteCallback(500, out block, out args))
+                    processCallback(ctx, block, args);
+                if (endRun || sink.Stopped)
                     break;
             }
             return GraceObject.Done;

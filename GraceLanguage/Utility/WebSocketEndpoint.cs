@@ -14,11 +14,14 @@ using System.Xml.Linq;
 using Grace.Execution;
 using Grace.Parsing;
 using Grace.Runtime;
-using Grace.Utility;
 
-namespace Grace
+namespace Grace.Utility
 {
-    internal class WebSocketEndpoint
+    /// <summary>
+    /// Static class handling setting up and processing a
+    /// web socket RPC connection to a browser client.
+    /// </summary>
+    public class WebSocketEndpoint
     {
         private static Dictionary<string, string> moduleCode
             = new Dictionary<string, string>();
@@ -29,13 +32,37 @@ namespace Grace
         private static Dictionary<int, GraceObject> responses
             = new Dictionary<int, GraceObject>();
 
+        private static bool stop;
+
+        /// <summary>
+        /// Register an event handler to a given key.
+        /// </summary>
+        /// <param name="key">Key identifying the handle</param>
+        /// <param name="handle">Event handler</param>
         public static void AddEventHandle(int key, EventWaitHandle handle)
         {
             eventWaitHandlers[key] = handle;
         }
 
+        /// <summary>
+        /// Stop the connection and trigger all
+        /// waiting event handlers to die.
+        /// </summary>
+        public static void Stop()
+        {
+            stop = true;
+            foreach (var h in eventWaitHandlers.Values)
+                h.Set();
+        }
+
+        /// <summary>
+        /// Retrieve the result of an event that has been received.
+        /// </summary>
+        /// <param name="key">Key identifying the event</param>
         public static GraceObject GetEventResult(int key)
         {
+            if (stop)
+                Environment.Exit(0);
             var ret = responses[key];
             responses.Remove(key);
             eventWaitHandlers.Remove(key);
@@ -58,6 +85,7 @@ namespace Grace
         {
             var interp = new Interpreter(sink);
             ErrorReporting.SetSink(new OutputSinkWrapper(Console.Error));
+            interp.RPCSink = sink;
             interp.AddModuleRoot(Path.GetFullPath("."));
             interp.FailedImportHook = loadCachedModule;
             interp.LoadPrelude();
@@ -170,6 +198,64 @@ namespace Grace
             sink.ReceiveCallback(blockID, args);
         }
 
+        /// <summary>
+        /// Start a web socket server on a different thread, modifying
+        /// the given interpreter to use it.
+        /// </summary>
+        /// <param name="current">Current interpreter</param>
+        public static Thread WSServeThread(Interpreter current)
+        {
+            var ws = new Grace.Execution.WebSocketServer();
+            var wss = ws.Start();
+            var runningThread = Thread.CurrentThread;
+            var runningSink = new WSOutputSink(wss);
+            current.RPCSink = runningSink;
+            wss.JsonReceived += (o, e) => {
+                var je = (JsonWSEvent)e;
+                var root = je.Root;
+                var md = root.XPathSelectElement("//mode");
+                var mode = md.Value;
+                if (mode == "stop")
+                {
+                    Console.WriteLine("Program stopped on remote end.");
+                    runningSink.Stop();
+                    runningSink.HardStop();
+                    wss.Stop();
+                    WebSocketEndpoint.Stop();
+                    return;
+                }
+                else if (mode == "response")
+                {
+                    processResponse(root);
+                    return;
+                }
+                else if (mode == "callback")
+                {
+                    if (runningThread != null)
+                    {
+                        processCallback(root, runningSink);
+                    }
+                    return;
+                }
+                else if (mode == "ack")
+                {
+                    return;
+                }
+                else
+                {
+                    Console.WriteLine("unknown mode " + mode);
+                }
+            };
+            var thread = new Thread(() => {
+                    wss.Run();
+                });
+            thread.Start();
+            return thread;
+        }
+
+        /// <summary>
+        /// Start a WebSocket server.
+        /// </summary>
         public static int WSServe()
         {
             var ws = new Grace.Execution.WebSocketServer();
@@ -207,6 +293,12 @@ namespace Grace
                         }
                         return;
                     }
+                    else if (mode == "ack")
+                    {
+                        return;
+                    }
+                    else if (mode != "build")
+                        return;
                     var cn = root.XPathSelectElement("//code");
                     var mn = root.XPathSelectElement("//modulename");
                     var code = cn.Value;
@@ -340,24 +432,67 @@ namespace Grace
         }
     }
 
+    /// <summary>
+    /// Sink that sends output over the wire.
+    /// </summary>
     public class WSOutputSink : OutputSink, RPCSink
     {
         private WebSocketStream wss;
         private volatile bool stop;
+        private volatile bool hardStop;
 
         private BlockingCollection<Callback> callbacks
             = new BlockingCollection<Callback>();
 
+        /// <param name="_wss">WebSocketStream to send output over</param>
         public WSOutputSink(WebSocketStream _wss)
         {
             wss = _wss;
         }
 
+        /// <summary>Get the stream this sink accesses</summary>
+        public WebSocketStream Stream
+        {
+            get
+            {
+                return wss;
+            }
+        }
+
+        /// <summary>
+        /// Stop execution of this program.
+        /// </summary>
         public void Stop()
         {
             stop = true;
         }
 
+        /// <summary>
+        /// Stop execution of this program and terminate the process.
+        /// </summary>
+        public void HardStop()
+        {
+            stop = true;
+            hardStop = true;
+        }
+
+        /// <summary>
+        /// True iff this sink has been stopped.
+        /// </summary>
+        public bool Stopped
+        {
+            get
+            {
+                return stop;
+            }
+        }
+
+        /// <summary>
+        /// Write a single line of console output.
+        /// </summary>
+        /// <param name="s">
+        /// Text to output
+        /// </param>
         public void WriteLine(string s)
         {
             if (stop)
@@ -395,6 +530,15 @@ namespace Grace
             wss.Send(reader.ReadToEnd());
         }
 
+        /// <summary>
+        /// Note an output error across the RPC channel.
+        /// </summary>
+        /// <param name="message">
+        /// Error message
+        /// </param>
+        /// <param name="stackTrace">
+        /// Stack of method calls leading to the error.
+        /// </param>
         public void SendRuntimeError(string message,
                 IList<string> stackTrace)
         {
@@ -447,6 +591,14 @@ namespace Grace
             wss.Send(reader.ReadToEnd());
         }
 
+        /// <summary>
+        /// Send a syntax or other static error over the RPC
+        /// channel.
+        /// </summary>
+        /// <param name="code">Error code</param>
+        /// <param name="module">Module name</param>
+        /// <param name="line">Line number of the error</param>
+        /// <param name="message">Error message</param>
         public void SendStaticError(string code,
                 string module, int line, string message)
         {
@@ -504,6 +656,15 @@ namespace Grace
             wss.Send(reader.ReadToEnd());
         }
 
+        /// <summary>
+        /// Send a generic event over the wire.
+        /// </summary>
+        /// <param name="eventName">
+        /// Identifying name of the event.
+        /// </param>
+        /// <param name="key">
+        /// Key to identify event.
+        /// </param>
         public void SendEvent(string eventName, string key)
         {
             if (stop)
@@ -558,9 +719,23 @@ namespace Grace
             return blocks.Count - 1;
         }
 
+        /// <summary>
+        /// Send a procedure call over the wire.
+        /// </summary>
+        /// <param name="receiver">
+        /// Identifier of remote receiving object.
+        /// </param>
+        /// <param name="name">
+        /// Name of procedure
+        /// </param>
+        /// <param name="args">
+        /// Array of arguments to the call.
+        /// </param>
         public GraceObject SendCall(int receiver, string name,
                 object[] args)
         {
+            if (hardStop)
+                Environment.Exit(0);
             if (stop)
                 return GraceObject.Done;
             int theKey = callKey++;
@@ -658,18 +833,41 @@ namespace Grace
             return WebSocketEndpoint.GetEventResult(theKey);
         }
 
+        /// <summary>
+        /// Send a RPC to the other end of the channel.
+        /// </summary>
+        /// <param name="receiver">
+        /// Identifier of remote receiving object.
+        /// </param>
+        /// <param name="name">
+        /// Name of procedure
+        /// </param>
+        /// <param name="args">
+        /// Array of arguments to the call.
+        /// </param>
         public GraceObject SendRPC(int receiver, string name,
                 object[] args)
         {
             return SendCall(receiver, name, args);
         }
 
+        /// <summary>
+        /// Receive a callback from the other end of the channel.
+        /// </summary>
+        /// <param name="blockID">
+        /// Identifier of the block registered to handle this
+        /// event.
+        /// </param>
+        /// <param name="args">
+        /// Arguments of the event.
+        /// </param>
         public void ReceiveCallback(int blockID, object[] args)
         {
             var c = new Callback(blocks[blockID], args);
             callbacks.Add(c);
         }
 
+        /// <inheritdoc/>
         public bool AwaitRemoteCallback(int time,
                 out GraceObject block,
                 out object[] args)
