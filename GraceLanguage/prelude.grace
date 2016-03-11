@@ -2954,3 +2954,6 @@ method try(b) catch(e1) catch(e2) catch(e3) catch(e4) catch (e5) {
     _base_try_catch_finally(b, {}, e1, e2, e3, e4, e5)
 }
 
+method circumfix[ *x ] {
+    x
+}

@@ -164,10 +164,10 @@ method prettyPrintInterpolatedString(s, indent) {
     def partCount = parts.get_Count
     var ret := "\""
     // Native lists are available as objects with a Count property
-    // that can be indexed using []. These lists are zero-indexed
+    // that can be indexed using .at. These lists are zero-indexed
     // as the host is, and do not yet support iteration.
     for (0 .. (partCount - 1)) do { i ->
-        def part = parts[i]
+        def part = parts.at(i)
         ret := ret ++ match(part)
             case { _ : pnStringLiteral -> part.get_Raw }
             case { _ -> "\{{prettyPrint(part, indent)}\}" }
@@ -193,7 +193,7 @@ method helper_Generics(g, indent) {
         if (i > 0) then {
             ret := ret ++ ", "
         }
-        ret := ret ++ prettyPrint(g[i], indent)
+        ret := ret ++ prettyPrint(g.at(i), indent)
     }
     "{ret}>"
 }
@@ -205,7 +205,7 @@ method prettyPrintClassDeclaration(m, indent) {
     def body = m.get_Body
     def count = body.get_Count
     for (0 .. (count - 1)) do {i->
-        def node = body[i]
+        def node = body.at(i)
         ret := ret ++ prettyPrintStatement(node, "{indent}    ")
     }
     "{ret}{indent}\}"
@@ -218,7 +218,7 @@ method prettyPrintTraitDeclaration(m, indent) {
     def body = m.get_Body
     def count = body.get_Count
     for (0 .. (count - 1)) do {i->
-        def node = body[i]
+        def node = body.at(i)
         ret := ret ++ prettyPrintStatement(node, "{indent}    ")
     }
     "{ret}{indent}\}"
@@ -231,7 +231,7 @@ method prettyPrintMethodDeclaration(m, indent) {
     def body = m.get_Body
     def count = body.get_Count
     for (0 .. (count - 1)) do {i->
-        def node = body[i]
+        def node = body.at(i)
         ret := ret ++ prettyPrintStatement(node, "{indent}    ")
     }
     "{ret}{indent}\}"
@@ -248,7 +248,7 @@ method prettyPrintSignaturePart(p, indent) {
             if (i > 0) then {
                 ret := ret ++ ","
             }
-            ret := ret ++ prettyPrint(genericParameters[i], indent)
+            ret := ret ++ prettyPrint(genericParameters.at(i), indent)
         }
         ret := ret ++ ">"
     }
@@ -258,7 +258,7 @@ method prettyPrintSignaturePart(p, indent) {
             if (i > 0) then {
                 ret := ret ++ ","
             }
-            ret := ret ++ prettyPrint(params[i], indent)
+            ret := ret ++ prettyPrint(params.at(i), indent)
         }
         ret := ret ++ ")"
     }
@@ -271,7 +271,7 @@ method prettyPrintSignature(s, indent) {
     def size = parts.get_Count
     var ret := ""
     for (0 .. (size - 1)) do { i ->
-        ret := ret ++ prettyPrint(parts[i], indent)
+        ret := ret ++ prettyPrint(parts.at(i), indent)
     }
     if (!returnType.isNull) then {
         ret := ret ++ " -> " ++ prettyPrint(returnType, indent)
@@ -287,7 +287,7 @@ method prettyPrintObjectBody(body, indent) {
     var ret := ""
     def count = body.get_Count
     for (0 .. (count - 1)) do {i->
-        def node = body[i]
+        def node = body.at(i)
         ret := ret ++ prettyPrintStatement(node, indent)
     }
     ret
@@ -312,7 +312,7 @@ method prettyPrintImplicitReceiverRequest(r, indent) {
     var firstPart := true
     var lineSoFar := indent.size
     for (0 .. (size - 1)) do { i ->
-        def args = argLists[i]
+        def args = argLists.at(i)
         def argCount = args.get_Count
         var firstArg := true
         def retStart = ret.size
@@ -321,12 +321,12 @@ method prettyPrintImplicitReceiverRequest(r, indent) {
             lineSoFar := indent.size + 4
         }
         ret := "{ret}{if (!firstPart) then {" "} else {""}}"
-        ret := ret ++ nameParts[i] .get_Name
-        ret := ret ++ helper_Generics(r.get_GenericArguments[i], indent)
+        ret := ret ++ nameParts.at(i).get_Name
+        ret := ret ++ helper_Generics(r.get_GenericArguments.at(i), indent)
         var noParen := false
         // Don't parenthesise single blocks &c
         if (argCount == 1) then {
-            def lone = args[0]
+            def lone = args.at 0
             match (lone)
                 case {
                     b : pnBlock | pnNumber | pnStringLiteral
@@ -348,7 +348,7 @@ method prettyPrintImplicitReceiverRequest(r, indent) {
             if (!firstArg) then {
                 ret := "{ret}, "
             }
-            ret := ret ++ prettyPrint(args[j], indent ++
+            ret := ret ++ prettyPrint(args.at(j), indent ++
                 if (breakLines) then { "    " } else { "" })
             firstArg := false
         }
@@ -385,7 +385,7 @@ method prettyPrintBlock(b, indent) {
             if (!firstParam) then {
                 ret := "{ret}, "
             }
-            ret := ret ++ prettyPrint(params[j], indent)
+            ret := ret ++ prettyPrint(params.at(j), indent)
             firstParam := false
         }
         ret := ret ++ " ->"
@@ -394,10 +394,10 @@ method prettyPrintBlock(b, indent) {
     def count = body.get_Count
     var multiLine := count > 1
     if (count == 1) then {
-        if (pnComment.match(body[0])) then {
+        if (pnComment.match(body.at 0)) then {
             multiLine := true
         } else {
-            def flp = prettyPrint(body[0], "{indent}    ")
+            def flp = prettyPrint(body.at 0, "{indent}    ")
             if ((flp.size + indent.size + 4 + 2) > 40) then {
                 multiLine := breakLines
             }
@@ -411,7 +411,7 @@ method prettyPrintBlock(b, indent) {
         }
     }
     for (0 .. (count - 1)) do {i->
-        def node = body[i]
+        def node = body.at(i)
         if (multiLine) then {
             ret := ret ++ prettyPrintStatement(node, "{indent}    ")
         } else {
@@ -505,7 +505,7 @@ method prettyPrintAliases(aliases, indent) {
     var ret := ""
     def newIndent = indent ++ "    "
     for (0 .. (ac - 1)) do { i ->
-        def a = aliases[i]
+        def a = aliases.at(i)
         ret := ret ++ "\n" ++ indent ++ "alias "
             ++ prettyPrint(a.get_NewName, newIndent)
             ++ " = "
@@ -519,7 +519,7 @@ method prettyPrintExcludes(excludes, indent) {
     var ret := ""
     def newIndent = indent ++ "    "
     for (0 .. (ac - 1)) do { i ->
-        def a = excludes[i]
+        def a = excludes.at(i)
         ret := ret ++ "\n" ++ indent ++ "exclude "
             ++ prettyPrint(a.get_Name, newIndent)
     }
@@ -551,7 +551,7 @@ method prettyPrintAnnotations(o, ind) {
     def anns = o.get_Annotations
     def annCount = o.get_Annotations.get_Count
     for (0 .. (annCount - 1)) do { i ->
-        def a = anns[i]
+        def a = anns.at(i)
         if (i > 0) then {
             ret := ret ++ ", "
         }
@@ -568,7 +568,7 @@ method prettyPrintExplicitBracketRequest(b, indent) {
         if (i > 0) then {
             ret := ret ++ ", "
         }
-        ret := ret ++ prettyPrint(args[i], indent)
+        ret := ret ++ prettyPrint(args.at(i), indent)
     }
     "{ret}{b.get_Token.get_Other}"
 }

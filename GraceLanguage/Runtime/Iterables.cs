@@ -93,7 +93,7 @@ namespace Grace.Runtime
             AddMethod("with do",
                 new DelegateMethodReq(
                     new NativeMethodReq(this.WithDo)));
-            TagName = "VariadicList";
+            TagName = "Lineup";
         }
 
         /// <summary>

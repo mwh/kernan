@@ -582,42 +582,12 @@ namespace Grace.Parsing
             return ret;
         }
 
-        private SignaturePartParseNode parsePostfixBracketSignaturePart(
-                Token start,
-                OpenBracketToken ob)
-        {
-            nextToken();
-            var partName = new IdentifierParseNode(ob, ob.Name + ob.Other);
-            var ret = new OrdinarySignaturePartParseNode(partName);
-            parseParameterList<CloseBracketToken>(ob, ret.Parameters);
-            expectWithError<CloseBracketToken>("P1033",
-                    ob.Name + " ... " + ob.Other);
-            var cb = (CloseBracketToken)lexer.current;
-            if (cb.Name != ob.Other)
-            {
-                ErrorReporting.ReportStaticError(moduleName, cb.line,
-                        "P1033",
-                        new Dictionary<string, string> {
-                            { "expected", ob.Name + " ... " + ob.Other},
-                            { "found", cb.Name }
-                        },
-                        "Expected bracket name ${expected}, "
-                            + "got ${found}.");
-            }
-            nextToken();
-            ret.Final = true;
-            return ret;
-        }
-
         private SignaturePartParseNode parseFirstSignaturePart(Token start)
         {
             var op = lexer.current as OperatorToken;
-            var ob = lexer.current as OpenBracketToken;
             var id = lexer.current as IdentifierToken;
             if (op != null)
                 return parseOperatorSignaturePart(start, op);
-            if (ob != null)
-                return parsePostfixBracketSignaturePart(start, ob);
             if (id != null)
             {
                 if (id.Name == "prefix")
@@ -1097,11 +1067,6 @@ namespace Grace.Parsing
             {
                 lhs = parseDotRequest(lhs);
             }
-            if (lexer.current is OpenBracketToken)
-            {
-                lhs = parsePostcircumfixRequest(lhs);
-                return expressionRestNoOp(lhs);
-            }
             return lhs;
         }
 
@@ -1251,6 +1216,8 @@ namespace Grace.Parsing
                 return true;
             if (lexer.current is LBraceToken && !doNotAcceptDelimitedBlock)
                 return true;
+            if (lexer.current is OpenBracketToken)
+                return true;
             return false;
         }
 
@@ -1263,6 +1230,8 @@ namespace Grace.Parsing
             if (lexer.current is StringToken)
                 return true;
             if (lexer.current is LBraceToken)
+                return true;
+            if (lexer.current is OpenBracketToken)
                 return true;
             if (lexer.current is TypeKeywordToken)
                 return true;
@@ -1299,6 +1268,10 @@ namespace Grace.Parsing
             else if (lexer.current is OperatorToken)
             {
                 ret = parsePrefixOperator();
+            }
+            else if (lexer.current is OpenBracketToken)
+            {
+                ret = parseImplicitBracket();
             }
             else if (lexer.current is SelfKeywordToken)
             {

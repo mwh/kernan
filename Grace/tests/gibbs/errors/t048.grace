@@ -1,4 +1,4 @@
-// ERROR = P1031
+// ERROR = P1032
 method [ {
     print "Hello"
 }
