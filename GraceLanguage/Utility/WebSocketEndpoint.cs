@@ -731,8 +731,12 @@ namespace Grace.Utility
         /// <param name="args">
         /// Array of arguments to the call.
         /// </param>
+        /// <param name="wait">
+        /// True to wait for a result, false to return
+        /// done immediately.
+        /// </param>
         public GraceObject SendCall(int receiver, string name,
-                object[] args)
+                object[] args, bool wait)
         {
             if (hardStop)
                 Environment.Exit(0);
@@ -753,6 +757,12 @@ namespace Grace.Utility
             var tn = xmlDoc.CreateTextNode("call");
             mode.AppendChild(tn);
             root.AppendChild(mode);
+
+            var reply = xmlDoc.CreateElement("noreply");
+            reply.SetAttribute("type", "boolean");
+            tn = xmlDoc.CreateTextNode(wait ? "false" : "true");
+            reply.AppendChild(tn);
+            root.AppendChild(reply);
 
             var rec = xmlDoc.CreateElement("receiver");
             rec.SetAttribute("type", "number");
@@ -825,12 +835,18 @@ namespace Grace.Utility
 #endif
             stream.Seek(0, SeekOrigin.Begin);
             var reader = new StreamReader(stream);
-            EventWaitHandle handle = new EventWaitHandle(false,
-                    EventResetMode.ManualReset);
-            WebSocketEndpoint.AddEventHandle(theKey, handle);
+            EventWaitHandle handle;
+            if (wait)
+            {
+                handle = new EventWaitHandle(false,
+                        EventResetMode.ManualReset);
+                WebSocketEndpoint.AddEventHandle(theKey, handle);
+                wss.Send(reader.ReadToEnd());
+                handle.WaitOne();
+                return WebSocketEndpoint.GetEventResult(theKey);
+            }
             wss.Send(reader.ReadToEnd());
-            handle.WaitOne();
-            return WebSocketEndpoint.GetEventResult(theKey);
+            return GraceObject.Done;
         }
 
         /// <summary>
@@ -848,7 +864,26 @@ namespace Grace.Utility
         public GraceObject SendRPC(int receiver, string name,
                 object[] args)
         {
-            return SendCall(receiver, name, args);
+            return SendCall(receiver, name, args, true);
+        }
+
+        /// <summary>
+        /// Send a RPC to the other end of the channel, ignoring
+        /// the result.
+        /// </summary>
+        /// <param name="receiver">
+        /// Identifier of remote receiving object.
+        /// </param>
+        /// <param name="name">
+        /// Name of procedure
+        /// </param>
+        /// <param name="args">
+        /// Array of arguments to the call.
+        /// </param>
+        public GraceObject SendRPCNoResult(int receiver, string name,
+                object[] args)
+        {
+            return SendCall(receiver, name, args, false);
         }
 
         /// <summary>

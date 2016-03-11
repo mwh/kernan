@@ -419,6 +419,22 @@ namespace Grace.Execution
         GraceObject SendRPC(int receiver, string name, object[] args);
 
         /// <summary>
+        /// Send an RPC message to the remote client, ignoring any
+        /// result and returning done immediately.
+        /// </summary>
+        /// <param name="receiver">
+        /// Unique identifier of the object to receive the message
+        /// on the remote end.
+        /// </param>
+        /// <param name="name">
+        /// Name of the message to send.
+        /// </param>
+        /// <param name="args">
+        /// Arguments to the message.
+        /// </param>
+        GraceObject SendRPCNoResult(int receiver, string name, object[] args);
+
+        /// <summary>
         /// Attempt to wait for a callback or return value from
         /// the remote client.
         /// </summary>

@@ -214,6 +214,8 @@ function format_reply(resp, ret) {
 }
 
 function remote_reply(call, ret) {
+    if (call.noreply)
+        return;
     var resp = {
         mode: 'response',
         key: call.key,

@@ -131,11 +131,13 @@ namespace WebSocketModules
                 MethodRequest req, GraceObject receiver)
         {
             var part = req[0];
+            var isAssign = false;
             if (req.Count > 1)
             {
                 if (req[1].Name == ":=(_)")
                 {
                     part = req[1];
+                    isAssign = true;
                 }
             }
             object[] args = new object[part.Arguments.Count];
@@ -157,6 +159,8 @@ namespace WebSocketModules
             var idx = name.IndexOf('(');
             if (idx != -1)
                 name = name.Substring(0, idx);
+            if (isAssign)
+                return sink.SendRPCNoResult(key, name, args);
             var ret = sink.SendRPC(key, name, args);
             var gfo = ret as GraceForeignObject;
             if (gfo == null)
