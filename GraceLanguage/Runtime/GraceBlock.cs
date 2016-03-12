@@ -48,7 +48,13 @@ namespace Grace.Runtime
                 {
                     Pattern = par.Evaluate(ctx);
                     explicitPattern = true;
-                    this.parameters = new List<Node>(parameters.Skip<Node>(1));
+                    var t = par.Location;
+                    var id = new IdentifierParseNode(
+                            new IdentifierToken(t.module, t.line, t.column,
+                                "_"));
+                    this.parameters = new List<Node> {
+                        new ParameterNode(t, id)
+                    };
                 }
             }
         }
@@ -216,35 +222,9 @@ namespace Grace.Runtime
                         MethodRequest.Single("apply", result));
                 return Matching.SuccessfulMatch(ctx, res);
             }
-            var args = new List<GraceObject>();
-            //args.Add(result);
-            var doReq = MethodRequest.Single("do", new AddToListBlock(args));
-            var bindings = matchResult.Request(ctx,
-                    MethodRequest.Nullary("bindings"));
-            bindings.Request(ctx, doReq);
-            if (args.Count != parameters.Count)
-            {
-                ErrorReporting.RaiseError(ctx, "R2023",
-                        new Dictionary<string,string>
-                        {
-                            { "parameter count", "" + parameters.Count },
-                            { "binding count", "" + args.Count },
-                            { "parameters", String.Join(", ",
-                                    from x in parameters.OfType<ParameterNode>()
-                                    select x.Name
-                                    ) }
-                        },
-                        "MatchingError: Wrong number of bindings"
-                    );
-            }
-            var mReq = new MethodRequest();
-            var rpn = new RequestPart("apply", new List<GraceObject>(),
-                    args);
-            mReq.AddPart(rpn);
-            var myResult = this.Apply(ctx, mReq);
-            //var myResult = this.Apply(ctx,
-            //        MethodRequest.Single("apply", result));
-            return Matching.SuccessfulMatch(ctx, myResult);
+            var res2 = this.Apply(ctx,
+                    MethodRequest.Single("apply", result));
+            return Matching.SuccessfulMatch(ctx, res2);
         }
 
         private class AddToListBlock : GraceObject

@@ -1763,15 +1763,6 @@ namespace Grace.Parsing
                 while (awaiting<RParenToken>(start))
                 {
                     ParseNode expr = parseExpression();
-                    if (lexer.current is ColonToken)
-                    {
-                        ret = true;
-                        var colon = lexer.current;
-                        nextToken();
-                        ParseNode pat = parseExpression();
-                        expr = new TypedParameterParseNode(expr, pat,
-                                colon);
-                    }
                     arguments.Add(expr);
                     consumeBlankLines();
                     if (lexer.current is CommaToken)
