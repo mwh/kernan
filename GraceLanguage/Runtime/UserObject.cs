@@ -64,7 +64,7 @@ namespace Grace.Runtime
             var reader = new FieldReaderMethod(c);
             var writer = new FieldWriterMethod(c);
             AddMethod(name, reader);
-            AddMethod(name + " :=", writer);
+            AddMethod(name + " :=(_)", writer);
             return new ReaderWriterPair { Read = reader, Write = writer };
         }
 
@@ -141,7 +141,7 @@ namespace Grace.Runtime
             var r = new FieldReaderMethod(cell);
             methods[name] = r;
             var w = new FieldWriterMethod(cell);
-            methods[name + " :="] = w;
+            methods[name + " :=(_)"] = w;
             if (!readable)
                 r.Confidential = true;
             if (!writable)

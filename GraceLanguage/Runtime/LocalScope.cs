@@ -98,7 +98,7 @@ namespace Grace.Runtime
         {
             locals[name] = val;
             AddMethod(name, Reader);
-            AddMethod(name + " :=", Writer);
+            AddMethod(name + " :=(_)", Writer);
             return new ReaderWriterPair { Read = Reader, Write = Writer };
         }
 

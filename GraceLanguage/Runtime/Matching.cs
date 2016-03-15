@@ -87,9 +87,10 @@ namespace Grace.Runtime
         public static GraceObject OrCombinator(EvaluationContext ctx,
                 GraceObject self, GraceObject other)
         {
-            var patReq = MethodRequest.Single("_OrPattern",
-                    self);
-            patReq[0].Arguments.Add(other);
+            var patReq = new MethodRequest();
+            patReq.AddPart(new RequestPart("_OrPattern",
+                        RequestPart.EmptyList,
+                        new List<GraceObject> { self, other }));
             GraceObject patRec = ctx.FindReceiver(patReq);
             return patRec.Request(ctx, patReq);
         }
@@ -101,9 +102,10 @@ namespace Grace.Runtime
         public static GraceObject AndCombinator(EvaluationContext ctx,
                 GraceObject self, GraceObject other)
         {
-            var patReq = MethodRequest.Single("_AndPattern",
-                    self);
-            patReq[0].Arguments.Add(other);
+            var patReq = new MethodRequest();
+            patReq.AddPart(new RequestPart("_OrPattern",
+                        RequestPart.EmptyList,
+                        new List<GraceObject> { self, other }));
             GraceObject patRec = ctx.FindReceiver(patReq);
             return patRec.Request(ctx, patReq);
         }
@@ -122,9 +124,9 @@ namespace Grace.Runtime
     class NativeTypePattern<T> : GraceObject {
         public NativeTypePattern()
         {
-            AddMethod("match", new DelegateMethod1Ctx(mMatch));
-            AddMethod("|", Matching.OrMethod);
-            AddMethod("&", Matching.AndMethod);
+            AddMethod("match(_)", new DelegateMethod1Ctx(mMatch));
+            AddMethod("|(_)", Matching.OrMethod);
+            AddMethod("&(_)", Matching.AndMethod);
         }
 
         /// <summary>Native method for Grace match</summary>

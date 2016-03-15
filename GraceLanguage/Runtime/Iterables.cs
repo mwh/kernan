@@ -33,10 +33,10 @@ namespace Grace.Runtime
             {
                 left = l;
                 right = r;
-                AddMethod("do",
+                AddMethod("do(_)",
                     new DelegateMethod1Ctx(
                         new NativeMethod1Ctx(this.Do)));
-                AddMethod("++", Iterables.ConcatMethod);
+                AddMethod("++(_)", Iterables.ConcatMethod);
                 TagName = "ConcatenatedIterables";
             }
 
@@ -86,11 +86,11 @@ namespace Grace.Runtime
         /// <summary>Empty list</summary>
         public GraceVariadicList()
         {
-            AddMethod("do",
+            AddMethod("do(_)",
                 new DelegateMethod1Ctx(
                     new NativeMethod1Ctx(this.Do)));
-            AddMethod("++", Iterables.ConcatMethod);
-            AddMethod("with do",
+            AddMethod("++(_)", Iterables.ConcatMethod);
+            AddMethod("with(_) do(_)",
                 new DelegateMethodReq(
                     new NativeMethodReq(this.WithDo)));
             TagName = "Lineup";
@@ -157,7 +157,7 @@ namespace Grace.Runtime
                     GraceObject block) {
                 _elements = elements;
                 _block = block;
-                AddMethod("apply",
+                AddMethod("apply(_)",
                     new DelegateMethod1Ctx(
                         new NativeMethod1Ctx(this.apply)));
             }

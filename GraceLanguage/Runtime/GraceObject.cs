@@ -161,8 +161,8 @@ namespace Grace.Runtime
                 // User objects obtain them by inheritance, but
                 // others will have them directly.
                 AddMethod("asString", null);
-                AddMethod("==", null);
-                AddMethod("!=", null);
+                AddMethod("==(_)", null);
+                AddMethod("!=(_)", null);
             }
         }
 
@@ -283,10 +283,10 @@ namespace Grace.Runtime
                 case "asString":
                     m = new DelegateMethodReceiver0Ctx(AsString);
                     return m;
-                case "==":
+                case "==(_)":
                     m = new DelegateMethodReceiver1Ctx(mEqualsEquals);
                     return m;
-                case "!=":
+                case "!=(_)":
                     m = new DelegateMethodReceiver1Ctx(mNotEquals);
                     return m;
             }

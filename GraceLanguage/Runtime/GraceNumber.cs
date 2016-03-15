@@ -58,23 +58,23 @@ namespace Grace.Runtime
                 return sharedMethods;
             sharedMethods = new Dictionary<string, Method>
             {
-                { "==", new DelegateMethodTyped1<GraceNumber>(mEqualsEquals) },
-                { "!=", new DelegateMethodTyped1<GraceNumber>(mNotEquals) },
-                { "+", new DelegateMethodTyped1<GraceNumber>(mAdd) },
-                { "*", new DelegateMethodTyped1<GraceNumber>(mMultiply) },
-                { "-", new DelegateMethodTyped1<GraceNumber>(mSubtract) },
-                { "/", new DelegateMethodTyped1Ctx<GraceNumber>(mDivide) },
-                { "%", new DelegateMethodTyped1<GraceNumber>(mModulus) },
-                { "^", new DelegateMethodTyped1<GraceNumber>(mExponentiate) },
-                { ">", new DelegateMethodTyped1<GraceNumber>(mGreaterThan) },
-                { ">=", new DelegateMethodTyped1<GraceNumber>(mGreaterEqual) },
-                { "<", new DelegateMethodTyped1<GraceNumber>(mLessThan) },
-                { "<=", new DelegateMethodTyped1<GraceNumber>(mLessEqual) },
+                { "==(_)", new DelegateMethodTyped1<GraceNumber>(mEqualsEquals) },
+                { "!=(_)", new DelegateMethodTyped1<GraceNumber>(mNotEquals) },
+                { "+(_)", new DelegateMethodTyped1<GraceNumber>(mAdd) },
+                { "*(_)", new DelegateMethodTyped1<GraceNumber>(mMultiply) },
+                { "-(_)", new DelegateMethodTyped1<GraceNumber>(mSubtract) },
+                { "/(_)", new DelegateMethodTyped1Ctx<GraceNumber>(mDivide) },
+                { "%(_)", new DelegateMethodTyped1<GraceNumber>(mModulus) },
+                { "^(_)", new DelegateMethodTyped1<GraceNumber>(mExponentiate) },
+                { ">(_)", new DelegateMethodTyped1<GraceNumber>(mGreaterThan) },
+                { ">=(_)", new DelegateMethodTyped1<GraceNumber>(mGreaterEqual) },
+                { "<(_)", new DelegateMethodTyped1<GraceNumber>(mLessThan) },
+                { "<=(_)", new DelegateMethodTyped1<GraceNumber>(mLessEqual) },
                 { "asString",
                     new DelegateMethodTyped0<GraceNumber>(mAsString) },
                 { "prefix-", new DelegateMethodTyped0<GraceNumber>(mNegate) },
-                { "..", new DelegateMethodTyped1Ctx<GraceNumber>(mDotDot) },
-                { "match", new DelegateMethodTyped1Ctx<GraceNumber>(mMatch) },
+                { "..(_)", new DelegateMethodTyped1Ctx<GraceNumber>(mDotDot) },
+                { "match(_)", new DelegateMethodTyped1Ctx<GraceNumber>(mMatch) },
                 { "hash", new DelegateMethodTyped0<GraceNumber>(mHash) },
                 // These methods are extensions, and should not be used.
                 { "numerator",
@@ -395,16 +395,16 @@ namespace Grace.Runtime
             _low = start;
             _high = end;
             _step = step;
-            AddMethod("..", null);
+            AddMethod("..(_)", null);
             AddMethod("asString", null);
-            AddMethod("do", new DelegateMethod1Ctx(mDo));
+            AddMethod("do(_)", new DelegateMethod1Ctx(mDo));
         }
 
         protected override Method getLazyMethod(string name)
         {
             switch(name)
             {
-                case "..": return new DelegateMethod1Ctx(mDotDot);
+                case "..(_)": return new DelegateMethod1Ctx(mDotDot);
                 case "asString": return new DelegateMethod0Ctx(mAsString);
             }
             return base.getLazyMethod(name);

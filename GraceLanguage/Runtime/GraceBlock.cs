@@ -22,6 +22,8 @@ namespace Grace.Runtime
         /// <summary>Whether this block is variadic or not</summary>
         public bool Variadic { get; set; }
 
+        private readonly string applyName;
+
         private GraceBlock(EvaluationContext ctx, List<Node> parameters,
                 List<Node> body, BlockNode node)
         {
@@ -29,14 +31,15 @@ namespace Grace.Runtime
             this.body = body;
             this.node = node;
             lexicalScope = ctx.Memorise();
-            AddMethod("apply", null);
+            applyName = MethodHelper.ArityNamePart("apply", parameters.Count);
+            AddMethod(applyName, null);
             AddMethod("spawn", null);
             AddMethod("asString", null);
             if (parameters.Count == 1)
             {
-                AddMethod("match", null);
-                AddMethod("|", Matching.OrMethod);
-                AddMethod("&", Matching.AndMethod);
+                AddMethod("match(_)", null);
+                AddMethod("|(_)", Matching.OrMethod);
+                AddMethod("&(_)", Matching.AndMethod);
                 var par = parameters[0];
                 var first = par as ParameterNode;
                 if (first != null && first.Type != null)
@@ -62,9 +65,10 @@ namespace Grace.Runtime
         /// <inheritdoc />
         protected override Method getLazyMethod(string name)
         {
+            if (name == applyName)
+                return new DelegateMethodReq(Apply);
             switch(name) {
-                case "apply": return new DelegateMethodReq(Apply);
-                case "match": return new DelegateMethodReq(Match);
+                case "match(_)": return new DelegateMethodReq(Match);
                 case "spawn": return new DelegateMethod0Ctx(mSpawn);
                 case "asString": return new DelegateMethod0Ctx(mAsString);
             }
@@ -80,11 +84,11 @@ namespace Grace.Runtime
             if (Pattern != null)
                 return;
             explicitPattern = true;
-            AddMethod("match",
+            AddMethod("match(_)",
                 new DelegateMethodReq(
                     new NativeMethodReq(this.Match)));
-            AddMethod("|", Matching.OrMethod);
-            AddMethod("&", Matching.AndMethod);
+            AddMethod("|(_)", Matching.OrMethod);
+            AddMethod("&(_)", Matching.AndMethod);
             Pattern = pattern;
         }
 
@@ -206,7 +210,7 @@ namespace Grace.Runtime
             if (Pattern == null)
             {
                 var rrr = this.Apply(ctx,
-                        MethodRequest.Single("apply", target));
+                        MethodRequest.Single("apply(_)", target));
                 return Matching.SuccessfulMatch(ctx, rrr);
             }
             var matchResult = Matching.Match(ctx, Pattern, target);
@@ -219,11 +223,11 @@ namespace Grace.Runtime
             if (!explicitPattern)
             {
                 var res = this.Apply(ctx,
-                        MethodRequest.Single("apply", result));
+                        MethodRequest.Single("apply(_)", result));
                 return Matching.SuccessfulMatch(ctx, res);
             }
             var res2 = this.Apply(ctx,
-                    MethodRequest.Single("apply", result));
+                    MethodRequest.Single("apply(_)", result));
             return Matching.SuccessfulMatch(ctx, res2);
         }
 
@@ -234,7 +238,7 @@ namespace Grace.Runtime
             public AddToListBlock(List<GraceObject> dest)
             {
                 _dest = dest;
-                AddMethod("apply",
+                AddMethod("apply(_)",
                     new DelegateMethod1Ctx(
                         new NativeMethod1Ctx(this.apply)));
             }

@@ -117,13 +117,23 @@ namespace Grace.Execution
             var s = new LocalScope();
             scope.scope = s;
             majorScope = s;
-            s.AddMethod("print",
+            s.AddMethod("print(_)",
                     new DelegateMethod1Ctx(Print));
             s.AddLocalDef("true", GraceBoolean.True);
             s.AddLocalDef("false", GraceBoolean.False);
-            s.AddMethod("_base_while_do",
+            s.AddMethod("_base_while_do(_,_)",
                     new DelegateMethodReq(BaseWhileDo));
-            s.AddMethod("_base_try_catch_finally",
+            s.AddMethod("_base_try_catch_finally(_,_)",
+                    new DelegateMethodReq(BaseTryCatchFinally));
+            s.AddMethod("_base_try_catch_finally(_,_,_)",
+                    new DelegateMethodReq(BaseTryCatchFinally));
+            s.AddMethod("_base_try_catch_finally(_,_,_,_)",
+                    new DelegateMethodReq(BaseTryCatchFinally));
+            s.AddMethod("_base_try_catch_finally(_,_,_,_,_)",
+                    new DelegateMethodReq(BaseTryCatchFinally));
+            s.AddMethod("_base_try_catch_finally(_,_,_,_,_,_)",
+                    new DelegateMethodReq(BaseTryCatchFinally));
+            s.AddMethod("_base_try_catch_finally(_,_,_,_,_,_,_)",
                     new DelegateMethodReq(BaseTryCatchFinally));
             s.AddMethod("Exception",
                     new ConstantMethod(

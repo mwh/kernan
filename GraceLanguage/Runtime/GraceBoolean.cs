@@ -31,26 +31,26 @@ namespace Grace.Runtime
             AddMethod("not",
                     new DelegateMethod0(new NativeMethod0(this.Negate)));
             AddMethod("hash", new DelegateMethod0(mHash));
-            AddMethod("&&",
+            AddMethod("&&(_)",
                     new DelegateMethod1Ctx(this.AndAnd));
-            AddMethod("||",
+            AddMethod("||(_)",
                     new DelegateMethod1Ctx(this.OrOr));
-            AddMethod("ifTrue",
+            AddMethod("ifTrue(_)",
                     new DelegateMethod1Ctx(
                         new NativeMethod1Ctx(this.IfTrue)));
-            AddMethod("ifFalse",
+            AddMethod("ifFalse(_)",
                     new DelegateMethod1Ctx(
                         new NativeMethod1Ctx(this.IfFalse)));
-            AddMethod("ifTrue ifFalse",
+            AddMethod("ifTrue(_) ifFalse(_)",
                     new DelegateMethodReq(
                         new NativeMethodReq(this.IfTrueIfFalse)));
-            AddMethod("andAlso",
+            AddMethod("andAlso(_)",
                     new DelegateMethod1Ctx(
                         new NativeMethod1Ctx(this.AndAlso)));
-            AddMethod("orElse",
+            AddMethod("orElse(_)",
                     new DelegateMethod1Ctx(
                         new NativeMethod1Ctx(this.OrElse)));
-            AddMethod("match", new DelegateMethod1Ctx(
+            AddMethod("match(_)", new DelegateMethod1Ctx(
                         new NativeMethod1Ctx(this.Match)));
             AddMethod("asString",
                     new DelegateMethod0(new NativeMethod0(this.AsString)));

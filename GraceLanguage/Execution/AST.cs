@@ -480,7 +480,7 @@ namespace Grace.Execution
             if (rec == null)
             {
                 NestRequest(ctx, req);
-                if (req[req.Count - 1].Name == ":=")
+                if (req[req.Count - 1].Name == ":=(_)")
                 {
                     var req2 = new MethodRequest();
                     for (int i = 0; i < req.Count() - 1; i++)
@@ -567,7 +567,7 @@ namespace Grace.Execution
     public abstract class RequestNode : Node, IEnumerable<RequestPartNode>
     {
 
-        private string name = "";
+        private string name;
         /// <summary>The name parts making up this request</summary>
         protected List<RequestPartNode> parts;
 
@@ -592,9 +592,6 @@ namespace Grace.Execution
         public void AddPart(RequestPartNode part)
         {
             parts.Add(part);
-            if (name.Length > 0)
-                name += " ";
-            name += part.Name;
         }
 
         /// <summary>The name of the method being requested</summary>
@@ -603,6 +600,12 @@ namespace Grace.Execution
         {
             get
             {
+                if (name == null)
+                {
+                    name = String.Join(" ",
+                            from x in parts
+                            select x.Name);
+                }
                 return name;
             }
         }
@@ -636,7 +639,7 @@ namespace Grace.Execution
         /// <param name="ctx">Current interpreter</param>
         protected MethodRequest createRequest(EvaluationContext ctx)
         {
-            MethodRequest req = new MethodRequest(name);
+            MethodRequest req = new MethodRequest(Name);
             foreach (RequestPartNode rpn in this)
             {
                 var generics = rpn.GenericArguments.Count > 0
@@ -649,7 +652,10 @@ namespace Grace.Execution
                     generics.Add(n.Evaluate(ctx));
                 foreach (Node n in rpn.Arguments)
                     arguments.Add(n.Evaluate(ctx));
-                RequestPart rp = new RequestPart(rpn.Name, generics, arguments);
+                RequestPart rp = new RequestPart(
+                        rpn.BaseName,
+                        generics,
+                        arguments);
                 req.AddPart(rp);
             }
             return req;
@@ -944,12 +950,27 @@ end:
     public class RequestPartNode : GraceObject
     {
         private string name;
+        private string baseName;
         private List<Node> generics;
         private List<Node> arguments;
 
         internal RequestPartNode(string name, List<Node> generics, List<Node> arguments)
         {
-            this.name = name;
+            this.baseName = name;
+            this.name = MethodHelper.ArityNamePart(name, arguments.Count);
+            this.generics = generics;
+            this.arguments = arguments;
+            AddMethods(sharedMethods);
+        }
+
+        internal RequestPartNode(string name, List<Node> generics,
+                List<Node> arguments,
+                bool allowArityOverloading)
+        {
+            this.baseName = name;
+            this.name = allowArityOverloading ?
+                MethodHelper.ArityNamePart(name, arguments.Count)
+                : name;
             this.generics = generics;
             this.arguments = arguments;
             AddMethods(sharedMethods);
@@ -958,7 +979,7 @@ end:
         /// <summary>Make this part into a := bind request part</summary>
         public void MakeBind()
         {
-            name += ":=";
+            name += ":=(_)";
         }
 
         /// <summary>The name of this part</summary>
@@ -968,6 +989,16 @@ end:
             get
             {
                 return name;
+            }
+        }
+
+        /// <summary>The base name of this part</summary>
+        /// <value>This property gets the string field baseName</value>
+        public string BaseName
+        {
+            get
+            {
+                return baseName;
             }
         }
 
@@ -1004,7 +1035,7 @@ end:
                     { "typeArguments",
                         new DelegateMethodTyped0
                             <RequestPartNode>(mTypeArguments) },
-                    { "accept",
+                    { "accept(_)",
                         new DelegateMethodReceiver1Ctx(mAccept) },
                 };
 
@@ -1080,7 +1111,7 @@ end:
             {
                 vars.Add(v);
                 fieldNames.Add(v.Name);
-                fieldNames.Add(v.Name + " :=");
+                fieldNames.Add(v.Name + " :=(_)");
             }
             body.Add(node);
             if (imp != null)
@@ -2736,7 +2767,7 @@ end:
         private static Dictionary<string, Method>
             sharedMethods =
                 new Dictionary<string, Method> {
-                    { "do",
+                    { "do(_)",
                         new DelegateMethodTyped
                             <AnnotationsNode>(mDo) },
                 };
@@ -2768,8 +2799,20 @@ end:
     public class SignatureNode : Node, IEnumerable<SignaturePartNode>
     {
 
+        private string _name;
+
         /// <summary>Name of the method</summary>
-        public string Name { get; private set; }
+        public string Name {
+            get
+            {
+                if (_name == null)
+                {
+                    _name = String.Join(" ",
+                            from x in Parts select x.Name);
+                }
+                return _name;
+            }
+        }
 
         /// <summary>Parts of the method name</summary>
         public IList<SignaturePartNode> Parts { get; private set; }
@@ -2792,7 +2835,6 @@ end:
         internal SignatureNode(Token location, SignatureParseNode source)
             : base(location, source)
         {
-            Name = source.Name;
             Parts = new List<SignaturePartNode>();
             Annotations = new AnnotationsNode(location,
                     source != null ? source.Annotations : null);
@@ -2925,7 +2967,21 @@ end:
                 IList<Node> genericParameters)
             : base(location, source)
         {
-            _name = source.Name;
+            _name = MethodHelper.ArityNamePart(source.Name, parameters.Count);
+            Parameters = parameters;
+            GenericParameters = genericParameters;
+        }
+
+        internal OrdinarySignaturePartNode(Token location,
+                OrdinarySignaturePartParseNode source,
+                IList<Node> parameters,
+                IList<Node> genericParameters,
+                bool allowArityOverloading)
+            : base(location, source)
+        {
+            _name = allowArityOverloading
+                ? MethodHelper.ArityNamePart(source.Name, parameters.Count)
+                : source.Name;
             Parameters = parameters;
             GenericParameters = genericParameters;
         }

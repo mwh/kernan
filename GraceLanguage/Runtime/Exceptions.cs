@@ -232,13 +232,13 @@ namespace Grace.Runtime
             AddMethod("asString",
                 new DelegateMethodReceiver0Ctx(
                     new NativeMethodReceiver0Ctx(this.AsString)));
-            AddMethod("match",
+            AddMethod("match(_)",
                 new DelegateMethodReq(
                     new NativeMethodReq(this.Match)));
-            AddMethod("raise",
+            AddMethod("raise(_)",
                 new DelegateMethod1Ctx(
                     new NativeMethod1Ctx(this.Raise)));
-            AddMethod("refine",
+            AddMethod("refine(_)",
                 new DelegateMethod1Ctx(
                     new NativeMethod1Ctx(this.Refine)));
         }

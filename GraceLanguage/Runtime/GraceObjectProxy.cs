@@ -55,29 +55,29 @@ namespace Grace.Runtime
                     if (obj == null)
                         return GraceBoolean.True;
                     return GraceBoolean.False;
-                case "+":
+                case "+(_)":
                     return GraceObjectProxy.Create((dynamic)obj + (dynamic)viewAsNative(req[0].Arguments[0]));
-                case "-":
+                case "-(_)":
                     return GraceObjectProxy.Create((dynamic)obj - (dynamic)viewAsNative(req[0].Arguments[0]));
-                case "*":
+                case "*(_)":
                     return GraceObjectProxy.Create((dynamic)obj * (dynamic)viewAsNative(req[0].Arguments[0]));
-                case "/":
+                case "/(_)":
                     return GraceObjectProxy.Create((dynamic)obj / (dynamic)viewAsNative(req[0].Arguments[0]));
-                case "<":
+                case "<(_)":
                     return GraceObjectProxy.Create((dynamic)obj < (dynamic)viewAsNative(req[0].Arguments[0]));
-                case "<=":
+                case "<=(_)":
                     return GraceObjectProxy.Create((dynamic)obj <= (dynamic)viewAsNative(req[0].Arguments[0]));
-                case ">":
+                case ">(_)":
                     return GraceObjectProxy.Create((dynamic)obj > (dynamic)viewAsNative(req[0].Arguments[0]));
-                case ">=":
+                case ">=(_)":
                     return GraceObjectProxy.Create((dynamic)obj >= (dynamic)viewAsNative(req[0].Arguments[0]));
-                case "==":
+                case "==(_)":
                     return GraceObjectProxy.Create((dynamic)obj == (dynamic)viewAsNative(req[0].Arguments[0]));
-                case "!=":
+                case "!=(_)":
                     return GraceObjectProxy.Create((dynamic)obj != (dynamic)viewAsNative(req[0].Arguments[0]));
-                case "%":
+                case "%(_)":
                     return GraceObjectProxy.Create((dynamic)obj % (dynamic)viewAsNative(req[0].Arguments[0]));
-                case "^":
+                case "^(_)":
                     return GraceObjectProxy.Create(Math.Pow((dynamic)obj, (dynamic)viewAsNative(req[0].Arguments[0])));
                 case "asString":
                     if (obj == null)
@@ -85,7 +85,7 @@ namespace Grace.Runtime
                     return GraceString.Create(obj.ToString());
                 case "prefix!":
                     return GraceObjectProxy.Create(!(dynamic)obj);
-                case "at":
+                case "at(_)":
                     if (Interpreter.JSIL)
                         // Calling get_Item directly is iffy, but
                         // works on JSIL where accessing Item fails,

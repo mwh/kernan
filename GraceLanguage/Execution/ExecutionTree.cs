@@ -95,7 +95,6 @@ namespace Grace.Execution
         public Node Visit(SignatureParseNode spn)
         {
             var ret = new SignatureNode(spn.Token, spn);
-            string name = ret.Name;
             foreach (var part in spn.Parts)
             {
                 ret.AddPart((SignaturePartNode)part.Visit(this));
@@ -168,6 +167,9 @@ namespace Grace.Execution
                     throw new Exception("unimplemented - bad generic parameters");
                 }
             }
+            if (osppn.Name.StartsWith("circumfix", StringComparison.Ordinal))
+                return new OrdinarySignaturePartNode(osppn.Token, osppn,
+                        parameters, generics, false);
             return new OrdinarySignaturePartNode(osppn.Token, osppn,
                     parameters, generics);
         }
@@ -574,7 +576,8 @@ namespace Grace.Execution
             ImplicitReceiverRequestNode ret = new ImplicitReceiverRequestNode(ibrpn.Token, ibrpn);
             RequestPartNode rpn = new RequestPartNode("circumfix" + ibrpn.Name,
                     new List<Node>(),
-                    map(ibrpn.Arguments));
+                    map(ibrpn.Arguments),
+                    false);
             ret.AddPart(rpn);
             return ret;
         }

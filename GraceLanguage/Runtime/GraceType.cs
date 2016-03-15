@@ -15,10 +15,10 @@ namespace Grace.Runtime
         public GraceType(string name)
         {
             this.name = name;
-            AddMethod("match", new DelegateMethod1Ctx(
+            AddMethod("match(_)", new DelegateMethod1Ctx(
                         new NativeMethod1Ctx(this.Match)));
-            AddMethod("|", Matching.OrMethod);
-            AddMethod("&", Matching.AndMethod);
+            AddMethod("|(_)", Matching.OrMethod);
+            AddMethod("&(_)", Matching.AndMethod);
         }
 
         /// <summary>Add a method type entry to this type</summary>

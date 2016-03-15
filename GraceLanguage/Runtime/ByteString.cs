@@ -31,10 +31,9 @@ namespace Grace.Runtime
         {
             sharedMethods = new Dictionary<string, Method>
             {
-                { "at", new DelegateMethodTyped<ByteString>(mAt) },
-                { "[]", new DelegateMethodTyped<ByteString>(mAt) },
+                { "at(_)", new DelegateMethodTyped<ByteString>(mAt) },
                 { "size", new DelegateMethodTyped<ByteString>(mSize) },
-                { "++", new DelegateMethodTyped<ByteString>(mConcat) },
+                { "++(_)", new DelegateMethodTyped<ByteString>(mConcat) },
             };
         }
 

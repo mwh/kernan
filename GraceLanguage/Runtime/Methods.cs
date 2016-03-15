@@ -677,6 +677,30 @@ namespace Grace.Runtime
                         "InheritanceError: Invalid inheritance"
                     );
         }
+
+        /// <summary>
+        /// Return an arity-formatted version of a part name.
+        /// </summary>
+        /// <param name="name">Part name</param>
+        /// <param name="count">Number of parameters/arguments</param>
+        public static string ArityNamePart(string name, int count)
+        {
+            switch(count)
+            {
+                case 0:
+                    return name;
+                case 1:
+                    return name + "(_)";
+                case 2:
+                    return name + "(_,_)";
+                case 3:
+                    return name + "(_,_,_)";
+                default:
+                    return name + "("
+                        + String.Join(",", Enumerable.Repeat("_", count))
+                        + ")";
+            }
+        }
     }
 
 }

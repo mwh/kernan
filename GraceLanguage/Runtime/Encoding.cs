@@ -17,19 +17,17 @@ namespace Grace.Runtime
 
         private static Dictionary<string, Method> sharedMethods =
             new Dictionary<string, Method> {
-                { "<", new DelegateMethodTyped<StringCodepoints>(mLT) },
-                { "<=", new DelegateMethodTyped<StringCodepoints>(mLTE) },
-                { ">", new DelegateMethodTyped<StringCodepoints>(mGT) },
-                { ">=", new DelegateMethodTyped<StringCodepoints>(mGTE) },
-                { "==", new DelegateMethodTyped<StringCodepoints>(mEQ) },
-                { "!=", new DelegateMethodTyped<StringCodepoints>(mNE) },
-                { "[]",
-                    new DelegateMethodTyped<StringCodepoints>(mAt) },
-                { "at",
+                { "<(_)", new DelegateMethodTyped<StringCodepoints>(mLT) },
+                { "<=(_)", new DelegateMethodTyped<StringCodepoints>(mLTE) },
+                { ">(_)", new DelegateMethodTyped<StringCodepoints>(mGT) },
+                { ">=(_)", new DelegateMethodTyped<StringCodepoints>(mGTE) },
+                { "==(_)", new DelegateMethodTyped<StringCodepoints>(mEQ) },
+                { "!=(_)", new DelegateMethodTyped<StringCodepoints>(mNE) },
+                { "at(_)",
                     new DelegateMethodTyped<StringCodepoints>(mAt) },
                 { "size",
                     new DelegateMethodTyped<StringCodepoints>(mSize) },
-                { "++",
+                { "++(_)",
                     new DelegateMethodTyped<StringCodepoints>(mConcat) },
                 { "string",
                     new DelegateMethodTyped<StringCodepoints>(mString) },
@@ -309,10 +307,10 @@ namespace Grace.Runtime
         private static void createSharedMethods()
         {
             sharedMethods = new Dictionary<string, Method> {
-                { "<", new DelegateMethodTyped<CodepointObject>(mLT) },
-                { "<=", new DelegateMethodTyped<CodepointObject>(mLTE) },
-                { ">", new DelegateMethodTyped<CodepointObject>(mGT) },
-                { ">=", new DelegateMethodTyped<CodepointObject>(mGTE) },
+                { "<(_)", new DelegateMethodTyped<CodepointObject>(mLT) },
+                { "<=(_)", new DelegateMethodTyped<CodepointObject>(mLTE) },
+                { ">(_)", new DelegateMethodTyped<CodepointObject>(mGT) },
+                { ">=(_)", new DelegateMethodTyped<CodepointObject>(mGTE) },
                 { "asString",
                     new DelegateMethodTyped<CodepointObject>(mAsString) },
                 { "codepoint",
@@ -565,8 +563,7 @@ namespace Grace.Runtime
         private static void createSharedMethods()
         {
             sharedMethods = new Dictionary<string, Method> {
-                { "at", new DelegateMethodTyped<UTF16CodepointsView>(mAt) },
-                { "[]", new DelegateMethodTyped<UTF16CodepointsView>(mAt) },
+                { "at(_)", new DelegateMethodTyped<UTF16CodepointsView>(mAt) },
                 { "le",
                     new DelegateMethodTyped<UTF16CodepointsView>(mLEndian)
                 },
@@ -648,8 +645,7 @@ namespace Grace.Runtime
         private static void createSharedMethods()
         {
             sharedMethods = new Dictionary<string, Method> {
-                { "at", new DelegateMethodTyped<UTF32CodepointsView>(mAt) },
-                { "[]", new DelegateMethodTyped<UTF32CodepointsView>(mAt) },
+                { "at(_)", new DelegateMethodTyped<UTF32CodepointsView>(mAt) },
                 { "le",
                     new DelegateMethodTyped<UTF32CodepointsView>(mLEndian)
                 },

@@ -43,7 +43,7 @@ namespace Grace.Runtime
         internal RequestPart(string name, IList<GraceObject> generics,
                 IList<GraceObject> arguments)
         {
-            this.name = name;
+            this.name = MethodHelper.ArityNamePart(name, arguments.Count);
             this.generics = generics;
             this.arguments = arguments;
         }

@@ -18,7 +18,7 @@ namespace Grace.Platform.Memory
 
         public PlatformMemory() : base("platform/memory")
         {
-            AddMethod("allocate", new DelegateMethod1(mAlloc));
+            AddMethod("allocate(_)", new DelegateMethod1(mAlloc));
         }
 
         private GraceObject mAlloc(GraceObject arg)
@@ -40,10 +40,8 @@ namespace Grace.Platform.Memory
             data = new GraceObject[size];
             var at = new DelegateMethod1Ctx(mAt);
             var atPut = new DelegateMethodReq(mAtPut);
-            AddMethod("[]", at);
-            AddMethod("at", at);
-            AddMethod("[] :=", atPut);
-            AddMethod("at put", atPut);
+            AddMethod("at(_)", at);
+            AddMethod("at(_) put(_)", atPut);
             AddMethod("size", new DelegateMethod0(mSize));
         }
 
