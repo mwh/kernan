@@ -297,7 +297,7 @@ namespace Grace.Utility
                     {
                         return;
                     }
-                    else if (mode != "build")
+                    else if (mode != "build" && mode != "run")
                         return;
                     var cn = root.XPathSelectElement("//code");
                     var mn = root.XPathSelectElement("//modulename");
