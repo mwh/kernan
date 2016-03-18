@@ -41,9 +41,12 @@ namespace Grace.Execution
                     + ((IPEndPoint)client.Client.RemoteEndPoint).Address
                     + ".");
             var stream = client.GetStream();
-            Handshake(stream);
-            var wss = new WebSocketStream(stream);
-            return wss;
+            if (Handshake(stream))
+            {
+                var wss = new WebSocketStream(stream);
+                return wss;
+            }
+            return Next();
         }
 
         /// <summary>
@@ -60,21 +63,38 @@ namespace Grace.Execution
                     + ((IPEndPoint)client.Client.RemoteEndPoint).Address
                     + ".");
             var stream = client.GetStream();
-            Handshake(stream);
-            var wss = new WebSocketStream(stream);
-            return wss;
+            if (Handshake(stream))
+            {
+                var wss = new WebSocketStream(stream);
+                return wss;
+            }
+            return Next();
         }
 
         /// <summary>
         /// Perform the web socket handshake on a base NetworkStream.
         /// </summary>
         /// <param name="stream">NetworkStream to handshake on</param>
-        public void Handshake(NetworkStream stream)
+        public bool Handshake(NetworkStream stream)
         {
             byte[] buffer = new byte[2048];
             // Await handshake
             int read = stream.Read(buffer, 0, buffer.Length);
             var str = Encoding.UTF8.GetString(buffer, 0, read);
+            if (str.StartsWith("GET / HTTP/1"))
+            {
+                Console.WriteLine("Open wsclient/index.html in your browser "
+                        + "to connect.");
+                byte[] response = Encoding.ASCII.GetBytes(
+                        "HTTP/1.0 200 OK\r\n"
+                        + "\r\n"
+                        + "Open wsclient/index.html in your "
+                        + "browser to connect, or another Grace "
+                        + "WebSocket client.");
+                stream.Write(response, 0, response.Length);
+                stream.Close();
+                return false;
+            }
 #if DEBUG_WS
             Console.WriteLine("Read: " + str);
 #endif
@@ -107,6 +127,7 @@ namespace Grace.Execution
                     Console.WriteLine("Accepted connection.");
                 }
             }
+            return true;
         }
     }
 
