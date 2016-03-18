@@ -36,6 +36,10 @@ namespace Grace.Execution
             Console.WriteLine("Server started on "
                     + endpoint.Address + ":" + endpoint.Port
                     + ", awaiting connection...");
+            Console.WriteLine("You can either use a Grace WebSocket client, "
+                    + "or visit http://"
+                    + endpoint.Address + ":" + endpoint.Port
+                    + " in your web browser.");
             var client = server.AcceptTcpClient();
             Console.WriteLine("Connection received from "
                     + ((IPEndPoint)client.Client.RemoteEndPoint).Address
@@ -71,6 +75,29 @@ namespace Grace.Execution
             return Next();
         }
 
+        private void httpServe(NetworkStream stream, string path,
+                string mime)
+        {
+            var bases = Interpreter.GetStaticModulePaths();
+            foreach (var p in bases)
+            {
+                string filePath = System.IO.Path.Combine(p, path);
+                if (System.IO.File.Exists(filePath))
+                {
+                    var data = System.IO.File.ReadAllBytes(filePath);
+                    Console.WriteLine("Serving " + path + " (" + data.Length
+                            + " bytes) over HTTP...");
+                    byte[] response = Encoding.ASCII.GetBytes(
+                            "HTTP/1.0 200 OK\r\n"
+                            + "Content-type: " + mime + "\r\n"
+                            + "\r\n");
+                    stream.Write(response, 0, response.Length);
+                    stream.Write(data, 0, data.Length);
+                }
+            }
+            stream.Close();
+        }
+
         /// <summary>
         /// Perform the web socket handshake on a base NetworkStream.
         /// </summary>
@@ -83,16 +110,14 @@ namespace Grace.Execution
             var str = Encoding.UTF8.GetString(buffer, 0, read);
             if (str.StartsWith("GET / HTTP/1"))
             {
-                Console.WriteLine("Open wsclient/index.html in your browser "
-                        + "to connect.");
-                byte[] response = Encoding.ASCII.GetBytes(
-                        "HTTP/1.0 200 OK\r\n"
-                        + "\r\n"
-                        + "Open wsclient/index.html in your "
-                        + "browser to connect, or another Grace "
-                        + "WebSocket client.");
-                stream.Write(response, 0, response.Length);
-                stream.Close();
+                httpServe(stream, "websocket/index.html",
+                        "text/html");
+                return false;
+            }
+            if (str.StartsWith("GET /minigrace.js HTTP/1"))
+            {
+                httpServe(stream, "websocket/minigrace.js",
+                        "text/javascript");
                 return false;
             }
 #if DEBUG_WS
