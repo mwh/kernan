@@ -37,6 +37,8 @@ namespace WebSocketModules
             AddMethod("run", new DelegateMethod0Ctx(mRun));
             AddMethod("yield", new DelegateMethod0Ctx(mYield));
             AddMethod("end", new DelegateMethod0Ctx(mEnd));
+            AddMethod("ignoreResultOf(_) on(_)",
+                    new DelegateMethodReq(mIgnoreResultOf_On));
         }
 
         private GraceObject mDocument(EvaluationContext ctx)
@@ -88,6 +90,18 @@ namespace WebSocketModules
             return GraceObject.Done;
         }
 
+        private GraceObject mIgnoreResultOf_On(
+                EvaluationContext ctx,
+                MethodRequest req)
+        {
+            var obj = req[1].Arguments[0] as DomObject;
+            if (obj == null)
+                return GraceObject.Done;
+            var str = req[0].Arguments[0].FindNativeParent<GraceString>().Value;
+            obj.Ignore(str);
+            return GraceObject.Done;
+        }
+
         private void processCallback(EvaluationContext ctx,
                 GraceObject block, object[] args)
         {
@@ -116,10 +130,19 @@ namespace WebSocketModules
         private int key;
         private RPCSink sink;
 
+        private HashSet<string> ignoredMethodResults;
+
         public DomObject(int k, RPCSink s)
         {
             key = k;
             sink = s;
+        }
+
+        public void Ignore(string m)
+        {
+            if (ignoredMethodResults == null)
+                ignoredMethodResults = new HashSet<string>();
+            ignoredMethodResults.Add(m);
         }
 
         public override bool RespondsTo(MethodRequest req)
@@ -161,6 +184,11 @@ namespace WebSocketModules
                 name = name.Substring(0, idx);
             if (isAssign)
                 return sink.SendRPCNoResult(key, name, args);
+            if (ignoredMethodResults != null)
+            {
+                if (ignoredMethodResults.Contains(name))
+                    return sink.SendRPCNoResult(key, name, args);
+            }
             var ret = sink.SendRPC(key, name, args);
             var gfo = ret as GraceForeignObject;
             if (gfo == null)
