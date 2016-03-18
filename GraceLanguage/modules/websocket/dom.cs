@@ -36,6 +36,7 @@ namespace WebSocketModules
             AddMethod("sleep(_)", new DelegateMethod1(mSleep));
             AddMethod("run", new DelegateMethod0Ctx(mRun));
             AddMethod("yield", new DelegateMethod0Ctx(mYield));
+            AddMethod("yieldFor(_)", new DelegateMethod1Ctx(mYieldFor));
             AddMethod("end", new DelegateMethod0Ctx(mEnd));
             AddMethod("ignoreResultOf(_) on(_)",
                     new DelegateMethodReq(mIgnoreResultOf_On));
@@ -57,6 +58,26 @@ namespace WebSocketModules
             if (n == null)
                 return GraceObject.Done;
             Thread.Sleep((int)(n.Double));
+            return GraceObject.Done;
+        }
+
+        private GraceObject mYieldFor(EvaluationContext ctx, GraceObject arg)
+        {
+            var n = arg.FindNativeParent<GraceNumber>();
+            if (n == null)
+                return GraceObject.Done;
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            GraceObject block;
+            object[] args;
+            var ms = (int)(n.Double);
+            while (sw.ElapsedMilliseconds < ms)
+            {
+                var delay = (int)(ms - sw.ElapsedMilliseconds);
+                if (delay < 0)
+                    delay = 0;
+                if (sink.AwaitRemoteCallback(delay, out block, out args))
+                    processCallback(ctx, block, args);
+            }
             return GraceObject.Done;
         }
 
