@@ -41,7 +41,7 @@ method creator {
     }
 }
 var j := object {
-    inherits creator
+    inherit creator
 }
 
 print "Should be three trues and then all false"

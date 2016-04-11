@@ -9,7 +9,7 @@ class A {
 }
 
 class B {
-  inherits A
+  inherit A
   method b {
     print("B")
   }

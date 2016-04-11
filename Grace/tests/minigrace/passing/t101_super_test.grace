@@ -8,7 +8,7 @@ class A(v') {
     }
 }
 class B(x) {
-    inherits A(x)
+    inherit A(x)
         alias abaz = baz
     method bar {
         print "B's bar"
@@ -19,7 +19,7 @@ class B(x) {
     }
 }
 class C(y) {
-    inherits B(y)
+    inherit B(y)
         alias bbaz = baz
     method baz {
         print "C's baz invokes..."

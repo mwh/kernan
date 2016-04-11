@@ -476,7 +476,7 @@ method prettyPrintInherits(p, indent) {
     def newIndent = indent ++ "    "
     def aliases = p.get_Aliases
     def excludes = p.get_Excludes
-    var ret := "inherits {prettyPrint(p.get_From, newIndent)}"
+    var ret := "inherit {prettyPrint(p.get_From, newIndent)}"
     if (aliases.get_Count > 0) then {
         ret := ret ++ prettyPrintAliases(aliases, newIndent)
     }
@@ -490,7 +490,7 @@ method prettyPrintUses(p, indent) {
     def newIndent = indent ++ "    "
     def aliases = p.get_Aliases
     def excludes = p.get_Excludes
-    var ret := "uses {prettyPrint(p.get_From, newIndent)}"
+    var ret := "use {prettyPrint(p.get_From, newIndent)}"
     if (aliases.get_Count > 0) then {
         ret := ret ++ prettyPrintAliases(aliases, newIndent)
     }

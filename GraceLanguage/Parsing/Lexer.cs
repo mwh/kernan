@@ -262,9 +262,9 @@ namespace Grace.Parsing
                 return new ClassKeywordToken(moduleName, line, column);
             if ("trait" == ident)
                 return new TraitKeywordToken(moduleName, line, column);
-            if ("inherits" == ident)
+            if ("inherit" == ident)
                 return new InheritsKeywordToken(moduleName, line, column);
-            if ("uses" == ident)
+            if ("use" == ident)
                 return new UsesKeywordToken(moduleName, line, column);
             if ("import" == ident)
                 return new ImportKeywordToken(moduleName, line, column);

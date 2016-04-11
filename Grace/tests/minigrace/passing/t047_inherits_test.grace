@@ -8,7 +8,7 @@ class A(v') {
     }
 }
 class B(x) {
-    inherits A(x)
+    inherit A(x)
     method bar {
         print "B's bar"
     }

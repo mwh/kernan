@@ -5,14 +5,14 @@ class A {
 }
 
 class B {
-    inherits A
+    inherit A
     method bar {
         print "hello {foo}"
     }
 }
 
 class C {
-    inherits B
+    inherit B
     method quux {
         print "X"
         bar
@@ -20,7 +20,7 @@ class C {
 }
 
 object {
-    inherits A
+    inherit A
 }
 
 def x = B

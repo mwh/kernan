@@ -1,5 +1,5 @@
 // ERROR = P1018
 object {
-    inherits .
+    inherit .
     method foo {}
 }

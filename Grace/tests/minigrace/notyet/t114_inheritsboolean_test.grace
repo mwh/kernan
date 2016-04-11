@@ -1,13 +1,13 @@
 
 def x = object {
-    inherits true
+    inherit true
     method isAnX {
         self
     }
 }
 
 def y = object {
-    inherits false
+    inherit false
     method isAnX {
         false
     }
