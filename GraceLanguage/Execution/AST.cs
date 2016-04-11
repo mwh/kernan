@@ -1463,18 +1463,22 @@ end:
         }
 
         /// <summary>
-        /// Respond to a given request.
+        /// Respond to a given request with a given binding of
+        /// the receiver.
         /// </summary>
         /// <param name="ctx">Current interpreter</param>
+        /// <param name="self">Receiver of the request</param>
         /// <param name="req">Request that accessed this method</param>
         /// <returns>The return value of this method within
         /// this context and with these arguments.</returns>
         public virtual GraceObject Respond(EvaluationContext ctx,
+                GraceObject self,
                 MethodRequest req)
         {
             GraceObject ret = GraceObject.Done;
             Interpreter.ScopeMemo memo = ctx.Memorise();
             var myScope = new MethodScope(req.Name);
+            myScope.AddLocalDef("self", self);
             // Bind any local methods (types) on the scope
             foreach (var localMeth in Body.OfType<MethodNode>())
             {
