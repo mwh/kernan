@@ -1629,6 +1629,14 @@ namespace Grace.Parsing
                     if (lexer.current is CommaToken
                         || lexer.current is ArrowToken)
                         reportError("P1022", lexer.current, "Block parameter list contained invalid symbol.");
+                    if (lexer.current.line == firstBodyToken.line
+                            && !(lexer.current is NewLineToken
+                                || lexer.current is RBraceToken))
+                    {
+                        Console.WriteLine("got token " + lexer.current);
+                        reportError("P1004", lexer.current,
+                                "Unexpected token after statement.");
+                    }
                     takeSemicolon();
                 }
                 else if (lexer.current is SemicolonToken)
@@ -1659,6 +1667,14 @@ namespace Grace.Parsing
                 {
                     ret.Body.Add(expr);
                     takeSemicolon();
+                    if (lexer.current.line == firstBodyToken.line
+                            && !(lexer.current is NewLineToken
+                                || lexer.current is RBraceToken))
+                    {
+                        Console.WriteLine("got token " + lexer.current);
+                        reportError("P1004", lexer.current,
+                                "Unexpected token after statement.");
+                    }
                 }
                 if (lexer.current is CommaToken)
                 {
