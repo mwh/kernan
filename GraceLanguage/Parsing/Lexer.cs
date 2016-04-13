@@ -410,10 +410,6 @@ namespace Grace.Parsing
                         || code[index] == '\r' || code[index] == '\n'
                         || code[index] == '\u2028'))
                 spaceAfter = true;
-            if ("<" == op && !spaceBefore)
-                return new LGenericToken(moduleName, line, column);
-            if (">" == op && !spaceBefore)
-                return new RGenericToken(moduleName, line, column);
             if (op.StartsWith(">") && !spaceBefore)
             {
                 // This is a closing generic followed by some other
@@ -715,6 +711,8 @@ namespace Grace.Parsing
                 cat = validateChar();
                 c = code[index];
                 cStr = StringInfo.GetNextTextElement(code, index);
+                if (code.Substring(start, index - start) == "[[")
+                    return new LGenericToken(moduleName, line, column);
             }
             string bracket = code.Substring(start, index - start);
             int[] indices = StringInfo.ParseCombiningCharacters(bracket);
@@ -751,6 +749,8 @@ namespace Grace.Parsing
                 cat = validateChar();
                 c = code[index];
                 cStr = StringInfo.GetNextTextElement(code, index);
+                if (code.Substring(start, index - start) == "]]")
+                    return new RGenericToken(moduleName, line, column);
             }
             string bracket = code.Substring(start, index - start);
             int[] indices = StringInfo.ParseCombiningCharacters(bracket);

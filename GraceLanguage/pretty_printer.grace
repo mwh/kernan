@@ -188,14 +188,14 @@ method helper_Generics(g, indent) {
     if (gCount == 0) then {
         return ""
     }
-    var ret := "<"
+    var ret := "[["
     for (0 .. (gCount - 1)) do { i ->
         if (i > 0) then {
             ret := ret ++ ", "
         }
         ret := ret ++ prettyPrint(g.at(i), indent)
     }
-    "{ret}>"
+    "{ret}]]"
 }
 
 method prettyPrintClassDeclaration(m, indent) {
@@ -243,14 +243,14 @@ method prettyPrintSignaturePart(p, indent) {
     def genericParameters = p.get_GenericParameters
     var ret := "{name}"
     if (genericParameters.get_Count > 0) then {
-        ret := ret ++ "<"
+        ret := ret ++ "[["
         for (0 .. (genericParameters.get_Count - 1)) do { i ->
             if (i > 0) then {
                 ret := ret ++ ","
             }
             ret := ret ++ prettyPrint(genericParameters.at(i), indent)
         }
-        ret := ret ++ ">"
+        ret := ret ++ "]]"
     }
     if (params.get_Count > 0) then {
         ret := ret ++ "("

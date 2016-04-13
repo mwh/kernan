@@ -1,4 +1,4 @@
 // ERROR = P1013
-method bar<A {
+method bar[[A {
     "Hello"
 }

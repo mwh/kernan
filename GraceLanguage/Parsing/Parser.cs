@@ -792,13 +792,10 @@ namespace Grace.Parsing
                     reportError("P1007", "Unterminated generic type parameter list.");
                 nextToken();
             }
-            else if (lexer.current is OperatorToken)
+            else if (lexer.current is OperatorToken
+                    || lexer.current is OpenBracketToken)
             {
-                OperatorToken op = lexer.current as OperatorToken;
-                if (op.Name == "<")
-                    reportError("P1008", "Generic '<' must not have spaces around it.");
-                else
-                    reportError("P1009", "Unexpected operator in type name, expected '<'.");
+                reportError("P1009", "Unexpected operator in type name, expected '[['.");
             }
             expect<SingleEqualsToken>();
             nextToken();

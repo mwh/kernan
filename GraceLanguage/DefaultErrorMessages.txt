@@ -10,8 +10,7 @@ P1004 Unexpected code on line after statement completed: token ${token}
 P1005 A 'var' declaration must use ':=', not '='
 P1006 A 'def' declaration must use '=', not ':='
 P1007 Generic parameter list not terminated: expected a '>'
-P1008 A generic '<' must not have spaces around it
-P1009 Unexpected operator in type name, expected '<' or '='
+P1009 Unexpected operator in type name, expected '[[' or '='
 P1010 Indentation must increase inside a type body: indentation was ${previous indent}, but the new indentation is only ${new indent}
 P1011 Indentation must increase inside {}: indentation was ${previous indent}, but the new indentation is only ${new indent}
 P1012 Unexpected operator '${operator}' in parameter list: expected identifier
