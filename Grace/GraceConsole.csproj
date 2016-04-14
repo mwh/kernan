@@ -56,6 +56,11 @@
       <Name>GraceLanguage</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="help.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="DeployNativeModules" AfterTargets="AfterBuild" Inputs="@(NativeModule)" Outputs="$(OutDir)modules\%(NativeModule.RecursiveDir)\%(NativeModule.Filename).dll">
     <Copy SourceFiles="..\GraceLanguage\$(OutputPath)modules\%(NativeModule.RecursiveDir)%(NativeModule.Filename)%(NativeModule.Extension)" DestinationFolder="$(OutDir)modules\%(NativeModule.RecursiveDir)" />

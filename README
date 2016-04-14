@@ -34,3 +34,23 @@ Source code
 ===========
 The mainline source code of Kernan is available via git from:
     https://mwh.nz/git/kernan
+
+Licence
+=======
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version, with the following additional
+Section 7c restriction:
+
+    Modified versions of this software must be clearly marked as
+    different by not using the name "Kernan".
+
+The text of the GPL is provided in the "GPL3" file in the root of the
+repository. This licence applies to all files that do not otherwise
+state a different licence in their text.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.

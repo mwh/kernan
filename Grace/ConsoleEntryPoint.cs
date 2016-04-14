@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 using System.Net;
+using System.Diagnostics;
 using Grace.Execution;
 using Grace.Parsing;
 using Grace.Runtime;
@@ -15,6 +16,7 @@ namespace Grace
 {
     class ConsoleEntryPoint
     {
+
         static int Main(string[] args)
         {
             var enc = new UTF8Encoding(false);
@@ -31,6 +33,14 @@ namespace Grace
             for (int i = 0; i < args.Length; i++)
             {
                 var arg = args[i];
+                if (arg == "--help")
+                {
+                    return help();
+                }
+                if (arg == "--about")
+                {
+                    return about(i + 1 < args.Length ? args[i+1] : null);
+                }
                 if (arg == "--parse-tree")
                     mode = "parse-tree";
                 else if (arg.StartsWith("--pretty-print="))
@@ -187,6 +197,108 @@ namespace Grace
                             + "This is a bug in the implementation.");
                     return 1;
                 }
+            }
+            return 0;
+        }
+
+        static bool writeFile(string filename, string name)
+        {
+            string dir = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+            var p = Path.Combine(dir, filename);
+            if (File.Exists(p))
+            {
+                using (StreamReader reader = File.OpenText(p))
+                {
+                    while (!reader.EndOfStream)
+                    {
+                        string line = reader.ReadLine();
+                        Console.WriteLine(line.Replace("%NAME%", name));
+                    }
+                }
+                return true;
+            }
+            return false;
+        }
+
+        static bool writeFile(string filename, string name,
+                string start, string end)
+        {
+            string dir = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+            var p = Path.Combine(dir, filename);
+            var output = false;
+            if (File.Exists(p))
+            {
+                using (StreamReader reader = File.OpenText(p))
+                {
+                    while (!reader.EndOfStream)
+                    {
+                        string line = reader.ReadLine();
+                        if (line.IndexOf(end) != -1)
+                            output = false;
+                        else if (line.IndexOf(start) != -1)
+                            output = true;
+                        if (output)
+                            Console.WriteLine(line.Replace("%NAME%", name));
+                    }
+                }
+                return true;
+            }
+            return false;
+        }
+
+        static int about(string arg)
+        {
+            switch(arg)
+            {
+                case "authors":
+                    writeFile("authors.txt", null);
+                    break;
+                case "gpl":
+                case "GPL":
+                case "gpl3":
+                case "GPL3":
+                    writeFile("GPL3", null);
+                    break;
+                case "story":
+                case "kernan":
+                    writeFile("story", null);
+                    break;
+                case "licence":
+                case "license":
+                    writeFile("licence.txt", null);
+                    Console.WriteLine("\nTo see the full text of the GPL, "
+                            + "use --about gpl");
+                    break;
+                case "warranty":
+                    writeFile("GPL3", null,
+                            "15. Disclaimer of Warranty",
+                            "END OF TERMS AND CONDITIONS");
+                    Console.WriteLine("\nTo see the full text of the GPL, "
+                            + "use --about gpl");
+                    break;
+                default:
+                    Console.WriteLine("Copyright (C) 2015, 2016 its authors.");
+                    Console.WriteLine();
+                    writeFile("licence.txt", null);
+                    Console.WriteLine("\nTo see:              Use:");
+                    Console.WriteLine("Text of the GPL"
+                            + "      --about gpl");
+                    Console.WriteLine("List of authors      --about authors");
+                    Console.WriteLine("Licence terms        --about licence");
+                    Console.WriteLine("Warranty             --about warranty");
+                    break;
+            }
+            return 0;
+        }
+
+        static int help()
+        {
+            var name = System.Diagnostics.Process
+                .GetCurrentProcess().ProcessName;
+            if (!writeFile("help.txt", name))
+            {
+                Console.WriteLine("Usage: " + name + " [OPTION...] [FILE]");
+                Console.WriteLine("Execute Grace code.");
             }
             return 0;
         }
@@ -353,6 +465,9 @@ namespace Grace
         {
             Console.WriteLine("* Grace REPL with runtime "
                     + Interpreter.GetRuntimeVersion());
+            Console.WriteLine("Copyright (C) 2015, 2016 its authors.");
+            Console.WriteLine("This program comes with ABSOLUTELY NO WARRANTY;"
+                    + " for details type `--about'.");
             ParseNode module;
             var ls = new LocalScope("repl-inner");
             var obj = new UserObject();
@@ -409,11 +524,18 @@ namespace Grace
             var memo = interp.Memorise();
             var edit = new Editor(s => completion(obj, s));
             string accum = String.Empty;
-            bool unfinished;
+            bool unfinished = false;
             GraceObject result;
             string line = edit.GetLine(">>> ");
             while (line != null)
             {
+                if (line.StartsWith("--about"))
+                {
+                    var spl = line.Split(' ');
+                    about(spl.Length > 1 ? spl[1] : null);
+                    line = edit.GetLine(">>> ");
+                    continue;
+                }
                 accum += line.Replace("\u0000", "") + "\n";
                 var r = REPL.RunLine(interp, obj, memo, accum, out unfinished,
                         out result);

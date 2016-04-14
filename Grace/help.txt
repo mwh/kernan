@@ -1,0 +1,23 @@
+Usage: %NAME% [OPTION...] [FILE]
+Execute Grace code.
+
+Modes:
+  -c CODE          Evaluate CODE as Grace code. Can be provided
+                   multiple times for sequential lines of code.
+  --ws             Start the WebSocket server awaiting commands.
+  --repl           Load FILE in the REPL.
+  --pretty-print   Pretty-print FILE to standard output.
+  --no-run         Do not execute FILE, only process it.
+  --parse-tree     Output parse tree of FILE.
+  --execution-tree Output AST of FILE.
+  --about          Display information about this program, including
+                   licence, warranty, and authors.
+
+Options:
+  --verbose                      Output debugging messages.
+  --builtins-extension EXT.grace Load EXT.grace as an extension to
+                                 built-in numbers, strings, and objects.
+  --errors-to-file ERRFILE       Write error information to ERRFILE.
+
+By default, if no FILE is given, launches the REPL. When FILE is
+provided, executes that file and terminates.
