@@ -518,7 +518,8 @@ namespace Grace.Execution
                         "Can only inherit from method requests" );
             return new InheritsNode(ipn.Token, ipn, frm,
                     from x in ipn.Aliases select
-                        new KeyValuePair<string, SignatureNode>(x.NewName.Name,
+                        new KeyValuePair<string, SignatureNode>(
+                            ((SignatureNode)x.NewName.Visit(this)).Name,
                             (SignatureNode)x.OldName.Visit(this)),
                     from x in ipn.Excludes select x.Name.Name);
         }
