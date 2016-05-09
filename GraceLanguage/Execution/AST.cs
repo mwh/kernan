@@ -36,7 +36,7 @@ namespace Grace.Execution
             this.parseNode = source;
             TagName = this.GetType().Name;
             if (acceptMethod != null)
-                AddMethod("accept", acceptMethod);
+                AddMethod("accept(_)", acceptMethod);
             addMethods();
         }
 
@@ -46,7 +46,7 @@ namespace Grace.Execution
             this.parseNode = source;
             TagName = this.GetType().Name;
             if (acceptMethod != null)
-                AddMethod("accept", acceptMethod);
+                AddMethod("accept(_)", acceptMethod);
             addMethods();
         }
 
