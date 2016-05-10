@@ -166,6 +166,15 @@ namespace Grace.Execution
             kind = n;
         }
 
+        /// <param name="n">Kind of implicit this is</param>
+        /// <param name="basis">ParseNode location of this Implicit</param>
+        public ImplicitNode(string n,
+                ParseNode basis)
+            : base(basis.Token, basis)
+        {
+            kind = n;
+        }
+
         /// <inheritdoc/>
         protected override string getVisibleName()
         {
@@ -373,7 +382,7 @@ namespace Grace.Execution
         {
             if (self.type != null)
                 return self.type;
-            return ImplicitUnknown;
+            return new ImplicitNode("Unknown", self.Origin);
         }
 
     }
@@ -2187,14 +2196,14 @@ end:
         {
             if (self.Value != null)
                 return self.Value;
-            return ImplicitUninitialised;
+            return new ImplicitNode("Uninitialised", self.Origin);
         }
 
         private static GraceObject mTypeAnnotation(VarDeclarationNode self)
         {
             if (self.type != null)
                 return self.type;
-            return ImplicitUnknown;
+            return new ImplicitNode("Unknown", self.Origin);
         }
 
         private static GraceObject mAnnotations(VarDeclarationNode self)
@@ -2335,14 +2344,14 @@ end:
         {
             if (self.Value != null)
                 return self.Value;
-            return ImplicitUninitialised;
+            return new ImplicitNode("Uninitialised", self.Origin);
         }
 
         private static GraceObject mTypeAnnotation(DefDeclarationNode self)
         {
             if (self.type != null)
                 return self.type;
-            return ImplicitUnknown;
+            return new ImplicitNode("Unknown", self.Origin);
         }
 
         private static GraceObject mAnnotations(DefDeclarationNode self)
@@ -2413,7 +2422,7 @@ end:
         {
             if (self.Value != null)
                 return self.Value;
-            return ImplicitDone;
+            return new ImplicitNode("Done", self.Origin);
         }
 
     }
@@ -2605,7 +2614,7 @@ end:
         {
             if (self.Type != null)
                 return self.Type;
-            return ImplicitUnknown;
+            return new ImplicitNode("Unknown", self.Origin);
         }
 
         private static GraceObject mIsVariadic(ParameterNode self)
@@ -2977,7 +2986,7 @@ end:
         {
             if (self.ReturnType != null)
                 return self.ReturnType;
-            return ImplicitUnknown;
+            return new ImplicitNode("Unknown", self.Origin);
         }
     }
 
