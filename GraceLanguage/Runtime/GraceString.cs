@@ -383,6 +383,24 @@ namespace Grace.Runtime
             return self;
         }
 
+        /// <summary>
+        /// Convert any GraceObject into a CLI string.
+        /// </summary>
+        /// <param name="ctx">Interpreter to call asString under</param>
+        /// <param name="o">Object to convert</param>
+        public static string AsNativeString(EvaluationContext ctx,
+                GraceObject o)
+        {
+            var s = o as GraceString;
+            if (s != null)
+                return s.Value;
+            s = o.Request(ctx, MethodRequest.Nullary("asString"))
+                as GraceString;
+            if (s != null)
+                return s.Value;
+            return "not a string, nor stringifiable";
+        }
+
         /// <inheritdoc/>
         public override string ToString()
         {

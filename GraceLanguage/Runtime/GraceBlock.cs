@@ -62,6 +62,14 @@ namespace Grace.Runtime
             }
         }
 
+        private GraceBlock(Action<GraceObject> act)
+        {
+            AddMethod("apply(_)", null);
+            AddMethod("spawn", null);
+            AddMethod("asString", null);
+            stringification = GraceString.Create("{ _ -> native code }");
+        }
+
         /// <inheritdoc />
         protected override Method getLazyMethod(string name)
         {
@@ -249,6 +257,64 @@ namespace Grace.Runtime
                 _dest.Add(arg);
                 return GraceObject.Done;
             }
+        }
+
+        /// <summary>
+        /// Create a one-parameter block from an action.
+        /// </summary>
+        /// <param name="act">Action to wrap</param>
+        public static NativeBlock_1d Create(Action<GraceObject> act)
+        {
+            return act;
+        }
+
+    }
+
+    /// <summary>
+    /// Wraps an Action&lt;GraceObject&gt; into a GraceObject block.
+    /// </summary>
+    public class NativeBlock_1d : GraceObject
+    {
+        private GraceString stringification;
+        private Action<GraceObject> action;
+
+        private NativeBlock_1d(Action<GraceObject> act)
+        {
+            action = act;
+            AddMethod("apply(_)", null);
+            AddMethod("asString", null);
+            stringification = GraceString.Create("{ _ -> native code }");
+        }
+
+        /// <summary>
+        /// Convert a lambda with a single argument to a block.
+        /// </summary>
+        /// <param name="act">Lambda/action to wrap</param>
+        public static implicit operator NativeBlock_1d(Action<GraceObject> act)
+        {
+            return new NativeBlock_1d(act);
+        }
+
+        private GraceObject mApply(GraceObject arg)
+        {
+            action(arg);
+            return GraceObject.Done;
+        }
+
+        /// <inheritdoc />
+        protected override Method getLazyMethod(string name)
+        {
+            if (name == "apply(_)")
+                return new DelegateMethod1(mApply);
+            switch(name) {
+                case "asString": return new DelegateMethod0Ctx(mAsString);
+            }
+            return base.getLazyMethod(name);
+        }
+
+        private GraceObject mAsString(EvaluationContext ctx)
+        {
+            return stringification;
         }
 
     }

@@ -11,6 +11,25 @@ namespace Grace.Runtime
     /// <summary>Encapsulates behaviour relating to iterables</summary>
     public static class Iterables
     {
+        /// <summary>
+        /// Execute a block of native code for each element
+        /// of an iterable.
+        /// </summary>
+        /// <param name="ctx">Interpreter to use</param>
+        /// <param name="iterable">Iterable to loop over</param>
+        /// <param name="block">
+        /// Block of code to execute.
+        /// </param>
+        public static void ForEach(
+                EvaluationContext ctx,
+                GraceObject iterable,
+                GraceObject block
+                )
+        {
+            var req = MethodRequest.Single("do", block);
+            iterable.Request(ctx, req);
+        }
+
         /// <summary>Create an iterable from the concatenation of
         /// two existing iterables</summary>
         /// <param name="left">First iterable</param>

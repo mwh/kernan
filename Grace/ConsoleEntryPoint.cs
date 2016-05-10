@@ -181,6 +181,7 @@ namespace Grace
                     {
                         File.WriteAllText(errorCodeTarget, e.Code);
                     }
+                    ErrorReporting.WriteAllRecorded();
                     return 1;
                 }
                 catch (Exception e)

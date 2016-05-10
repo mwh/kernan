@@ -353,6 +353,69 @@ namespace Grace
         {
             SilencedErrors.Add(code);
         }
+
+        private static List<Tuple<Token, string, string, Dictionary<string, string>>>
+            reportedErrors = new List<Tuple<Token, string, string, Dictionary<string, string>>>();
+
+        /// <summary>
+        /// Record an error at a given location with a code and
+        /// message, with the mapping of variables as well.
+        /// </summary>
+        /// <param name="t">Location of the error</param>
+        /// <param name="code">Error code</param>
+        /// <param name="message">Error message</param>
+        /// <param name="vars">Mapping of replacement variables</param>
+        public static void Record(Token t, string code, string message,
+                Dictionary<string, string> vars)
+        {
+            reportedErrors.Add(Tuple.Create(t, code, message, vars));
+        }
+
+        /// <summary>
+        /// Write all recorded (likely dialect) errors to
+        /// the screen.
+        /// </summary>
+        public static void WriteAllRecorded()
+        {
+            foreach (var tp in reportedErrors)
+            {
+                var module = tp.Item1.module;
+                var line = tp.Item1.line;
+                var code = tp.Item2;
+                var localDescription = tp.Item3;
+                var vars = tp.Item4;
+                try
+                {
+                    string baseMessage = GetMessage(code, vars)
+                        ?? localDescription;
+                    string formattedMessage = FormatMessage(baseMessage, vars);
+                    WriteError(module, line,
+                            code, formattedMessage);
+                }
+                catch (StaticErrorException)
+                {}
+            }
+        }
+
+        /// <summary>
+        /// Empty the collected list of errors reported so far.
+        /// </summary>
+        public static void ClearRecordedErrors()
+        {
+            reportedErrors.Clear();
+        }
+
+        /// <summary>
+        /// True iff at least one recorded, but not immediately fatal,
+        /// error has been given already.
+        /// </summary>
+        public static bool HasRecordedError
+        {
+            get
+            {
+                return reportedErrors.Count != 0;
+            }
+        }
     }
 
     /// <summary>Represents the fact that a static error occurred</summary>

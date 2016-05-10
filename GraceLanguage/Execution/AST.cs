@@ -37,6 +37,10 @@ namespace Grace.Execution
             TagName = this.GetType().Name;
             if (acceptMethod != null)
                 AddMethod("accept(_)", acceptMethod);
+            if (reportMethod != null)
+                AddMethod("report(_,_)", reportMethod);
+            if (reportWithMethod != null)
+                AddMethod("report(_,_) with(_)", reportWithMethod);
             addMethods();
         }
 
@@ -47,6 +51,10 @@ namespace Grace.Execution
             TagName = this.GetType().Name;
             if (acceptMethod != null)
                 AddMethod("accept(_)", acceptMethod);
+            if (reportMethod != null)
+                AddMethod("report(_, _)", reportMethod);
+            if (reportWithMethod != null)
+                AddMethod("report(_, _) with(_)", reportWithMethod);
             addMethods();
         }
 
@@ -68,6 +76,12 @@ namespace Grace.Execution
         private static Method acceptMethod =
             new DelegateMethodReceiver1Ctx(mAccept);
 
+        private static Method reportMethod =
+            new DelegateMethodTyped<Node>(mReport);
+
+        private static Method reportWithMethod =
+            new DelegateMethodTyped<Node>(mReportWith);
+
         /// <summary>Represents an implicit "Done" in the source.</summary>
         protected static readonly GraceObject ImplicitDone =
             new ImplicitNode("Done");
@@ -87,6 +101,43 @@ namespace Grace.Execution
             var name = "visit" + ((Node)receiver).getVisibleName();
             var req = MethodRequest.Single(name, receiver);
             return other.Request(ctx, req);
+        }
+
+        private static GraceObject mReport(EvaluationContext ctx,
+                MethodRequest req,
+                Node receiver)
+        {
+            var code = GraceString.AsNativeString(ctx, req[0].Arguments[0]);
+            var message = GraceString.AsNativeString(ctx, req[0].Arguments[1]);
+            var dict = new Dictionary<string, string>();
+            ErrorReporting.Record(receiver.Location, code, message, dict);
+            return GraceObject.Done;
+        }
+
+        private static GraceObject mReportWith(EvaluationContext ctx,
+                MethodRequest req,
+                Node receiver)
+        {
+            var code = GraceString.AsNativeString(ctx, req[0].Arguments[0]);
+            var message = GraceString.AsNativeString(ctx, req[0].Arguments[1]);
+            var dict = new Dictionary<string, string>();
+            var pairs = req[1].Arguments[0];
+            Iterables.ForEach(ctx, pairs,
+                   GraceBlock.Create((GraceObject o) => {
+                        string k = null, v = null;
+                        Iterables.ForEach(ctx, o,
+                                GraceBlock.Create((GraceObject kv) => {
+                                    if (k == null)
+                                        k = GraceString.AsNativeString(ctx, kv);
+                                    else
+                                        v = GraceString.AsNativeString(ctx, kv);
+                                })
+                        );
+                        dict[k] = v;
+                    })
+            );
+            ErrorReporting.Record(receiver.Location, code, message, dict);
+            return GraceObject.Done;
         }
 
         /// <summary>
@@ -177,7 +228,15 @@ namespace Grace.Execution
             ctx.AddMinorDef("dialect", mod);
             var checker = MethodRequest.Single("checker", Module);
             if (mod.RespondsTo(checker))
+            {
                 mod.Request(ctx, checker);
+                if (ErrorReporting.HasRecordedError)
+                {
+                    throw new StaticErrorException("D9000",
+                            Location.line, Location.module,
+                            "Checker rejected program.");
+                }
+            }
             var atModuleStart = MethodRequest.Single("atModuleStart", GraceString.Create(""));
             if (mod.RespondsTo(atModuleStart))
                 mod.Request(ctx, atModuleStart);
