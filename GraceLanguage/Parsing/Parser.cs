@@ -376,12 +376,6 @@ namespace Grace.Parsing
             else if (notTrait)
             {
                 ret = parseExpression();
-                if (lexer.current is BindToken)
-                {
-                    nextToken();
-                    ParseNode expr = parseExpression();
-                    ret = new BindParseNode(start, ret, expr);
-                }
             }
             else
             {
@@ -496,7 +490,7 @@ namespace Grace.Parsing
             while (lexer.current is IdentifierToken)
             {
                 doNotAcceptDelimitedBlock = true;
-                ret.AddAnnotation(parseExpression());
+                ret.AddAnnotation(parseExpressionNoBind());
                 doNotAcceptDelimitedBlock = false;
                 expecting = false;
                 if (lexer.current is CommaToken)
@@ -960,7 +954,7 @@ namespace Grace.Parsing
         {
             expect<ColonToken>();
             nextToken();
-            return parseExpression();
+            return parseExpressionNoBind();
         }
 
         private ParseNode parseInherits()
@@ -1213,10 +1207,23 @@ namespace Grace.Parsing
             return lhs;
         }
 
-        private ParseNode parseExpression()
+        private ParseNode parseExpressionNoBind()
         {
             ParseNode lhs = parseExpressionNoOp();
             lhs = maybeParseOperator(lhs);
+            return lhs;
+        }
+
+        private ParseNode parseExpression()
+        {
+            var start = lexer.current;
+            ParseNode lhs = parseExpressionNoBind();
+            if (lexer.current is BindToken)
+            {
+                nextToken();
+                ParseNode expr = parseExpression();
+                lhs = new BindParseNode(start, lhs, expr);
+            }
             return lhs;
         }
 
