@@ -818,8 +818,18 @@ namespace Grace.Execution
         public Method AddMinorDef(string name, GraceObject val)
         {
             var m = scope.scope as LocalScope;
-            if (m == null)
-                return null;
+            if (m == null) {
+                var s = scope.next;
+                while (s != null) {
+                    if (s.minor)
+                        m = s.scope as LocalScope;
+                    if (m != null)
+                        break;
+                    s = s.next;
+                }
+                if (m == null)
+                    return null;
+            }
             return m.AddLocalDef(name, val);
         }
 
