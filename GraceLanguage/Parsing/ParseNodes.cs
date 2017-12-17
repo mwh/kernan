@@ -2103,9 +2103,9 @@ namespace Grace.Parsing
             }
             else
             {
-                req = MethodRequest.Single("prettyPrintObjectBody",
-                        new GraceObjectProxy(p.Body));
-                req[0].Arguments.Add(GraceString.Create(""));
+                req = MethodRequest.WithArgs("prettyPrintObjectBody",
+                        new GraceObject[] { new GraceObjectProxy(p.Body),
+                            GraceString.Create("") });
             }
             var r = prettyPrinter.Request(ctx, req);
             var gs = r as GraceString;
