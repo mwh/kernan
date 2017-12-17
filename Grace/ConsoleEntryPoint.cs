@@ -193,6 +193,16 @@ namespace Grace
                             + Interpreter.GetRuntimeVersion());
                     System.Console.Error.WriteLine(e);
                     System.Console.Error.WriteLine(e.StackTrace);
+                    var gepe = e as GraceExceptionPacketException;
+                    if (gepe != null)
+                    {
+                        System.Console.Error.WriteLine("\nThe error was a native Grace exception, whose information follows:");
+                        var gep = gepe.ExceptionPacket;
+                        System.Console.Error.WriteLine(gep.Description);
+                        foreach (var l in gep.StackTrace) {
+                            System.Console.Error.WriteLine("  " + l);
+                        }
+                    }
                     System.Console.Error.WriteLine(
                             "\nAn internal error occurred. "
                             + "This is a bug in the implementation.");
