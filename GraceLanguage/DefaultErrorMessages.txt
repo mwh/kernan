@@ -89,5 +89,6 @@ R2020 InheritanceError: No such method «${method}» exists to exclude.
 R2021 InheritanceError: Method «${method}» is abstract and must be given a definition or excluded.
 R2022 InheritanceError: Method «${method}» was provided two or more times by inheritance and must be given an overriding definition or have all but one version excluded.
 R2023 MatchingError: Matching block declares ${parameter count} parameters but ${binding count} bindings were accrued through matching. Declared parameters were: ${parameters}.
+R2024 RecursionError: Maximum recursion depth exceeded.
 
 D9000 The dialect found problems with this module and did not let it run.
