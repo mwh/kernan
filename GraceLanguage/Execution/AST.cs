@@ -2742,6 +2742,15 @@ end:
                     { "request",
                         new DelegateMethodTyped0
                             <InheritsNode>(mRequest) },
+                    { "kind",
+                        new DelegateMethodTyped0
+                            <InheritsNode>(mKind) },
+                    { "excludes",
+                        new DelegateMethodTyped0
+                            <InheritsNode>(mExcludes) },
+                    { "aliases",
+                        new DelegateMethodTyped0
+                            <InheritsNode>(mAliases) },
                 };
 
         /// <inheritdoc/>
@@ -2759,6 +2768,47 @@ end:
         {
             return self.From;
         }
+
+        private static GraceObject mKind(InheritsNode self)
+        {
+	    if (self.Origin is InheritsParseNode)
+	    {
+                return GraceString.Create("inherit");
+            }
+	    if (self.Origin is UsesParseNode)
+	    {
+                return GraceString.Create("use");
+            }
+            return GraceString.Create("");
+        }
+
+        private static GraceObject mExcludes(InheritsNode self)
+        {
+            IList<GraceString> myexcludes = new List<GraceString>();
+            foreach (var e in self.Excludes)
+                myexcludes.Add(GraceString.Create(e));
+
+            return GraceVariadicList.Of(myexcludes);
+        }
+
+        private static GraceObject mAliases(InheritsNode self)
+        {
+            IList<GraceObject> myaliases = new List<GraceObject>();
+            foreach (var kv in self.Aliases)
+            {
+                IList<GraceObject> oneAlias = new List<GraceObject>();
+                oneAlias.Add(GraceString.Create(kv.Key));
+                oneAlias.Add(GraceString.Create(kv.Value.Name));
+                IList<Node> myannotations = new List<Node>();
+		foreach (var a in kv.Value.Annotations)
+		    myannotations.Add(a);
+		oneAlias.Add(GraceVariadicList.Of(myannotations));
+		myaliases.Add(GraceVariadicList.Of(oneAlias));
+            }
+            return GraceVariadicList.Of(myaliases);
+        }
+
+
     }
 
     /// <summary>
