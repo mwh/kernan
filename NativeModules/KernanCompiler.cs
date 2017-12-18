@@ -19,11 +19,11 @@ namespace KernanCompiler
 
         public ExposedCompiler() : base("mwh.nz/kernan/compiler")
         {
-            AddMethod("parse", new DelegateMethodNode1(
+            AddMethod("parse(_)", new DelegateMethod1(
                         new NativeMethod1(mParse)));
-            AddMethod("parseFile", new DelegateMethodNode1(
+            AddMethod("parseFile(_)", new DelegateMethod1(
                         new NativeMethod1(mParseFile)));
-            AddMethod("parseNodes", new DelegateMethodNode0(
+            AddMethod("parseNodes", new DelegateMethod0(
                         new NativeMethod0(mParseNodes)));
         }
 
@@ -114,7 +114,7 @@ namespace KernanCompiler
     class NativeTypePattern<T> : GraceObject {
         public NativeTypePattern()
         {
-            AddMethod("match", new DelegateMethodNode1Ctx(
+            AddMethod("match(_)", new DelegateMethod1Ctx(
                         new NativeMethod1Ctx(mMatch)));
             AddMethod("|", Matching.OrMethod);
             AddMethod("&", Matching.AndMethod);
