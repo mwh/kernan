@@ -16,6 +16,7 @@ namespace Grace
 {
     class ConsoleEntryPoint
     {
+        public static List<string> UnusedArgs = UnusedArguments.UnusedArgs;
 
         static int Main(string[] args)
         {
@@ -30,9 +31,11 @@ namespace Grace
             string errorCodeTarget = null;
             var lines = new List<string>();
             string builtinsExtensionFile = null;
+            int lastArgs = 0;
             for (int i = 0; i < args.Length; i++)
             {
                 var arg = args[i];
+                lastArgs = i;
                 if (arg == "--help")
                 {
                     return help();
@@ -81,7 +84,9 @@ namespace Grace
                 else if (arg == "--")
                 {
                     if (i < args.Length - 1)
-                        filename = args[++i];
+                        {
+                            filename = args[++i];
+                        }
                     i++;
                     break;
                 }
@@ -89,9 +94,16 @@ namespace Grace
                 {
                     return error("Unknown option `" + arg + "`.");
                 }
-                else
+                else {
                     filename = arg;
+                    break;
+                    }
             }
+
+            for (int i = lastArgs + 1; i < args.Length; i++) {
+                 UnusedArgs.Add(args[i]);
+            }
+
             if (mode == "repl" || (mode == "run" && filename == null))
                 return repl(filename, builtinsExtensionFile);
             if (mode == "ws")
@@ -109,6 +121,7 @@ namespace Grace
                         Path.GetDirectoryName(Path.GetFullPath(filename)));
             else
                 interp.AddModuleRoot(Path.GetFullPath("."));
+
             interp.FailedImportHook = promptInstallModule;
             interp.LoadPrelude();
             if (builtinsExtensionFile != null)

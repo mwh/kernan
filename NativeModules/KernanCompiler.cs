@@ -3,6 +3,9 @@ using System.IO;
 using Grace.Parsing;
 using Grace.Execution;
 using Grace.Runtime;
+using Grace.Utility;
+using Grace;
+
 
 namespace KernanCompiler
 {
@@ -25,6 +28,8 @@ namespace KernanCompiler
                         new NativeMethod1(mParseFile)));
             AddMethod("parseNodes", new DelegateMethod0(
                         new NativeMethod0(mParseNodes)));
+            AddMethod("args", new DelegateMethod0(
+                        new NativeMethod0(mArguments)));
         }
 
         private GraceObject mParse(GraceObject code)
@@ -45,6 +50,19 @@ namespace KernanCompiler
                 return new GraceObjectProxy(p.Parse());
             }
         }
+
+
+        private GraceObject mArguments()
+        {
+            IList<string> unusedArguments = UnusedArguments.UnusedArgs;
+            IList<GraceString> graceUnusedArguments = new List<GraceString>();
+
+            foreach (var a in unusedArguments)
+                graceUnusedArguments.Add(GraceString.Create(a));
+
+            return GraceVariadicList.Of(graceUnusedArguments);
+        }
+
 
         private GraceObject mParseNodes()
         {
