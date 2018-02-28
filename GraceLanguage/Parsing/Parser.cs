@@ -686,6 +686,9 @@ namespace Grace.Parsing
         {
             var ret = new SignatureParseNode(start);
             var first = lexer.current;
+            // Trick JSIL into treating first as a real variable
+            // and not substituting lexer.current later on.
+            lexer.Peek();
             var part = parseFirstSignaturePart(start);
             ret.AddPart(part);
             if (lexer.current is BindToken)
