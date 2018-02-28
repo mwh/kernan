@@ -696,9 +696,10 @@ namespace Grace.Runtime
                 case 3:
                     return name + "(_,_,_)";
                 default:
-                    return name + "("
-                        + String.Join(",", Enumerable.Repeat("_", count))
-                        + ")";
+                    var ret = name + "(_";
+                    for (int i = 1; i < count; i++)
+                        ret += ",_";
+                    return ret + ")";
             }
         }
     }
