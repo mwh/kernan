@@ -301,7 +301,7 @@ namespace Grace
                             + "use --about gpl");
                     break;
                 default:
-                    Console.WriteLine("Copyright (C) 2015, 2016 its authors.");
+                    Console.WriteLine("Copyright (C) 2015-2018 its authors.");
                     Console.WriteLine();
                     writeFile("licence.txt", null);
                     Console.WriteLine("\nTo see:              Use:");
@@ -489,7 +489,7 @@ namespace Grace
         {
             Console.WriteLine("* Grace REPL with runtime "
                     + Interpreter.GetRuntimeVersion());
-            Console.WriteLine("Copyright (C) 2015, 2016 its authors.");
+            Console.WriteLine("Copyright (C) 2015-2018 its authors.");
             Console.WriteLine("This program comes with ABSOLUTELY NO WARRANTY;"
                     + " for details type `--about'.");
             ParseNode module;

@@ -123,12 +123,12 @@ method for(iterable) do(blk) {
     iterable.do(blk)
 }
 
-type String = type {
+type String = interface {
     asString -> String
     ++(o : String) -> String
 }
 
-type Number = type {
+type Number = interface {
     asString -> String
     +(o : Number) -> Number
     *(o : Number) -> Number
@@ -138,7 +138,7 @@ type Number = type {
     %(o : Number) -> Number
 }
 
-type Boolean = type {
+type Boolean = interface {
     ifTrue(b) -> Done
     ifFalse(b) -> Done
     ifTrue(b1) ifFalse(b2)

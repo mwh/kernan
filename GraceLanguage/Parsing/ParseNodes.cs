@@ -521,8 +521,8 @@ namespace Grace.Parsing
 
     }
 
-    /// <summary>Parse node for a type</summary>
-    public class TypeParseNode : ParseNode
+    /// <summary>Parse node for an interface</summary>
+    public class InterfaceParseNode : ParseNode
     {
         private List<ParseNode> _body;
 
@@ -536,7 +536,7 @@ namespace Grace.Parsing
         /// <summary>Name of this type for debugging</summary>
         public string Name { get; set; }
 
-        internal TypeParseNode(Token tok, List<ParseNode> body)
+        internal InterfaceParseNode(Token tok, List<ParseNode> body)
             : base(tok)
         {
             this._body = body;
@@ -545,7 +545,7 @@ namespace Grace.Parsing
         /// <inheritdoc/>
         public override void DebugPrint(System.IO.TextWriter tw, string prefix)
         {
-            tw.WriteLine(prefix + "Type:");
+            tw.WriteLine(prefix + "Interface:");
             foreach (ParseNode n in _body)
             {
                 n.DebugPrint(tw, prefix + "    ");
@@ -1971,7 +1971,7 @@ namespace Grace.Parsing
                         new NativeTypePattern<TraitDeclarationParseNode>() },
                     { "TypeStatement",
                         new NativeTypePattern<TypeStatementParseNode>() },
-                    { "Type", new NativeTypePattern<TypeParseNode>() },
+                    { "Interface", new NativeTypePattern<InterfaceParseNode>() },
                     { "Signature",
                         new NativeTypePattern<SignatureParseNode>() },
                     { "SignaturePart",

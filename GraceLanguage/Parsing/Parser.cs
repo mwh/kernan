@@ -769,9 +769,6 @@ namespace Grace.Parsing
         private ParseNode parseTypeStatement()
         {
             Token start = lexer.current;
-            Token peeked = lexer.Peek();
-            if (peeked is LBraceToken)
-                return parseType();
             nextToken();
             expectWithError<IdentifierToken>("P1034");
             ParseNode name = parseIdentifier();
@@ -798,14 +795,14 @@ namespace Grace.Parsing
             nextToken();
             Token ts = lexer.current;
             ParseNode type = null;
-            if (lexer.current is TypeKeywordToken
+            if (lexer.current is InterfaceKeywordToken
                     || lexer.current is LBraceToken)
             {
-                if (lexer.current is TypeKeywordToken)
+                if (lexer.current is InterfaceKeywordToken)
                     nextToken();
                 List<ParseNode> origComments = prepareComments();
                 List<ParseNode> body = parseTypeBody();
-                type = new TypeParseNode(ts, body);
+                type = new InterfaceParseNode(ts, body);
                 attachComments(type, comments);
                 restoreComments(origComments);
             }
@@ -817,15 +814,15 @@ namespace Grace.Parsing
             return new TypeStatementParseNode(start, name, type, genericParameters);
         }
 
-        private ParseNode parseType()
+        private ParseNode parseInterface()
         {
             Token start = lexer.current;
-            expect<TypeKeywordToken>();
+            expect<InterfaceKeywordToken>();
             nextToken();
             expect<LBraceToken>();
             List<ParseNode> origComments = prepareComments();
             List<ParseNode> body = parseTypeBody();
-            ParseNode ret = new TypeParseNode(start, body);
+            ParseNode ret = new InterfaceParseNode(start, body);
             attachComments(ret, comments);
             restoreComments(origComments);
             return ret;
@@ -1283,9 +1280,9 @@ namespace Grace.Parsing
             {
                 ret = parseObject();
             }
-            else if (lexer.current is TypeKeywordToken)
+            else if (lexer.current is InterfaceKeywordToken)
             {
-                ret = parseType();
+                ret = parseInterface();
             }
             else if (lexer.current is OperatorToken)
             {

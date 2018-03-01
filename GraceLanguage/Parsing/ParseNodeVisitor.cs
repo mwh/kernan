@@ -73,9 +73,9 @@ namespace Grace.Parsing
         /// <summary>Visit a TypeStatementParseNode</summary>
         /// <param name="tspn">TypeStatementParseNode to visit</param>
         T Visit(TypeStatementParseNode tspn);
-        /// <summary>Visit a TypeParseNode</summary>
-        /// <param name="tpn">TypeParseNode to visit</param>
-        T Visit(TypeParseNode tpn);
+        /// <summary>Visit an InterfaceParseNode</summary>
+        /// <param name="tpn">InterfaceParseNode to visit</param>
+        T Visit(InterfaceParseNode tpn);
         /// <summary>Visit a ImportParseNode</summary>
         /// <param name="ipn">ImportParseNode to visit</param>
         T Visit(ImportParseNode ipn);

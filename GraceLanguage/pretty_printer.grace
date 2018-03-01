@@ -42,7 +42,7 @@ def pnVarArgsParameter = parseNodes.VarArgsParameter
 def pnPrefixOperator = parseNodes.PrefixOperator
 def pnAnnotations = parseNodes.Annotations
 def pnExplicitBracketRequest = parseNodes.ExplicitBracketRequest
-def pnType = parseNodes.Type
+def pnInterface = parseNodes.Interface
 def pnTypeStatement = parseNodes.TypeStatement
 
 def breakLines = false
@@ -104,7 +104,7 @@ method prettyPrint(obj, indent) {
         case { b : pnAnnotations -> prettyPrintAnnotations(b, indent) }
         case { r : pnExplicitBracketRequest ->
             prettyPrintExplicitBracketRequest(r, indent) }
-        case { b : pnType -> prettyPrintType(b, indent) }
+        case { b : pnInterface -> prettyPrintInterface(b, indent) }
         case { b : pnTypeStatement -> prettyPrintTypeStatement(b, indent) }
         case { _ ->
                 print "Printer does not support node type {obj}"
@@ -573,8 +573,8 @@ method prettyPrintExplicitBracketRequest(b, indent) {
     "{ret}{b.get_Token.get_Other}"
 }
 
-method prettyPrintType(o, indent) {
-    var ret := "type \{\n"
+method prettyPrintInterface(o, indent) {
+    var ret := "interface \{\n"
     ret := ret ++ prettyPrintObjectBody(o.get_Body, "{indent}    ")
     "{ret}{indent}\}"
 }

@@ -276,6 +276,8 @@ namespace Grace.Parsing
                 return new ReturnKeywordToken(moduleName, line, column);
             if ("type" == ident)
                 return new TypeKeywordToken(moduleName, line, column);
+            if ("interface" == ident)
+                return new InterfaceKeywordToken(moduleName, line, column);
             if ("is" == ident)
                 return new IsKeywordToken(moduleName, line, column);
             if ("where" == ident)

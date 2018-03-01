@@ -192,7 +192,7 @@ namespace Grace.Parsing
         }
 
         /// <inheritdoc/>
-        public virtual ParseNode Visit(TypeParseNode tpn)
+        public virtual ParseNode Visit(InterfaceParseNode tpn)
         {
             foreach (var t in tpn.Body)
                 t.Visit(this);

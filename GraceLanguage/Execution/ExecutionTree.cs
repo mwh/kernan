@@ -471,7 +471,7 @@ namespace Grace.Execution
             spp.GenericParameters = tspn.GenericParameters;
             spn.AddPart(spp);
             meth.Signature = spn;
-            var tpn = tspn.Body as TypeParseNode;
+            var tpn = tspn.Body as InterfaceParseNode;
             if (tpn != null)
             {
                 tpn.Name = ((IdentifierParseNode)tspn.BaseName).Name;
@@ -481,9 +481,9 @@ namespace Grace.Execution
         }
 
         /// <inheritdoc />
-        public Node Visit(TypeParseNode tpn)
+        public Node Visit(InterfaceParseNode tpn)
         {
-            var ret = new TypeNode(tpn.Token, tpn);
+            var ret = new InterfaceNode(tpn.Token, tpn);
             if (tpn.Name != null)
                 ret.Name = tpn.Name;
             foreach (var p in tpn.Body)

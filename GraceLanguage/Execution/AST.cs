@@ -2462,15 +2462,15 @@ end:
 
     }
 
-    /// <summary>A type literal</summary>
-    public class TypeNode : Node
+    /// <summary>An interface literal</summary>
+    public class InterfaceNode : Node
     {
         private List<SignatureNode> body = new List<SignatureNode>();
 
         /// <summary>The name of this type literal for debugging</summary>
         public string Name { get; set; }
 
-        internal TypeNode(Token token, ParseNode source)
+        internal InterfaceNode(Token token, ParseNode source)
             : base(token, source)
         {
             Name = "Anonymous";
@@ -2512,7 +2512,7 @@ end:
                 new Dictionary<string, Method> {
                     { "signatures",
                         new DelegateMethodTyped0
-                            <TypeNode>(mSignatures) },
+                            <InterfaceNode>(mSignatures) },
                 };
 
         /// <inheritdoc/>
@@ -2521,7 +2521,7 @@ end:
             AddMethods(sharedMethods);
         }
 
-        private static GraceObject mSignatures(TypeNode self)
+        private static GraceObject mSignatures(InterfaceNode self)
         {
             return GraceVariadicList.Of(self.body);
         }

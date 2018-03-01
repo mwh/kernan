@@ -586,6 +586,18 @@ namespace Grace.Parsing
         }
     }
 
+    class InterfaceKeywordToken : KeywordToken
+    {
+        public InterfaceKeywordToken(string module, int line, int column)
+            : base(module, line, column)
+        { }
+
+        protected override string describe()
+        {
+            return "InterfaceKeyword";
+        }
+    }
+
     class ReturnKeywordToken : KeywordToken
     {
         public ReturnKeywordToken(string module, int line, int column)
