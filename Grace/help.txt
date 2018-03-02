@@ -18,6 +18,7 @@ Options:
   --builtins-extension EXT.grace Load EXT.grace as an extension to
                                  built-in numbers, strings, and objects.
   --errors-to-file ERRFILE       Write error information to ERRFILE.
+  --module-root PATH             Add PATH as a root for module loading.
 
 By default, if no FILE is given, launches the REPL. When FILE is
 provided, executes that file and terminates.

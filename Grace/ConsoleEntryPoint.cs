@@ -31,6 +31,7 @@ namespace Grace
             string errorCodeTarget = null;
             var lines = new List<string>();
             string builtinsExtensionFile = null;
+            List<string> extraModuleRoots = new List<string>();
             int lastArgs = 0;
             for (int i = 0; i < args.Length; i++)
             {
@@ -73,6 +74,10 @@ namespace Grace
                 else if (arg == "--errors-to-file")
                 {
                     errorCodeTarget = args[++i];
+                }
+                else if (arg == "--module-root")
+                {
+                    extraModuleRoots.Add(args[++i]);
                 }
                 else if (arg == "-c")
                 {
@@ -121,6 +126,8 @@ namespace Grace
                         Path.GetDirectoryName(Path.GetFullPath(filename)));
             else
                 interp.AddModuleRoot(Path.GetFullPath("."));
+            foreach (var r in extraModuleRoots)
+                interp.AddModuleRoot(r);
 
             interp.FailedImportHook = promptInstallModule;
             interp.LoadPrelude();
