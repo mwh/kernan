@@ -91,7 +91,7 @@ namespace KernanCompiler
                         new NativeTypePattern<ClassDeclarationParseNode>() },
                     { "TypeStatement",
                         new NativeTypePattern<TypeStatementParseNode>() },
-                    { "Type", new NativeTypePattern<TypeParseNode>() },
+                    { "Interface", new NativeTypePattern<InterfaceParseNode>() },
                     { "Signature",
                         new NativeTypePattern<SignatureParseNode>() },
                     { "SignaturePart",
