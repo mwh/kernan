@@ -3,6 +3,7 @@ using System.Text;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Runtime.Serialization.Json;
 using System.Xml;
@@ -24,6 +25,8 @@ namespace Grace.Execution
         private static string magicString = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 
         private TcpListener server;
+
+        private HashSet<string> allowedOrigins = new HashSet<string>();
 
         /// <summary>
         /// Open a web socket server and return the stream of
@@ -125,32 +128,62 @@ namespace Grace.Execution
 #endif
             var lines = str.Split(new string[] {"\r\n"},
                     StringSplitOptions.None);
+            string keyStr = null;
+            bool originOK = true;
             foreach (var line in lines)
             {
                 if (line.StartsWith("Sec-WebSocket-Key:",
                             StringComparison.OrdinalIgnoreCase))
                 {
                     var bits = line.Split(new char[] { ':' });
-                    var keyStr = bits[1].Trim();
-                    //key = Convert.FromBase64String(keyStr);
-                    var keyResponse = Convert.ToBase64String(
-                            SHA1.Create().ComputeHash(
-                                    Encoding.ASCII.GetBytes(
-                                        keyStr + magicString
-                                    )
-                                )
-                            );
-                    byte[] response = Encoding.ASCII.GetBytes(
-                                "HTTP/1.1 101 Switching Protocols\r\n"
-                                + "Connection: Upgrade\r\n"
-                                + "Upgrade: websocket\r\n"
-                                + "Sec-WebSocket-Accept: "
-                                    + keyResponse + "\r\n"
-                                + "\r\n"
-                            );
-                    stream.Write(response, 0, response.Length);
-                    Console.WriteLine("Accepted connection.");
+                    keyStr = bits[1].Trim();
                 }
+                else if (line.StartsWith("Origin:"))
+                {
+                    var bits = line.Split(new char[] { ':' }, 2);
+                    var origin = bits[1].Trim();
+                    if (origin == "http://127.0.0.1:25447"
+                            || origin.StartsWith("file://"))
+                        originOK = true;
+                    else if (allowedOrigins.Contains(origin))
+                    {
+                        originOK = true;
+                        Console.WriteLine("Connection originates from "
+                                + origin + "; remembered OK.");
+                    }
+                    else {
+                        Console.WriteLine("Connection originating from "
+                                + origin + "; OK? Y/n\u0007");
+                        var resp = Console.ReadLine();
+                        originOK = resp == "" || resp[0] == 'y'
+                            || resp[0] == 'Y';
+                        if (originOK)
+                            allowedOrigins.Add(origin);
+                    }
+                }
+            }
+            if (keyStr != null && originOK) {
+                var keyResponse = Convert.ToBase64String(
+                        SHA1.Create().ComputeHash(
+                                Encoding.ASCII.GetBytes(
+                                    keyStr + magicString
+                                )
+                            )
+                        );
+                byte[] response = Encoding.ASCII.GetBytes(
+                            "HTTP/1.1 101 Switching Protocols\r\n"
+                            + "Connection: Upgrade\r\n"
+                            + "Upgrade: websocket\r\n"
+                            + "Sec-WebSocket-Accept: "
+                                + keyResponse + "\r\n"
+                            + "\r\n"
+                        );
+                stream.Write(response, 0, response.Length);
+                Console.WriteLine("Accepted connection.");
+            }
+            else if (keyStr != null && !originOK)
+            {
+                Console.WriteLine("Rejected connection.");
             }
             return true;
         }
