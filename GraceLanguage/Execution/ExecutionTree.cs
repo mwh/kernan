@@ -521,7 +521,8 @@ namespace Grace.Execution
                         new KeyValuePair<string, SignatureNode>(
                             ((SignatureNode)x.NewName.Visit(this)).Name,
                             (SignatureNode)x.OldName.Visit(this)),
-                    from x in ipn.Excludes select x.Name.Name);
+                    from x in ipn.Excludes select
+                        ((SignatureNode)x.Name.Visit(this)).Name);
         }
 
         /// <inheritdoc />
@@ -538,7 +539,8 @@ namespace Grace.Execution
                     from x in upn.Aliases select
                         new KeyValuePair<string, SignatureNode>(x.NewName.Name,
                             (SignatureNode)x.OldName.Visit(this)),
-                    from x in upn.Excludes select x.Name.Name);
+                    from x in upn.Excludes select
+                        ((SignatureNode)x.Name.Visit(this)).Name);
         }
 
         /// <inheritdoc/>
