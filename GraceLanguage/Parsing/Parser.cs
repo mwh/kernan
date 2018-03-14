@@ -834,6 +834,7 @@ namespace Grace.Parsing
             int indentBefore = indentColumn;
             Token start = lexer.current;
             nextToken();
+            consumeBlankLines();
             takeLineComments();
             consumeBlankLines();
             if (lexer.current is RBraceToken)
@@ -854,6 +855,7 @@ namespace Grace.Parsing
             {
                 List<ParseNode> origComments = prepareComments();
                 takeLineComments();
+                consumeBlankLines();
                 if (lexer.current is RBraceToken && comments.Count > 0)
                 {
                     // These can't just be dropped inline into
