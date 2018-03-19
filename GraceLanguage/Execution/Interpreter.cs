@@ -385,7 +385,11 @@ namespace Grace.Execution
                     // Optionally, the host program can try to satisfy a module
                     // and indicate that we should retry the import.
                     if (FailedImportHook(path, this))
+                    {
+                        importedPaths.Remove(path);
+                        importStack.Pop();
                         return LoadModule(path);
+                    }
                 }
             }
             finally
