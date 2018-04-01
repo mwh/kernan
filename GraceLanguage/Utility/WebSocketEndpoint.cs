@@ -80,6 +80,20 @@ namespace Grace.Utility
             return false;
         }
 
+        private static int replyParseTree(ParseNode module,
+            string modname,
+            WSOutputSink sink)
+        {
+            Action<XmlDocument, XmlElement> handler = (doc, parent) =>
+            {
+                var mod = doc.CreateElement("module");
+                var vis = new ParseTreeJSONVisitor(doc, mod);
+                parent.AppendChild(module.Visit(vis));
+            };
+            sink.SendData("parse-tree", modname, handler);
+            return 0;
+        }
+
         private static int runModule(string code, string modname,
                 string mode, WSOutputSink sink)
         {
@@ -94,6 +108,8 @@ namespace Grace.Utility
             try
             {
                 module = parser.Parse();
+                if (mode == "parse")
+                    return replyParseTree(module, modname, sink);
                 ExecutionTreeTranslator ett = new ExecutionTreeTranslator();
                 Node eModule = ett.Translate(module as ObjectParseNode);
                 sink.SendEvent("build-succeeded", modname);
@@ -297,7 +313,8 @@ namespace Grace.Utility
                     {
                         return;
                     }
-                    else if (mode != "build" && mode != "run")
+                    else if (mode != "build" && mode != "run"
+                        && mode != "parse" && mode != "execution-tree")
                         return;
                     var cn = root.XPathSelectElement("//code");
                     var mn = root.XPathSelectElement("//modulename");
@@ -700,6 +717,64 @@ namespace Grace.Utility
             stream.Seek(0, SeekOrigin.Begin);
             var reader = new StreamReader(stream);
             wss.Send(reader.ReadToEnd());
+        }
+        /// <summary>
+        /// Send computed data over the wire.
+        /// </summary>
+        /// <param name="eventName">
+        /// Identifying name of the event.
+        /// </param>
+        /// <param name="key">
+        /// Key to identify event.
+        /// </param>
+        /// <param name="dataHandler">
+        /// Callback to fill out the data object.
+        /// </param>
+        public void SendData(string eventName, string key,
+            Action<XmlDocument, XmlElement> dataHandler
+            )
+        {
+            if (stop)
+                return;
+            var stream = new MemoryStream(10240);
+            var jsonWriter = JsonReaderWriterFactory.CreateJsonWriter(
+                    stream
+                );
+            var xmlDoc = new XmlDocument();
+            var root = xmlDoc.CreateElement("root");
+            var output = xmlDoc.CreateElement("event");
+            var tn = xmlDoc.CreateTextNode(eventName);
+            output.AppendChild(tn);
+            root.AppendChild(output);
+            output = xmlDoc.CreateElement("key");
+            tn = xmlDoc.CreateTextNode(key);
+            output.AppendChild(tn);
+            root.AppendChild(output);
+            output = xmlDoc.CreateElement("data");
+            output.SetAttribute("type", "object");
+            dataHandler(xmlDoc, output);
+            root.AppendChild(output);
+            root.SetAttribute("type", "object");
+            xmlDoc.AppendChild(root);
+#if DEBUG_WS
+            Console.WriteLine(xmlDoc.OuterXml);
+#endif
+            xmlDoc.WriteTo(jsonWriter);
+            jsonWriter.Flush();
+#if DEBUG_WS
+            Console.WriteLine(
+                "Capacity = {0}, Length = {1}, Position = {2}\n",
+                stream.Capacity.ToString(),
+                stream.Length.ToString(),
+                stream.Position.ToString());
+#endif
+            stream.Seek(0, SeekOrigin.Begin);
+            var reader = new StreamReader(stream);
+            var body = reader.ReadToEnd();
+#if DEBUG_WS
+            Console.WriteLine("JSON: " + body);
+#endif
+            wss.Send(body);
         }
 
         private static int callKey;

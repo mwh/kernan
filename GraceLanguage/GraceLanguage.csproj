@@ -17,7 +17,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DefineConstants>TRACE;DEBUG</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>bin\Debug\GraceLanguage.xml</DocumentationFile>
@@ -72,6 +72,7 @@
     <Compile Include="Runtime\ByteString.cs" />
     <Compile Include="Runtime\Methods.cs" />
     <Compile Include="ErrorReporting.cs" />
+    <Compile Include="Utility\ParseTreeJSONVisitor.cs" />
     <Compile Include="Utility\Rational.cs" />
     <Compile Include="Utility\REPL.cs" />
     <Compile Include="Utility\Args.cs" />
