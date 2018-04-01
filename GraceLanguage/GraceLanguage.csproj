@@ -43,6 +43,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Execution\AST.cs" />
+    <Compile Include="Execution\ASTNodeVisitor.cs" />
     <Compile Include="Execution\ExecutionTree.cs" />
     <Compile Include="Execution\Interpreter.cs" />
     <Compile Include="Execution\WebSocket.cs" />

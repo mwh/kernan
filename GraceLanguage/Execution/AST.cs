@@ -149,6 +149,14 @@ namespace Grace.Execution
             var name = this.GetType().Name;
             return name.Substring(0, name.Length - 4);
         }
+
+        /// <summary>Double-dispatch visitor for parse nodes</summary>
+        /// <param name="visitor">Visitor to double-dispatch to</param>
+        /// <typeparam name="T">Return type of visitor</typeparam>
+        public virtual T Accept<T>(ASTNodeVisitor<T> visitor)
+        {
+            return visitor.Visit(this);
+        }
     }
 
     /// <summary>
@@ -198,6 +206,12 @@ namespace Grace.Execution
 
         /// <inheritdoc/>
         protected override void addMethods() {}
+
+        /// <inheritdoc/>
+        public override T Accept<T>(ASTNodeVisitor<T> visitor)
+        {
+            return visitor.Visit(this);
+        }
     }
 
     /// <summary>A dialect statement</summary>
@@ -281,6 +295,12 @@ namespace Grace.Execution
         private static GraceObject mPath(DialectNode self)
         {
             return GraceString.Create(self.Path);
+        }
+
+        /// <inheritdoc/>
+        public override T Accept<T>(ASTNodeVisitor<T> visitor)
+        {
+            return visitor.Visit(this);
         }
 
     }
@@ -383,6 +403,12 @@ namespace Grace.Execution
             if (self.type != null)
                 return self.type;
             return new ImplicitNode("Unknown", self.Origin);
+        }
+
+        /// <inheritdoc/>
+        public override T Accept<T>(ASTNodeVisitor<T> visitor)
+        {
+            return visitor.Visit(this);
         }
 
     }
@@ -494,6 +520,12 @@ namespace Grace.Execution
             return self.receiver;
         }
 
+        /// <inheritdoc/>
+        public override T Accept<T>(ASTNodeVisitor<T> visitor)
+        {
+            return visitor.Visit(this);
+        }
+
     }
 
     /// <summary>A method request with no syntactic receiver</summary>
@@ -579,6 +611,12 @@ namespace Grace.Execution
             req.IsInterior = true;
             return rec;
         }
+
+        /// <inheritdoc/>
+        public override T Accept<T>(ASTNodeVisitor<T> visitor)
+        {
+            return visitor.Visit(this);
+        }
     }
 
     /// <summary>A method request on the inbuilt prelude</summary>
@@ -628,6 +666,12 @@ namespace Grace.Execution
                 MethodRequest req)
         {
             return ctx.Prelude;
+        }
+
+        /// <inheritdoc/>
+        public override T Accept<T>(ASTNodeVisitor<T> visitor)
+        {
+            return visitor.Visit(this);
         }
     }
 
@@ -812,6 +856,12 @@ namespace Grace.Execution
         private static GraceObject mParts(RequestNode self)
         {
             return GraceVariadicList.Of(self.parts);
+        }
+
+        /// <inheritdoc/>
+        public override T Accept<T>(ASTNodeVisitor<T> visitor)
+        {
+            return visitor.Visit(this);
         }
 
     }
@@ -1130,6 +1180,14 @@ end:
             var req = MethodRequest.Single(name, receiver);
             return other.Request(ctx, req);
         }
+
+        /// <summary>Double-dispatch visitor for AST nodes</summary>
+        /// <param name="visitor">Visitor to double-dispatch to</param>
+        /// <typeparam name="T">Return type of visitor</typeparam>
+        public T Accept<T>(ASTNodeVisitor<T> visitor)
+        {
+            return visitor.Visit(this);
+        }
     }
 
     /// <summary>An object constructor expression</summary>
@@ -1428,6 +1486,12 @@ end:
         private static GraceObject mBody(ObjectConstructorNode self)
         {
             return GraceVariadicList.Of(self.Body);
+        }
+
+        /// <inheritdoc/>
+        public override T Accept<T>(ASTNodeVisitor<T> visitor)
+        {
+            return visitor.Visit(this);
         }
 
     }
@@ -1750,6 +1814,12 @@ end:
             return self.Annotations;
         }
 
+        /// <inheritdoc/>
+        public override T Accept<T>(ASTNodeVisitor<T> visitor)
+        {
+            return visitor.Visit(this);
+        }
+
     }
 
     /// <summary>A block expression</summary>
@@ -1854,6 +1924,12 @@ end:
         private static GraceObject mBody(BlockNode self)
         {
             return GraceVariadicList.Of(self.Body);
+        }
+
+        /// <inheritdoc/>
+        public override T Accept<T>(ASTNodeVisitor<T> visitor)
+        {
+            return visitor.Visit(this);
         }
 
     }
@@ -1965,6 +2041,12 @@ end:
             return GraceNumber.Create(self.Value);
         }
 
+        /// <inheritdoc/>
+        public override T Accept<T>(ASTNodeVisitor<T> visitor)
+        {
+            return visitor.Visit(this);
+        }
+
     }
 
     /// <summary>A string literal</summary>
@@ -2021,6 +2103,12 @@ end:
             return GraceString.Create(self.Value);
         }
 
+        /// <inheritdoc/>
+        public override T Accept<T>(ASTNodeVisitor<T> visitor)
+        {
+            return visitor.Visit(this);
+        }
+
     }
 
     /// <summary>A bare identifier</summary>
@@ -2055,6 +2143,12 @@ end:
         public override GraceObject Evaluate(EvaluationContext ctx)
         {
             return null;
+        }
+
+        /// <inheritdoc/>
+        public override T Accept<T>(ASTNodeVisitor<T> visitor)
+        {
+            return visitor.Visit(this);
         }
     }
 
@@ -2211,6 +2305,12 @@ end:
             return self.Annotations;
         }
 
+        /// <inheritdoc/>
+        public override T Accept<T>(ASTNodeVisitor<T> visitor)
+        {
+            return visitor.Visit(this);
+        }
+
     }
 
     /// <summary>A def declaration</summary>
@@ -2359,6 +2459,12 @@ end:
             return self.Annotations;
         }
 
+        /// <inheritdoc/>
+        public override T Accept<T>(ASTNodeVisitor<T> visitor)
+        {
+            return visitor.Visit(this);
+        }
+
     }
 
     /// <summary>A return statement</summary>
@@ -2425,6 +2531,12 @@ end:
             return new ImplicitNode("Done", self.Origin);
         }
 
+        /// <inheritdoc/>
+        public override T Accept<T>(ASTNodeVisitor<T> visitor)
+        {
+            return visitor.Visit(this);
+        }
+
     }
 
     /// <summary>A placeholder node with no effect</summary>
@@ -2458,6 +2570,12 @@ end:
         protected override void addMethods()
         {
             AddMethods(sharedMethods);
+        }
+
+        /// <inheritdoc/>
+        public override T Accept<T>(ASTNodeVisitor<T> visitor)
+        {
+            return visitor.Visit(this);
         }
 
     }
@@ -2524,6 +2642,12 @@ end:
         private static GraceObject mSignatures(InterfaceNode self)
         {
             return GraceVariadicList.Of(self.body);
+        }
+
+        /// <inheritdoc/>
+        public override T Accept<T>(ASTNodeVisitor<T> visitor)
+        {
+            return visitor.Visit(this);
         }
 
     }
@@ -2620,6 +2744,12 @@ end:
         private static GraceObject mIsVariadic(ParameterNode self)
         {
             return GraceBoolean.Create(self.Variadic);
+        }
+
+        /// <inheritdoc/>
+        public override T Accept<T>(ASTNodeVisitor<T> visitor)
+        {
+            return visitor.Visit(this);
         }
 
     }
@@ -2808,6 +2938,12 @@ end:
             return GraceVariadicList.Of(myaliases);
         }
 
+        /// <inheritdoc/>
+        public override T Accept<T>(ASTNodeVisitor<T> visitor)
+        {
+            return visitor.Visit(this);
+        }
+
 
     }
 
@@ -2913,6 +3049,12 @@ end:
                 block.Request(ctx, apply);
             }
             return GraceObject.Done;
+        }
+
+        /// <inheritdoc/>
+        public override T Accept<T>(ASTNodeVisitor<T> visitor)
+        {
+            return visitor.Visit(this);
         }
 
     }
@@ -3038,6 +3180,12 @@ end:
                 return self.ReturnType;
             return new ImplicitNode("Unknown", self.Origin);
         }
+
+        /// <inheritdoc/>
+        public override T Accept<T>(ASTNodeVisitor<T> visitor)
+        {
+            return visitor.Visit(this);
+        }
     }
 
 
@@ -3157,6 +3305,12 @@ end:
         private static GraceObject mParameters(OrdinarySignaturePartNode self)
         {
             return GraceVariadicList.Of(self.Parameters);
+        }
+
+        /// <inheritdoc/>
+        public override T Accept<T>(ASTNodeVisitor<T> visitor)
+        {
+            return visitor.Visit(this);
         }
     }
 
