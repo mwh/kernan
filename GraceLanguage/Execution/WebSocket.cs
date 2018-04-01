@@ -93,11 +93,24 @@ namespace Grace.Execution
                     byte[] response = Encoding.ASCII.GetBytes(
                             "HTTP/1.0 200 OK\r\n"
                             + "Content-type: " + mime + "\r\n"
+                            + "Connection: close\r\n"
                             + "\r\n");
                     stream.Write(response, 0, response.Length);
                     stream.Write(data, 0, data.Length);
                 }
             }
+            stream.Close();
+        }
+
+
+        private void httpServeCode(NetworkStream stream, int code)
+        {
+            Console.WriteLine("Serving " + code + " response over HTTP...");
+            byte[] response = Encoding.ASCII.GetBytes(
+                    "HTTP/1.0 " + code + "\r\n"
+                    + "Connection: close\r\n"
+                    + "\r\n");
+            stream.Write(response, 0, response.Length);
             stream.Close();
         }
 
@@ -121,6 +134,11 @@ namespace Grace.Execution
             {
                 httpServe(stream, "websocket/minigrace.js",
                         "text/javascript");
+                return false;
+            }
+            if (!str.StartsWith("GET /grace HTTP/1"))
+            {
+                httpServeCode(stream, 404);
                 return false;
             }
 #if DEBUG_WS
@@ -325,7 +343,6 @@ namespace Grace.Execution
                 Array.Copy(buffer, mask, 4);
 #if DEBUG_WS
                 Console.WriteLine("----------\nMessage:");
-                Console.WriteLine("Fin: " + fin);
                 Console.WriteLine("Op:  " + op);
                 Console.WriteLine("Len: " + length);
                 Console.WriteLine("Mask:" + String.Join(" ",
