@@ -28,7 +28,7 @@ namespace Grace.Utility
             XmlElement el = existingNode;
             if (el == null)
                 el = document.CreateElement("parsenode");
-            var type = document.CreateElement("type");
+            var type = document.CreateElement("nodetype");
             type.AppendChild(document.CreateTextNode(kind));
             var line = document.CreateElement("line");
             line.SetAttribute("type", "number");

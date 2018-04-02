@@ -166,6 +166,11 @@ namespace Grace.Execution
     public class ImplicitNode : Node
     {
         private string kind;
+        /// <summary>
+        /// Kind of implicit this represents, e.g. Done,
+        /// Unknown, Uninitialised
+        /// </summary>
+        public string Kind { get => kind; set => kind = value; }
 
         /// <param name="n">Kind of implicit this is</param>
         public ImplicitNode(string n)
@@ -507,6 +512,11 @@ namespace Grace.Execution
                         new DelegateMethodTyped0
                             <ExplicitReceiverRequestNode>(mReceiver) },
                 };
+
+        /// <summary>
+        /// Receiver expression of this request.
+        /// </summary>
+        public Node Receiver { get => receiver; set => receiver = value; }
 
         /// <inheritdoc/>
         protected override void addMethods()

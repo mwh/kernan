@@ -73,6 +73,7 @@
     <Compile Include="Runtime\ByteString.cs" />
     <Compile Include="Runtime\Methods.cs" />
     <Compile Include="ErrorReporting.cs" />
+    <Compile Include="Utility\ExecutionTreeJSONVisitor.cs" />
     <Compile Include="Utility\ParseTreeJSONVisitor.cs" />
     <Compile Include="Utility\Rational.cs" />
     <Compile Include="Utility\REPL.cs" />

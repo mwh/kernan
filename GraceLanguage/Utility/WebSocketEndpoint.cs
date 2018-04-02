@@ -94,6 +94,20 @@ namespace Grace.Utility
             return 0;
         }
 
+        private static int replyExecutionTree(Node module,
+            string modname,
+            WSOutputSink sink)
+        {
+            Action<XmlDocument, XmlElement> handler = (doc, parent) =>
+            {
+                var mod = doc.CreateElement("module");
+                var vis = new ExecutionTreeJSONVisitor(doc, mod);
+                parent.AppendChild(module.Accept(vis));
+            };
+            sink.SendData("execution-tree", modname, handler);
+            return 0;
+        }
+
         private static int runModule(string code, string modname,
                 string mode, WSOutputSink sink)
         {
@@ -113,6 +127,8 @@ namespace Grace.Utility
                 ExecutionTreeTranslator ett = new ExecutionTreeTranslator();
                 Node eModule = ett.Translate(module as ObjectParseNode);
                 sink.SendEvent("build-succeeded", modname);
+                if (mode == "execution-tree")
+                    return replyExecutionTree(eModule, modname, sink);
                 if (mode == "build")
                     return 0;
                 interp.EnterModule(modname);

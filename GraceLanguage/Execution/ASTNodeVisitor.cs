@@ -31,9 +31,6 @@ namespace Grace.Execution
         /// <summary>Visit a PreludeRequestNode</summary>
         /// <param name="n">PreludeRequestNode to visit</param>
         T Visit(PreludeRequestNode n);
-        /// <summary>Visit a RequestNode</summary>
-        /// <param name="n">RequestNode to visit</param>
-        T Visit(RequestNode n);
         /// <summary>Visit a RequestPartNode</summary>
         /// <param name="n">RequestPartNode to visit</param>
         T Visit(RequestPartNode n);
