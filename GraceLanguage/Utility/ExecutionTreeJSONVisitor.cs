@@ -64,6 +64,21 @@ namespace Grace.Utility
             }
         }
 
+        private void addPropertyEnumRPN<T>(XmlElement parent, string name,
+            IEnumerable<T> body) where T : RequestPartNode
+        {
+            var list = document.CreateElement(name);
+            list.SetAttribute("type", "array");
+            parent.AppendChild(list);
+            foreach (var x in body)
+            {
+                var item = document.CreateElement("item");
+                existingNode = item;
+                list.AppendChild(x.Accept(this));
+            }
+        }
+
+
         private void addProperty(XmlElement parent, string name,
             IEnumerable<string> body)
         {
@@ -172,7 +187,7 @@ namespace Grace.Utility
             var el = makeNode(n, "explicit-receiver-request");
             addProperty(el, "receiver", n.Receiver);
             addProperty(el, "name", n.Name);
-            addProperty(el, "parts", n);
+            addPropertyEnumRPN(el, "parts", n);
             return el;
         }
 
@@ -180,7 +195,7 @@ namespace Grace.Utility
         {
             var el = makeNode(n, "implicit-receiver-request");
             addProperty(el, "name", n.Name);
-            addProperty(el, "parts", n);
+            addPropertyEnumRPN(el, "parts", n);
             return el;
         }
 
@@ -188,7 +203,7 @@ namespace Grace.Utility
         {
             var el = makeNode(n, "prelude-request");
             addProperty(el, "name", n.Name);
-            addProperty(el, "parts", n);
+            addPropertyEnumRPN(el, "parts", n);
             return el;
         }
 
