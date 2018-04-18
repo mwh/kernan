@@ -26,6 +26,7 @@ namespace Grace.Utility
         private XmlElement makeNode(ParseNode o, string kind)
         {
             XmlElement el = existingNode;
+            existingNode = null;
             if (el == null)
                 el = document.CreateElement("parsenode");
             var type = document.CreateElement("nodetype");
@@ -43,11 +44,12 @@ namespace Grace.Utility
             {
                 var comments = document.CreateElement("comments");
                 comments.SetAttribute("type", "array");
-                var com = o.Comment;
+                var com = o.Comment as CommentParseNode;
                 while (com != null)
                 {
+                    existingNode = document.CreateElement("item");
                     comments.AppendChild(Visit(com));
-                    com = com.Comment;
+                    com = com.Comment as CommentParseNode;
                 }
                 el.AppendChild(comments);
             }
