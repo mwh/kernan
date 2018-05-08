@@ -170,7 +170,17 @@ namespace Grace.Execution
         /// Kind of implicit this represents, e.g. Done,
         /// Unknown, Uninitialised
         /// </summary>
-        public string Kind { get => kind; set => kind = value; }
+        public string Kind
+        {
+            get
+            {
+                return kind;
+            }
+            set
+            {
+                kind = value;
+            }
+        }
 
         /// <param name="n">Kind of implicit this is</param>
         public ImplicitNode(string n)
@@ -516,7 +526,17 @@ namespace Grace.Execution
         /// <summary>
         /// Receiver expression of this request.
         /// </summary>
-        public Node Receiver { get => receiver; set => receiver = value; }
+        public Node Receiver
+        {
+            get
+            {
+                return receiver;
+            }
+            set
+            {
+                receiver = value;
+            }
+        }
 
         /// <inheritdoc/>
         protected override void addMethods()
