@@ -435,8 +435,16 @@ namespace Grace.Execution
             }
             else
             {
-                // 64-bit lengths are not supported yet.
-                pkt = new byte[0];
+                pkt = new byte[data.Length + 10];
+                // FIN | opcode
+                pkt[0] = (byte)(128 | opcode);
+                // !MASK | 126 (16-bit length)
+                pkt[1] = (byte)(127);
+                var blen = BitConverter.GetBytes((UInt64)data.Length);
+                if (BitConverter.IsLittleEndian)
+                    Array.Reverse(blen);
+                Array.Copy(blen, 0, pkt, 2, 8);
+                Array.Copy(data, 0, pkt, 10, data.Length);
             }
             try
             {
