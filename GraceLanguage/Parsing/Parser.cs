@@ -1050,7 +1050,8 @@ namespace Grace.Parsing
         {
             Token start = lexer.current;
             nextToken();
-            if (lexer.current is NewLineToken || lexer.current is CommentToken)
+            if (lexer.current is NewLineToken || lexer.current is CommentToken
+                    || lexer.current is RBraceToken)
             {
                 // Void return
                 return new ReturnParseNode(start, null);
