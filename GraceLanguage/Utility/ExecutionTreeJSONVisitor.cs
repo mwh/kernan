@@ -136,7 +136,7 @@ namespace Grace.Utility
         {
             // For our purposes, an AnnotationsNode is just a list of
             // the annotations rather than handled as a node.
-            addProperty(parent, name, (IList<Node>)value);
+            addProperty(parent, name, (from x in value select x).ToList());
         }
 
         private void addProperty(XmlElement parent,
@@ -325,6 +325,16 @@ namespace Grace.Utility
             return el;
         }
 
+        public XmlElement Visit(SignatureNode n)
+        {
+            var el = makeNode(n, "signature");
+            addProperty(el, "parts", n.Parts);
+            addProperty(el, "annotations", n.Annotations);
+            addProperty(el, "returnType", n.ReturnType);
+            addProperty(el, "name", n.Name);
+            return el;
+        }
+
         public XmlElement Visit(AnnotationsNode n)
         {
             throw new NotImplementedException();
@@ -338,5 +348,6 @@ namespace Grace.Utility
             addProperty(el, "genericparameters", n.GenericParameters);
             return el;
         }
+
     }
 }

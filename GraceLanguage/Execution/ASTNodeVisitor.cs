@@ -76,6 +76,9 @@ namespace Grace.Execution
         /// <summary>Visit an AnnotationsNode</summary>
         /// <param name="n">AnnotationsNode to visit</param>
         T Visit(AnnotationsNode n);
+        /// <summary>Visit a SignatureNode</summary>
+        /// <param name="n">SignatureNode to visit</param>
+        T Visit(SignatureNode n);
         /// <summary>Visit an OrdinarySignaturePartNode</summary>
         /// <param name="n">OrdinarySignaturePartNode to visit</param>
         T Visit(OrdinarySignaturePartNode n);
