@@ -162,6 +162,8 @@ method _SuccessfulMatch(obj) {
         method ifTrue(blk) ifFalse(_) {
             blk.apply
         }
+        method assert(name) {}
+        method cleanup {}
     }
 }
 
@@ -179,6 +181,10 @@ method _FailedMatch(obj) {
         method ifTrue(_) ifFalse(blk) {
             blk.apply
         }
+        method assert(name) {
+            ArgumentTypeError.raise "{name} does not satisfy its declared type"
+        }
+        method cleanup {}
     }
 }
 

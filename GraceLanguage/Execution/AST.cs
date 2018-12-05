@@ -1633,7 +1633,8 @@ end:
                     throw new Exception("unimplemented - non-ordinary parts");
                 var sigPart = (OrdinarySignaturePartNode)pp.mine;
                 bool hadVariadic = false;
-                foreach (var arg in sigPart.Parameters.Zip(pp.req.Arguments, (a, b) => new { name = a, val = b }))
+                foreach (var arg in sigPart.Parameters.Zip(pp.req.Arguments,
+                    (a, b) => new { name = a, val = b, type = a.Type }))
                 {
                     var idNode = (ParameterNode)arg.name;
                     string name = idNode.Name;
@@ -2064,10 +2065,17 @@ end:
     {
 
         private StringLiteralParseNode origin;
+        private string _value;
         internal StringLiteralNode(Token location, StringLiteralParseNode source)
             : base(location, source)
         {
             origin = source;
+        }
+
+        internal StringLiteralNode(Token location, string val)
+        : base(location, null)
+        {
+            _value = val;
         }
 
         /// <summary>The string value of this literal</summary>
@@ -2077,6 +2085,8 @@ end:
         {
             get
             {
+                if (this._value != null)
+                    return this._value;
                 return origin.Value;
             }
         }
@@ -2351,11 +2361,21 @@ end:
             this.type = type;
             Value = val;
             this.origin = source;
+            Name = (origin.Name as IdentifierParseNode).Name;
             Annotations = new AnnotationsNode(
                     source.Annotations == null
                         ? location
                         : source.Annotations.Token,
                     source.Annotations);
+        }
+
+        internal DefDeclarationNode(Token location,
+                string name,
+                Node val)
+            : base(location, null)
+        {
+            Name = name;
+            Value = val;
         }
 
         /// <summary>The initial value given in this def declaration</summary>
@@ -2366,10 +2386,7 @@ end:
         /// parse node</value>
         public string Name
         {
-            get
-            {
-                return (origin.Name as IdentifierParseNode).Name;
-            }
+            get; private set;
         }
 
         /// <inheritdoc/>
@@ -3239,11 +3256,11 @@ end:
         public IList<Node> GenericParameters { get; private set; }
 
         /// <summary>Ordinary parameters of this part</summary>
-        public IList<Node> Parameters { get; private set; }
+        public IList<ParameterNode> Parameters { get; private set; }
 
         internal OrdinarySignaturePartNode(Token location,
                 OrdinarySignaturePartParseNode source,
-                IList<Node> parameters,
+                IList<ParameterNode> parameters,
                 IList<Node> genericParameters)
             : base(location, source)
         {
@@ -3254,7 +3271,7 @@ end:
 
         internal OrdinarySignaturePartNode(Token location,
                 OrdinarySignaturePartParseNode source,
-                IList<Node> parameters,
+                IList<ParameterNode> parameters,
                 IList<Node> genericParameters,
                 bool allowArityOverloading)
             : base(location, source)

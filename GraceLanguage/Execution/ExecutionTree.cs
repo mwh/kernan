@@ -116,7 +116,7 @@ namespace Grace.Execution
         /// <inheritdoc />
         public Node Visit(OrdinarySignaturePartParseNode osppn)
         {
-            var parameters = new List<Node>();
+            var parameters = new List<ParameterNode>();
             foreach (var p in osppn.Parameters)
             {
                 // f
@@ -186,12 +186,144 @@ namespace Grace.Execution
                     && d.Signature.Annotations.HasAnnotation("confidential"));
             ret.Abstract = (d.Signature.Annotations != null
                     && d.Signature.Annotations.HasAnnotation("abstract"));
-            foreach (ParseNode p in d.Body)
-                if (!(p is CommentParseNode))
-                    ret.Add(p.Visit(this));
             // Indicate whether this method returns a fresh object
             ret.Fresh = (d.Body.Count > 0 && d.Body[d.Body.Count - 1] is
                     ObjectParseNode);
+            // For each parameter, check against any given parameter types
+            // Only run if this method does not return a fresh object, as
+            // the try-finally decoration breaks it.
+            var hasType = false;
+            List<Tuple<string, Node>> matchResults = null;
+            if (!ret.Fresh)
+            {
+                hasType = sig.ReturnType != null;
+                matchResults = new List<Tuple<string, Node>>();
+                foreach (var part in sig.Parts)
+                {
+                    var ospn = part as OrdinarySignaturePartNode;
+                    foreach (var param in ospn.Parameters)
+                    {
+                        if (param.Type == null)
+                            continue;
+                        hasType = true;
+                        var patName = "pattern " + param.Name;
+                        var mrName = "match result " + param.Name;
+                        var tmpName = "temp " + param.Name;
+                        // def `pattern x` = String
+                        var patDef = new DefDeclarationNode(d.Token, patName,
+                            param.Type
+                            );
+                        var paramReq = new ImplicitReceiverRequestNode(d.Token, null);
+                        paramReq.AddPart(new RequestPartNode(param.Name, new List<Node>(),
+                            new List<Node>()));
+                        var tmpReq = new ImplicitReceiverRequestNode(d.Token, null);
+                        tmpReq.AddPart(new RequestPartNode(tmpName, new List<Node>(),
+                            new List<Node>()));
+                        var mrReq = new ImplicitReceiverRequestNode(d.Token, null);
+                        mrReq.AddPart(new RequestPartNode(mrName, new List<Node>(),
+                            new List<Node>()));
+                        var mr = new ExplicitReceiverRequestNode(d.Token, null, param.Type);
+                        mr.AddPart(new RequestPartNode("match", new List<Node>(),
+                            new List<Node> { paramReq }));
+                        // def `match result x` = `pattern x`.match(x)
+                        var mrDef = new DefDeclarationNode(d.Token, mrName,
+                            mr
+                            );
+                        // def x = `match result x`.result
+                        var resultReq = new ExplicitReceiverRequestNode(d.Token, null, mrReq);
+                        resultReq.AddPart(new RequestPartNode("result", new List<Node>(),
+                            new List<Node>()));
+                        var replaceDef = new DefDeclarationNode(d.Token, param.Name,
+                            resultReq
+                            );
+                        var testDef = new DefDeclarationNode(d.Token, "test" + param.Name,
+                            resultReq
+                            );
+                        ret.Add(patDef);
+                        ret.Add(mrDef);
+                        ret.Add(replaceDef);
+                        ret.Add(testDef);
+                        matchResults.Add(Tuple.Create(param.Name, (Node)mrReq));
+                    }
+                }
+            }
+            if (!hasType)
+            {
+                foreach (ParseNode p in d.Body)
+                    if (!(p is CommentParseNode))
+                        ret.Add(p.Visit(this));
+            }
+            else
+            {
+                // This means 1) not a fresh method, 2) at least one parameter had a type
+                var body = new List<Node>();
+                foreach (var tup in matchResults)
+                {
+                    var paramName = tup.Item1;
+                    var mrReq = tup.Item2;
+                    // `match result x`.assert "x"
+                    var assertReq = new ExplicitReceiverRequestNode(d.Token, null, mrReq);
+                    assertReq.AddPart(new RequestPartNode("assert", new List<Node>(),
+                        new List<Node> { new StringLiteralNode(d.Token, paramName) }));
+                    body.Add(assertReq);
+                }
+                foreach (ParseNode p in d.Body)
+                    if (!(p is CommentParseNode))
+                        body.Add(p.Visit(this));
+                if (sig.ReturnType != null && body.Count > 0)
+                {
+                    var last = body.Last();
+                    body.RemoveAt(body.Count - 1);
+                    var retDef = new DefDeclarationNode(last.Origin.Token, "return value", last);
+                    var retReq = new ImplicitReceiverRequestNode(d.Token, null);
+                    retReq.AddPart(new RequestPartNode("return value", new List<Node>(),
+                        new List<Node>()));
+                    var retMR = new ExplicitReceiverRequestNode(last.Origin.Token, null,
+                        sig.ReturnType);
+                    retMR.AddPart(new RequestPartNode("match", new List<Node>(),
+                        new List<Node> { retReq }));
+                    var mrDef = new DefDeclarationNode(last.Origin.Token,
+                        "match result return value",
+                        retMR
+                    );
+                    var mrReq = new ImplicitReceiverRequestNode(last.Origin.Token, null);
+                    mrReq.AddPart(new RequestPartNode("match result return value",
+                        new List<Node>(), new List<Node>()));
+                    var assertReq = new ExplicitReceiverRequestNode(last.Origin.Token,
+                        null, mrReq);
+                    assertReq.AddPart(new RequestPartNode("assert", new List<Node>(),
+                        new List<Node> { new StringLiteralNode(d.Token, "return value") }));
+                    body.Add(retDef);
+                    body.Add(mrDef);
+                    body.Add(assertReq);
+                    var resultReq = new ExplicitReceiverRequestNode(last.Origin.Token,
+                        null, mrReq);
+                    resultReq.AddPart(new RequestPartNode("result", new List<Node>(),
+                        new List<Node>()));
+                    body.Add(resultReq);
+                }
+                var cleanupBody = new List<Node>();
+                foreach (var tup in matchResults)
+                {
+                    var paramName = tup.Item1;
+                    var mrReq = tup.Item2;
+                    var cleanupReq = new ExplicitReceiverRequestNode(d.Token, null, mrReq);
+                    cleanupReq.AddPart(new RequestPartNode("cleanup", new List<Node>(),
+                        new List<Node>()));
+                    cleanupBody.Add(cleanupReq);
+                }
+                var tryFinally = new ImplicitReceiverRequestNode(d.Token, null);
+                tryFinally.AddPart(new RequestPartNode("try", new List<Node>(),
+                    new List<Node> {
+                    new BlockNode(d.Token, null, new List<Node>(), body, null)
+                    }));
+                tryFinally.AddPart(new RequestPartNode("finally", new List<Node>(),
+                    new List<Node>
+                    {
+                    new BlockNode(d.Token, null, new List<Node>(), cleanupBody, null)
+                    }));
+                ret.Add(tryFinally);
+            }
             return ret;
         }
 
