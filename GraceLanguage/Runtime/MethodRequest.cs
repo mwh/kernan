@@ -40,7 +40,7 @@ namespace Grace.Runtime
         /// <param name="name">Name of this part</param>
         /// <param name="generics">List of generic (type) arguments</param>
         /// <param name="arguments">List of ordinary arguments</param>
-        internal RequestPart(string name, IList<GraceObject> generics,
+        public RequestPart(string name, IList<GraceObject> generics,
                 IList<GraceObject> arguments)
         {
             this.name = MethodHelper.ArityNamePart(name, arguments.Count);

@@ -2645,7 +2645,7 @@ end:
         /// <inheritdoc/>
         public override GraceObject Evaluate(EvaluationContext ctx)
         {
-            var ret = new GraceType(Name);
+            var ret = new GraceType(Name, ctx.Memorise());
             foreach (var n in body)
                 ret.Add(n);
             return ret;
@@ -3188,12 +3188,20 @@ end:
                     { "returnType",
                         new DelegateMethodTyped0
                             <SignatureNode>(mReturnType) },
+                    { "name",
+                        new DelegateMethodTyped0
+                            <SignatureNode>(mName) },
                 };
 
         /// <inheritdoc/>
         protected override void addMethods()
         {
             AddMethods(sharedMethods);
+        }
+
+        private static GraceObject mName(SignatureNode self)
+        {
+            return GraceString.Create(self.Name);
         }
 
         private static GraceObject mParts(SignatureNode self)

@@ -98,6 +98,9 @@ namespace Grace.Runtime
                     return GraceObjectProxy.Create(
                             ((dynamic)obj)[
                                 (dynamic)viewAsNative(req[0].Arguments[0])]);
+                case "at(_) put(_)":
+                    ((dynamic)obj)[(dynamic)viewAsNative(req[0].Arguments[0])] = req[1].Arguments[0];
+                    return GraceObject.Done;
             }
             object[] args = new object[req[0].Arguments.Count];
             for (int i = 0; i < req[0].Arguments.Count; i++)
@@ -148,6 +151,12 @@ namespace Grace.Runtime
             var s = o as string;
             if (s != null)
                 return GraceString.Create(s);
+            var gn = o as GraceNumber;
+            if (gn != null)
+                return gn;
+            var gs = o as GraceString;
+            if (gs != null)
+                return gs;
             return new GraceObjectProxy(o);
         }
     }
