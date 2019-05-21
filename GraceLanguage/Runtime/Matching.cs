@@ -110,6 +110,21 @@ namespace Grace.Runtime
             return patRec.Request(ctx, patReq);
         }
 
+        /// <summary>Native method for the |&gt; combinator</summary>
+        /// <param name="ctx">Current interpreter</param>
+        /// <param name="self">Left-hand side</param>
+        /// <param name="other">Right-hand side</param>
+        public static GraceObject ChainCombinator(EvaluationContext ctx,
+                GraceObject self, GraceObject other)
+        {
+            var patReq = new MethodRequest();
+            patReq.AddPart(new RequestPart("_ChainPattern",
+                        RequestPart.EmptyList,
+                        new List<GraceObject> { self, other }));
+            GraceObject patRec = ctx.FindReceiver(patReq);
+            return patRec.Request(ctx, patReq);
+        }
+
         /// <summary>Reusable method for the &amp; combinator</summary>
         public static readonly Method AndMethod = new DelegateMethodReceiver1Ctx(
                     new NativeMethodReceiver1Ctx(Matching.AndCombinator)
@@ -119,6 +134,11 @@ namespace Grace.Runtime
         public static readonly Method OrMethod = new DelegateMethodReceiver1Ctx(
                     new NativeMethodReceiver1Ctx(Matching.OrCombinator)
                 );
+
+        /// <summary>Reusable method for the |> combinator</summary>
+        public static readonly Method ChainMethod = new DelegateMethodReceiver1Ctx(
+                    new NativeMethodReceiver1Ctx(Matching.ChainCombinator)
+                );
     }
 
     class NativeTypePattern<T> : GraceObject {
@@ -127,6 +147,7 @@ namespace Grace.Runtime
             AddMethod("match(_)", new DelegateMethod1Ctx(mMatch));
             AddMethod("|(_)", Matching.OrMethod);
             AddMethod("&(_)", Matching.AndMethod);
+            AddMethod("|>(_)", Matching.ChainMethod);
         }
 
         /// <summary>Native method for Grace match</summary>

@@ -125,6 +125,7 @@ namespace Grace.Runtime
                 { "hash", new DelegateMethodTyped0<GraceString>(mHash) },
                 { "|(_)", Matching.OrMethod },
                 { "&(_)", Matching.AndMethod },
+                { "|>(_)", Matching.ChainMethod },
             };
             return sharedMethods;
         }

@@ -40,6 +40,7 @@ namespace Grace.Runtime
                 AddMethod("match(_)", null);
                 AddMethod("|(_)", Matching.OrMethod);
                 AddMethod("&(_)", Matching.AndMethod);
+                AddMethod("|>(_)", Matching.ChainMethod);
                 var par = parameters[0];
                 var first = par as ParameterNode;
                 if (first != null && first.Type != null)
@@ -97,6 +98,7 @@ namespace Grace.Runtime
                     new NativeMethodReq(this.Match)));
             AddMethod("|(_)", Matching.OrMethod);
             AddMethod("&(_)", Matching.AndMethod);
+            AddMethod("|>(_)", Matching.ChainMethod);
             Pattern = pattern;
         }
 

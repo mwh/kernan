@@ -23,6 +23,7 @@ namespace Grace.Runtime
                         new NativeMethod1Ctx(this.Match)));
             AddMethod("|(_)", Matching.OrMethod);
             AddMethod("&(_)", Matching.AndMethod);
+            AddMethod("|>(_)", Matching.ChainMethod);
             AddMethod("signatures", new DelegateMethod0Ctx(
             new NativeMethod0Ctx(this.Signatures)));
 

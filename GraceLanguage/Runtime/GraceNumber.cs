@@ -75,6 +75,9 @@ namespace Grace.Runtime
                 { "prefix-", new DelegateMethodTyped0<GraceNumber>(mNegate) },
                 { "..(_)", new DelegateMethodTyped1Ctx<GraceNumber>(mDotDot) },
                 { "match(_)", new DelegateMethodTyped1Ctx<GraceNumber>(mMatch) },
+                { "|(_)", Matching.OrMethod },
+                { "&(_)", Matching.AndMethod },
+                { "|>(_)", Matching.ChainMethod },
                 { "hash", new DelegateMethodTyped0<GraceNumber>(mHash) },
                 // These methods are extensions, and should not be used.
                 { "numerator",

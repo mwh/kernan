@@ -215,6 +215,9 @@ method _OrPattern(l, r) {
         method &(o) {
             _AndPattern(self, o)
         }
+        method |>(o) {
+            _ChainPattern(self, o)
+        }
     }
 }
 
@@ -233,6 +236,31 @@ method _AndPattern(l, r) {
         }
         method &(o) {
             _AndPattern(self, o)
+        }
+        method |>(o) {
+            _ChainPattern(self, o)
+        }
+    }
+}
+
+method _ChainPattern(l, r) {
+    object {
+        method match(o) {
+            def mr = l.match(o)
+            if (mr) then {
+                def mr2 = r.match(mr.result)
+                return mr2
+            }
+            return mr
+        }
+        method |(o) {
+            _OrPattern(self, o)
+        }
+        method &(o) {
+            _AndPattern(self, o)
+        }
+        method |>(o) {
+            _ChainPattern(self, o)
         }
     }
 }
