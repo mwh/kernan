@@ -3349,4 +3349,34 @@ end:
         }
     }
 
+    /// <summary>A pseudo-node for pretty-printing other nodes</summary>
+    public class PrettyPrintNode : Node
+    {
+        private Node node;
+
+        internal PrettyPrintNode(Token location, Node node)
+            : base(location, node.Origin) {
+            this.node = node;
+        }
+
+        /// <inheritdoc/>
+        public override void DebugPrint(System.IO.TextWriter tw, string prefix)
+        {
+            tw.WriteLine(prefix + "PrettyPrintNode: ");
+            node.DebugPrint(tw, prefix + "    ");
+        }
+
+        /// <inheritdoc/>
+        public override GraceObject Evaluate(EvaluationContext ctx)
+        {
+            return GraceString.Create(ParseNodeMeta.PrettyPrint(ctx, Origin));
+        }
+
+        /// <inheritdoc/>
+        protected override void addMethods()
+        {
+
+        }
+    }
+
 }
