@@ -157,19 +157,23 @@ namespace Grace.Utility
                         if (v != null)
                         {
                             obj.CreateVar(v.Name, meths,
-                                    v.Readable, v.Writable, out cell);
+                                    v.Readable, v.Writable,
+                                    v.Type, out cell);
                             obj.AddMethods(meths);
                             if (v.Value != null)
                                 cell.Value = v.Value.Evaluate(interp);
+                            cell.Check(interp);
                             result = GraceObject.Done;
                             continue;
                         }
                         if (d != null)
                         {
                             obj.CreateDef(d.Name, meths,
-                                    d.Public, out cell);
+                                    d.Public, d.Type,
+                                    out cell);
                             obj.AddMethods(meths);
                             cell.Value = d.Value.Evaluate(interp);
+                            cell.Check(interp);
                             result = GraceObject.Done;
                             continue;
                         }

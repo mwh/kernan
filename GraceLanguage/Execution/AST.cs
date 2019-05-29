@@ -1356,13 +1356,16 @@ end:
             foreach (var d in defs)
             {
                 Cell cell;
-                ret.CreateDef(d.Name, meths, d.Public, out cell);
+                ret.CreateDef(d.Name, meths, d.Public, d.Type,
+                        out cell);
                 cellMap[d] = cell;
             }
             foreach (var v in vars)
             {
                 Cell cell;
-                ret.CreateVar(v.Name, meths, v.Readable, v.Writable, out cell);
+                ret.CreateVar(v.Name, meths, v.Readable, v.Writable,
+                        v.Type,
+                        out cell);
                 cellMap[v] = cell;
             }
             // Because we don't have part-objects, a fake "redirection"
@@ -1455,6 +1458,7 @@ end:
                         }
                         else if (v.Value != null)
                             cell.Value = v.Value.Evaluate(ctx);
+                        cell.Check(ctx);
                     }
                 }
                 else
@@ -2229,9 +2233,11 @@ end:
         {
             ReaderWriterPair pair;
             if (Value != null)
-                pair = ctx.AddVar(Name, Value.Evaluate(ctx));
+                pair = ctx.AddVar(Name, Value.Evaluate(ctx),
+                        Type);
             else
-                pair = ctx.AddVar(Name, GraceObject.Uninitialised);
+                pair = ctx.AddVar(Name, GraceObject.Uninitialised,
+                        Type);
             if (Readable)
                 pair.Read.Confidential = false;
             if (Writable)

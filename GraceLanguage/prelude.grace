@@ -148,6 +148,14 @@ type Boolean = interface {
     orElse(b)
 }
 
+class successfulMatch(o) {
+    inherit _SuccessfulMatch(o)
+}
+
+class failedMatch(o) {
+    inherit _FailedMatch(o)
+}
+
 method _SuccessfulMatch(obj) {
     object {
         def succeeded is public = true

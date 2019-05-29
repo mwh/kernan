@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Grace.Execution;
+using Grace.Parsing;
 
 namespace Grace.Runtime
 {
@@ -12,6 +13,8 @@ namespace Grace.Runtime
 
         private List<UserObjectInitialiser> initialisers
             = new List<UserObjectInitialiser>();
+
+        private List<Cell> cells = new List<Cell>();
 
         /// <summary>
         /// Creates a basic user object.
@@ -60,9 +63,25 @@ namespace Grace.Runtime
         public virtual ReaderWriterPair AddLocalVar(string name,
                 GraceObject val)
         {
-            var c = new Cell( val == null ? GraceObject.Uninitialised : val);
+            return AddLocalVar(name, val, null);
+        }
+
+        /// <summary>
+        /// Add methods to this object representing a var
+        /// declaration
+        /// </summary>
+        /// <param name="name">Name of the var to add</param>
+        /// <param name="val">Initial value of this var</param>
+        /// <param name="pattern">Pattern to check values against</param>
+        /// <returns>Object encapsulating the added methods</returns>
+        public virtual ReaderWriterPair AddLocalVar(string name,
+                GraceObject val, Node pattern)
+        {
+            var c = new Cell( val == null ? GraceObject.Uninitialised : val,
+                    pattern);
+            cells.Add(c);
             var reader = new FieldReaderMethod(c);
-            var writer = new FieldWriterMethod(c);
+            var writer = new FieldWriterMethod(c, pattern);
             AddMethod(name, reader);
             AddMethod(name + " :=(_)", writer);
             return new ReaderWriterPair { Read = reader, Write = writer };
@@ -77,7 +96,8 @@ namespace Grace.Runtime
         /// <returns>Added method</returns>
         public virtual Method AddLocalDef(string name, GraceObject val)
         {
-            var c = new Cell(val);
+            var c = new Cell(val, null);
+            cells.Add(c);
             var read = new FieldReaderMethod(c);
             AddMethod(name, read);
             return read;
@@ -95,6 +115,9 @@ namespace Grace.Runtime
         /// <param name="readable">
         /// True if this def is public.
         /// </param>
+        /// <param name="pattern">
+        /// Pattern the value of this def should match
+        /// </param>
         /// <param name="cell">
         /// Cell storing the value of this def
         /// </param>
@@ -102,10 +125,11 @@ namespace Grace.Runtime
                 string name,
                 Dictionary<string, Method> methods,
                 bool readable,
+                Node pattern,
                 out Cell cell
                 )
         {
-            cell = new Cell(GraceObject.Uninitialised);
+            cell = new Cell(GraceObject.Uninitialised, pattern);
             var m = new FieldReaderMethod(cell);
             methods[name] = m;
             if (!readable)
@@ -127,6 +151,9 @@ namespace Grace.Runtime
         /// <param name="writable">
         /// True if this var is writable.
         /// </param>
+        /// <param name="pattern">
+        /// Pattern to check values against
+        /// </param>
         /// <param name="cell">
         /// Cell storing the value of this var
         /// </param>
@@ -134,13 +161,14 @@ namespace Grace.Runtime
                 string name,
                 Dictionary<string, Method> methods,
                 bool readable, bool writable,
+                Node pattern,
                 out Cell cell
                 )
         {
-            cell = new Cell(GraceObject.Uninitialised);
+            cell = new Cell(GraceObject.Uninitialised, pattern);
             var r = new FieldReaderMethod(cell);
             methods[name] = r;
-            var w = new FieldWriterMethod(cell);
+            var w = new FieldWriterMethod(cell, pattern);
             methods[name + " :=(_)"] = w;
             if (!readable)
                 r.Confidential = true;
@@ -244,11 +272,14 @@ namespace Grace.Runtime
     class FieldWriterMethod : Method
     {
         Cell cell;
+        Node pattern;
 
         /// <param name="c">Cell holding the value to access.</param>
-        public FieldWriterMethod(Cell c)
+        /// <param name="p">Pattern to check values against</param>
+        public FieldWriterMethod(Cell c, Node p)
         {
             cell = c;
+            pattern = p;
         }
 
         /// <inheritdoc/>
@@ -259,7 +290,34 @@ namespace Grace.Runtime
                 )
         {
             checkAccessibility(ctx, req);
-            cell.Value = req[1].Arguments[0];
+            var val = req[1].Arguments[0];
+            if (pattern != null)
+            {
+                var pat = pattern.Evaluate(ctx);
+                var mr = Matching.Match(ctx, pat, val);
+                if (Matching.Succeeded(ctx, mr))
+                {
+                    val = Matching.GetResult(ctx, mr);
+                }
+                else
+                {
+                    ErrorReporting.RaiseError(ctx, "R2001",
+                            new Dictionary<string, string> {
+                                { "method", req.Name },
+                                { "index", "1" },
+                                { "part", ":=" },
+                                { "argument",
+                                    GraceString.AsNativeString(ctx, val)},
+                                { "required",
+                                    ParseNodeMeta.PrettyPrint(ctx,
+                                            pattern.Origin) }
+                            },
+                            "ArgumentTypeError: value assigned to variable did"
+                            + " not match type"
+                            );
+                }
+            }
+            cell.Value = val;
             return GraceObject.Done;
         }
 
@@ -275,10 +333,48 @@ namespace Grace.Runtime
         /// </summary>
         public GraceObject Value { get; set; }
 
+        /// <summary>
+        /// Pattern expression for values in this cell.
+        /// </summary>
+        public Node Pattern { get; set; }
+
         /// <param name="v">Initial value of this cell</param>
-        public Cell(GraceObject v)
+        /// <param name="p">Pattern for objects in this cell</param>
+        public Cell(GraceObject v, Node p)
         {
             Value = v;
+            Pattern = p;
+        }
+
+        /// <summary>Check that the value in this cell meets the
+        /// pattern</summary>
+        /// <param name="ctx">Interpreter</param>
+        public void Check(EvaluationContext ctx)
+        {
+            if (Value == GraceObject.Uninitialised)
+                return;
+            if (Pattern == null)
+                return;
+            var pat = Pattern.Evaluate(ctx);
+            var mr = Matching.Match(ctx, pat, Value);
+            if (Matching.Succeeded(ctx, mr))
+            {
+                Value = Matching.GetResult(ctx, mr);
+            }
+            else
+            {
+                ErrorReporting.RaiseError(ctx, "R2025",
+                        new Dictionary<string, string> {
+                            { "value",
+                                GraceString.AsNativeString(ctx, Value)},
+                            { "type",
+                                ParseNodeMeta.PrettyPrint(ctx,
+                                        Pattern.Origin) }
+                        },
+                        "ArgumentTypeError: value assigned to var did not "
+                        + "match type"
+                        );
+            }
         }
     }
 

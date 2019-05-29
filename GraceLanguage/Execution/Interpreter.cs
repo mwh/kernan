@@ -806,13 +806,21 @@ namespace Grace.Execution
         }
 
         /// <inheritdoc />
-        public ReaderWriterPair AddVar(string name, GraceObject val)
+        public ReaderWriterPair AddVar(string name, GraceObject val,
+                Node pattern)
         {
             var m = majorScope as LocalScope;
             if (m == null)
                 return new ReaderWriterPair();
-            var pair = m.AddLocalVar(name, val);
+            var pair = m.AddLocalVar(name, val, pattern);
+            m.Request(this, MethodRequest.Assignment(name, val));
             return pair;
+        }
+
+        /// <inheritdoc />
+        public ReaderWriterPair AddVar(string name, GraceObject val)
+        {
+            return AddVar(name, val, null);
         }
 
         /// <inheritdoc />
@@ -928,6 +936,8 @@ namespace Grace.Execution
         public Method Read;
         /// <summary>Writer method</summary>
         public Method Write;
+        /// <summary>Pattern</summary>
+        public GraceObject Pattern;
     }
 
     /// <summary>Represents the current status of a program evaluation</summary>
@@ -993,6 +1003,14 @@ namespace Grace.Execution
         /// <returns>An object encapsulating the reader and writer
         /// methods created for the var</returns>
         ReaderWriterPair AddVar(string name, GraceObject val);
+        /// <summary>Add a var field to the nearest major scope</summary>
+        /// <param name="name">Variable name to use</param>
+        /// <param name="val">Initial value of the field</param>
+        /// <param name="pattern">Pattern to check values against</param>
+        /// <returns>An object encapsulating the reader and writer
+        /// methods created for the var</returns>
+        ReaderWriterPair AddVar(string name, GraceObject val,
+                Node pattern);
         /// <summary>Add a def field to the nearest major scope</summary>
         /// <param name="name">Variable name to use</param>
         /// <param name="val">Value of the field</param>

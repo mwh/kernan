@@ -221,5 +221,18 @@ namespace Grace.Runtime
             ret.AddPart(rp);
             return ret;
         }
+
+        /// <summary>Create an assigmnent method request with
+        /// a lone ordinary argument</summary>
+        /// <param name="name">Name of field</param>
+        /// <param name="arg">Value being assigned</param>
+        public static MethodRequest Assignment(string name, GraceObject arg)
+        {
+            var ret = new MethodRequest();
+            ret.AddPart(RequestPart.Nullary(name));
+            ret.AddPart(RequestPart.Single(":=", arg));
+            return ret;
+        }
+
     }
 }

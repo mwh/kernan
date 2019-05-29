@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 using Grace.Execution;
+using Grace.Parsing;
 
 namespace Grace.Runtime
 {
@@ -23,6 +24,9 @@ namespace Grace.Runtime
 
         /// <summary>Mapping of variable names to values</summary>
         public Dictionary<string, GraceObject> locals = new Dictionary<string, GraceObject>();
+
+        /// <summary>Mapping of variable names to patterns</summary>
+        public Dictionary<string, Node> Patterns = new Dictionary<string, Node>();
 
         private string name = "<anon>";
 
@@ -87,6 +91,21 @@ namespace Grace.Runtime
         public void AddLocalVar(string name)
         {
             AddLocalVar(name, GraceObject.Uninitialised);
+        }
+
+        /// <summary>Add a new var to this scope</summary>
+        /// <param name="name">Name of var to create</param>
+        /// <param name="val">Value to set var to</param>
+        /// <param name="pattern">Pattern to check values against</param>
+        /// <returns>Pair of methods that were added</returns>
+        public override ReaderWriterPair AddLocalVar(string name,
+                GraceObject val, Node pattern)
+        {
+            locals[name] = val;
+            Patterns[name] = pattern;
+            AddMethod(name, Reader);
+            AddMethod(name + " :=(_)", Writer);
+            return new ReaderWriterPair { Read = Reader, Write = Writer };
         }
 
         /// <summary>Add a new var to this scope</summary>
@@ -181,7 +200,34 @@ namespace Grace.Runtime
             checkAccessibility(ctx, req);
             LocalScope s = self as LocalScope;
             string name = req[0].Name;
-            s[name] = req[1].Arguments[0];
+            var val = req[1].Arguments[0];
+            if (s.Patterns[name] != null
+                    && val != GraceObject.Uninitialised)
+            {
+                var pat = s.Patterns[name].Evaluate(ctx);
+                var mr = Matching.Match(ctx, pat, val);
+                if (Matching.Succeeded(ctx, mr))
+                {
+                    val = Matching.GetResult(ctx, mr);
+                }
+                else
+                {
+                    ErrorReporting.RaiseError(ctx, "R2001",
+                            new Dictionary<string, string> {
+                                { "method", req.Name },
+                                { "index", "1" },
+                                { "part", ":=" },
+                                { "argument",
+                                    GraceString.AsNativeString(ctx, val) },
+                                { "required", ParseNodeMeta.PrettyPrint(ctx,
+                                            s.Patterns[name].Origin) }
+                            },
+                            "ArgumentTypeError: value assigned to var did not "
+                            + "match type"
+                            );
+                }
+            }
+            s[name] = val;
             return GraceObject.Done;
         }
     }
