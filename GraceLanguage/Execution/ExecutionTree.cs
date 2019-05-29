@@ -216,6 +216,7 @@ namespace Grace.Execution
                         var paramReq = new ImplicitReceiverRequestNode(d.Token, null);
                         paramReq.AddPart(new RequestPartNode(param.Name, new List<Node>(),
                             new List<Node>()));
+
                         var tmpReq = new ImplicitReceiverRequestNode(d.Token, null);
                         tmpReq.AddPart(new RequestPartNode(tmpName, new List<Node>(),
                             new List<Node>()));
@@ -229,6 +230,68 @@ namespace Grace.Execution
                         var mrDef = new DefDeclarationNode(d.Token, mrName,
                             mr
                             );
+                        // `match result x`.ifFalse { ArgumentTypeError... }
+                        var pars = String.Join(", ",
+                                from p in ospn.Parameters select p.Name);
+                        var partDesc = ((OrdinarySignaturePartParseNode)part.Origin).Name + "(" + pars + ")";
+                        var argumentTypeError = new ImplicitReceiverRequestNode(d.Token, null);
+                        argumentTypeError.AddPart(
+                                new RequestPartNode("ArgumentTypeError",
+                                    new List<Node>(),
+                                    new List<Node>()));
+                        var raise = new ExplicitReceiverRequestNode(d.Token,
+                                null, argumentTypeError);
+                        // Error string
+                        var pp = new ExplicitReceiverRequestNode(d.Token,
+                                null,
+                                new StringLiteralNode(d.Token,
+                                        "argument for parameter "
+                                        + param.Name
+                                        + " of part "
+                                        + partDesc
+                                        + " does not meet type ")
+                                );
+                        pp.AddPart(new RequestPartNode("++",
+                                    new List<Node>(),
+                                    new List<Node> {
+                                        new PrettyPrintNode(d.Token,
+                                                param.Type)
+                                    }
+                                ));
+                        pp = new ExplicitReceiverRequestNode(d.Token, null, pp);
+                        pp.AddPart(new RequestPartNode("++",
+                                    new List<Node>(),
+                                    new List<Node> {
+                                        new StringLiteralNode(d.Token,
+                                                ": ")
+                                    }
+                                ));
+                        var asString = new ExplicitReceiverRequestNode(d.Token,
+                                null, paramReq);
+                        asString.AddPart(new RequestPartNode("asString",
+                                    new List<Node>(), new List<Node>()));
+                        pp = new ExplicitReceiverRequestNode(d.Token, null, pp);
+                        pp.AddPart(new RequestPartNode("++",
+                                    new List<Node>(),
+                                    new List<Node> {
+                                        asString
+                                    }
+                                ));
+                        // Actually reaise the error
+                        raise.AddPart(new RequestPartNode("raise",
+                                    new List<Node>(),
+                                    new List<Node> {
+                                        pp
+                                    }));
+                        var ifFalse = new ExplicitReceiverRequestNode(d.Token,
+                                null, mrReq);
+                        var falseBlock = new BlockNode(d.Token, null,
+                                new List<Node>(), new List<Node> {
+                                    raise
+                                }, null);
+                        ifFalse.AddPart(new RequestPartNode("ifFalse",
+                                    new List<Node>(),
+                                    new List<Node> {falseBlock}));
                         // def x = `match result x`.result
                         var resultReq = new ExplicitReceiverRequestNode(d.Token, null, mrReq);
                         resultReq.AddPart(new RequestPartNode("result", new List<Node>(),
@@ -241,6 +304,7 @@ namespace Grace.Execution
                             );
                         ret.Add(patDef);
                         ret.Add(mrDef);
+                        ret.Add(ifFalse);
                         ret.Add(replaceDef);
                         ret.Add(testDef);
                         matchResults.Add(Tuple.Create(param.Name, (Node)mrReq));
@@ -257,16 +321,6 @@ namespace Grace.Execution
             {
                 // This means 1) not a fresh method, 2) at least one parameter had a type
                 var body = new List<Node>();
-                foreach (var tup in matchResults)
-                {
-                    var paramName = tup.Item1;
-                    var mrReq = tup.Item2;
-                    // `match result x`.assert "x"
-                    var assertReq = new ExplicitReceiverRequestNode(d.Token, null, mrReq);
-                    assertReq.AddPart(new RequestPartNode("assert", new List<Node>(),
-                        new List<Node> { new StringLiteralNode(d.Token, paramName) }));
-                    body.Add(assertReq);
-                }
                 foreach (ParseNode p in d.Body)
                     if (!(p is CommentParseNode))
                         body.Add(p.Visit(this));
@@ -289,13 +343,8 @@ namespace Grace.Execution
                     var mrReq = new ImplicitReceiverRequestNode(last.Origin.Token, null);
                     mrReq.AddPart(new RequestPartNode("match result return value",
                         new List<Node>(), new List<Node>()));
-                    var assertReq = new ExplicitReceiverRequestNode(last.Origin.Token,
-                        null, mrReq);
-                    assertReq.AddPart(new RequestPartNode("assert", new List<Node>(),
-                        new List<Node> { new StringLiteralNode(d.Token, "return value") }));
                     body.Add(retDef);
                     body.Add(mrDef);
-                    body.Add(assertReq);
                     var resultReq = new ExplicitReceiverRequestNode(last.Origin.Token,
                         null, mrReq);
                     resultReq.AddPart(new RequestPartNode("result", new List<Node>(),
