@@ -162,8 +162,14 @@ method _SuccessfulMatch(obj) {
         method ifTrue(blk) ifFalse(_) {
             blk.apply
         }
+        method prefix! {
+            false
+        }
         method assert(name) {}
         method cleanup {}
+        method >>=(pattern) {
+            pattern.match(obj)
+        }
     }
 }
 
@@ -172,7 +178,7 @@ method _FailedMatch(obj) {
         def succeeded is public = false
         def asString is public = "FailedMatch[{obj}]"
         method result {
-            obj
+            FailedMatchError.raise "no result of failed match"
         }
         method ifFalse(blk) {
             blk.apply
@@ -181,10 +187,16 @@ method _FailedMatch(obj) {
         method ifTrue(_) ifFalse(blk) {
             blk.apply
         }
+        method prefix! {
+            true
+        }
         method assert(name) {
             ArgumentTypeError.raise "{name} does not satisfy its declared type"
         }
         method cleanup {}
+        method >>=(pattern) {
+            self
+        }
     }
 }
 
@@ -2900,6 +2912,7 @@ def RuntimeError = Error.refine "RuntimeError"
 def LookupError = RuntimeError.refine "LookupError"
 def ArgumentTypeError = RuntimeError.refine "ArgumentTypeError"
 def InsufficientArgumentsError = RuntimeError.refine "InsufficientArgumentsError"
+def FailedMatchError = RuntimeError.refine "FailedMatchError"
 
 method try(b) finally(f) {
     _base_try_catch_finally(b, f)
