@@ -174,6 +174,100 @@ namespace Grace.Execution
                     parameters, generics);
         }
 
+
+        private void doCheck(ParseNode d,
+                String description,
+                String name,
+                Node val,
+                Node pattern,
+                IList<Node> ret) {
+            var patName = "pattern " + name;
+            var mrName = "match result " + name;
+            var tmpName = "temp " + name;
+            // def `pattern x` = String
+            var patDef = new DefDeclarationNode(d.Token, patName,
+                pattern
+                );
+            // T.match(x)
+            var mr = new ExplicitReceiverRequestNode(d.Token, null, pattern);
+            mr.AddPart(new RequestPartNode("match", new List<Node>(),
+                new List<Node> { val }));
+            // def `match result x` = `pattern x`.match(x)
+            var mrDef = new DefDeclarationNode(d.Token, mrName,
+                mr
+                );
+            // Request for `match result x`
+            var mrReq = new ImplicitReceiverRequestNode(d.Token, null);
+            mrReq.AddPart(new RequestPartNode(mrName, new List<Node>(),
+                new List<Node>()));
+            // `match result x`.ifFalse { ArgumentTypeError... }
+            var argumentTypeError = new ImplicitReceiverRequestNode(d.Token, null);
+            argumentTypeError.AddPart(
+                    new RequestPartNode("ArgumentTypeError",
+                        new List<Node>(),
+                        new List<Node>()));
+            var raise = new ExplicitReceiverRequestNode(d.Token,
+                    null, argumentTypeError);
+            // Error string
+            var pp = new ExplicitReceiverRequestNode(d.Token,
+                    null,
+                    new StringLiteralNode(d.Token,
+                            description + " does not meet type ")
+                    );
+            pp.AddPart(new RequestPartNode("++",
+                        new List<Node>(),
+                        new List<Node> {
+                            new PrettyPrintNode(d.Token,
+                                    pattern)
+                        }
+                    ));
+            pp = new ExplicitReceiverRequestNode(d.Token, null, pp);
+            pp.AddPart(new RequestPartNode("++",
+                        new List<Node>(),
+                        new List<Node> {
+                            new StringLiteralNode(d.Token,
+                                    ": ")
+                        }
+                    ));
+            var asString = new ExplicitReceiverRequestNode(d.Token,
+                    null, val);
+            asString.AddPart(new RequestPartNode("asString",
+                        new List<Node>(), new List<Node>()));
+            pp = new ExplicitReceiverRequestNode(d.Token, null, pp);
+            pp.AddPart(new RequestPartNode("++",
+                        new List<Node>(),
+                        new List<Node> {
+                            asString
+                        }
+                    ));
+            // Actually raise the error
+            raise.AddPart(new RequestPartNode("raise",
+                        new List<Node>(),
+                        new List<Node> {
+                            pp
+                        }));
+            var ifFalse = new ExplicitReceiverRequestNode(d.Token,
+                    null, mrReq);
+            var falseBlock = new BlockNode(d.Token, null,
+                    new List<Node>(), new List<Node> {
+                        raise
+                    }, null);
+            ifFalse.AddPart(new RequestPartNode("ifFalse",
+                        new List<Node>(),
+                        new List<Node> {falseBlock}));
+            // def x = `match result x`.result
+            var resultReq = new ExplicitReceiverRequestNode(d.Token, null, mrReq);
+            resultReq.AddPart(new RequestPartNode("result", new List<Node>(),
+                new List<Node>()));
+            var replaceDef = new DefDeclarationNode(d.Token, name,
+                resultReq
+                );
+            ret.Add(patDef);
+            ret.Add(mrDef);
+            ret.Add(ifFalse);
+            ret.Add(replaceDef);
+        }
+
         /// <inheritdoc />
         public Node Visit(MethodDeclarationParseNode d)
         {
@@ -206,110 +300,34 @@ namespace Grace.Execution
                         if (param.Type == null)
                             continue;
                         hasType = true;
-                        var patName = "pattern " + param.Name;
-                        var mrName = "match result " + param.Name;
-                        var tmpName = "temp " + param.Name;
-                        // def `pattern x` = String
-                        var patDef = new DefDeclarationNode(d.Token, patName,
-                            param.Type
-                            );
                         var paramReq = new ImplicitReceiverRequestNode(d.Token, null);
                         paramReq.AddPart(new RequestPartNode(param.Name, new List<Node>(),
                             new List<Node>()));
-
-                        var tmpReq = new ImplicitReceiverRequestNode(d.Token, null);
-                        tmpReq.AddPart(new RequestPartNode(tmpName, new List<Node>(),
-                            new List<Node>()));
-                        var mrReq = new ImplicitReceiverRequestNode(d.Token, null);
-                        mrReq.AddPart(new RequestPartNode(mrName, new List<Node>(),
-                            new List<Node>()));
-                        var mr = new ExplicitReceiverRequestNode(d.Token, null, param.Type);
-                        mr.AddPart(new RequestPartNode("match", new List<Node>(),
-                            new List<Node> { paramReq }));
-                        // def `match result x` = `pattern x`.match(x)
-                        var mrDef = new DefDeclarationNode(d.Token, mrName,
-                            mr
-                            );
-                        // `match result x`.ifFalse { ArgumentTypeError... }
-                        var pars = String.Join(", ",
-                                from p in ospn.Parameters select p.Name);
-                        var partDesc = ((OrdinarySignaturePartParseNode)part.Origin).Name + "(" + pars + ")";
-                        var argumentTypeError = new ImplicitReceiverRequestNode(d.Token, null);
-                        argumentTypeError.AddPart(
-                                new RequestPartNode("ArgumentTypeError",
-                                    new List<Node>(),
-                                    new List<Node>()));
-                        var raise = new ExplicitReceiverRequestNode(d.Token,
-                                null, argumentTypeError);
-                        // Error string
-                        var pp = new ExplicitReceiverRequestNode(d.Token,
-                                null,
-                                new StringLiteralNode(d.Token,
-                                        "argument for parameter "
-                                        + param.Name
-                                        + " of part "
-                                        + partDesc
-                                        + " does not meet type ")
-                                );
-                        pp.AddPart(new RequestPartNode("++",
-                                    new List<Node>(),
-                                    new List<Node> {
-                                        new PrettyPrintNode(d.Token,
-                                                param.Type)
-                                    }
-                                ));
-                        pp = new ExplicitReceiverRequestNode(d.Token, null, pp);
-                        pp.AddPart(new RequestPartNode("++",
-                                    new List<Node>(),
-                                    new List<Node> {
-                                        new StringLiteralNode(d.Token,
-                                                ": ")
-                                    }
-                                ));
-                        var asString = new ExplicitReceiverRequestNode(d.Token,
-                                null, paramReq);
-                        asString.AddPart(new RequestPartNode("asString",
-                                    new List<Node>(), new List<Node>()));
-                        pp = new ExplicitReceiverRequestNode(d.Token, null, pp);
-                        pp.AddPart(new RequestPartNode("++",
-                                    new List<Node>(),
-                                    new List<Node> {
-                                        asString
-                                    }
-                                ));
-                        // Actually reaise the error
-                        raise.AddPart(new RequestPartNode("raise",
-                                    new List<Node>(),
-                                    new List<Node> {
-                                        pp
-                                    }));
-                        var ifFalse = new ExplicitReceiverRequestNode(d.Token,
-                                null, mrReq);
-                        var falseBlock = new BlockNode(d.Token, null,
-                                new List<Node>(), new List<Node> {
-                                    raise
-                                }, null);
-                        ifFalse.AddPart(new RequestPartNode("ifFalse",
-                                    new List<Node>(),
-                                    new List<Node> {falseBlock}));
-                        // def x = `match result x`.result
-                        var resultReq = new ExplicitReceiverRequestNode(d.Token, null, mrReq);
-                        resultReq.AddPart(new RequestPartNode("result", new List<Node>(),
-                            new List<Node>()));
-                        var replaceDef = new DefDeclarationNode(d.Token, param.Name,
-                            resultReq
-                            );
-                        var testDef = new DefDeclarationNode(d.Token, "test" + param.Name,
-                            resultReq
-                            );
-                        ret.Add(patDef);
-                        ret.Add(mrDef);
-                        ret.Add(ifFalse);
-                        ret.Add(replaceDef);
-                        ret.Add(testDef);
-                        matchResults.Add(Tuple.Create(param.Name, (Node)mrReq));
+                        var partDesc = ((OrdinarySignaturePartParseNode)part.Origin).Name
+                            + "("
+                            + String.Join(", ",
+                                    from p in ospn.Parameters select p.Name)
+                            + ")";
+                        doCheck(d,
+                                "argument to parameter "
+                                    + param.Name + " of part "
+                                    + partDesc
+                                    + " of method "
+                                    + ret.Name,
+                                 param.Name, paramReq, param.Type, ret.Body);
                     }
                 }
+            }
+            ImplicitReceiverRequestNode returnPattern = null;
+            if (sig.ReturnType != null) {
+                var returnDef = new DefDeclarationNode(d.Token, "return pattern",
+                    sig.ReturnType
+                    );
+                ret.Add(returnDef);
+                returnPattern = new ImplicitReceiverRequestNode(d.Token, null);
+                returnPattern.AddPart(new RequestPartNode(
+                            "return pattern",
+                            new List<Node>(), new List<Node>()));
             }
             if (!hasType)
             {
@@ -327,28 +345,24 @@ namespace Grace.Execution
                 if (sig.ReturnType != null && body.Count > 0)
                 {
                     var last = body.Last();
+                    var rn = last as ReturnNode;
+                    if (rn != null) last = rn.Value;
                     body.RemoveAt(body.Count - 1);
                     var retDef = new DefDeclarationNode(last.Origin.Token, "return value", last);
+                    ret.Add(retDef);
                     var retReq = new ImplicitReceiverRequestNode(d.Token, null);
                     retReq.AddPart(new RequestPartNode("return value", new List<Node>(),
                         new List<Node>()));
-                    var retMR = new ExplicitReceiverRequestNode(last.Origin.Token, null,
-                        sig.ReturnType);
-                    retMR.AddPart(new RequestPartNode("match", new List<Node>(),
-                        new List<Node> { retReq }));
-                    var mrDef = new DefDeclarationNode(last.Origin.Token,
-                        "match result return value",
-                        retMR
-                    );
-                    var mrReq = new ImplicitReceiverRequestNode(last.Origin.Token, null);
-                    mrReq.AddPart(new RequestPartNode("match result return value",
-                        new List<Node>(), new List<Node>()));
-                    body.Add(retDef);
-                    body.Add(mrDef);
-                    var resultReq = new ExplicitReceiverRequestNode(last.Origin.Token,
-                        null, mrReq);
-                    resultReq.AddPart(new RequestPartNode("result", new List<Node>(),
-                        new List<Node>()));
+                    doCheck(d,
+                            "return value"
+                                + " of method "
+                                + ret.Name,
+                             "return", retReq, sig.ReturnType, ret.Body);
+                    var resultReq = new ImplicitReceiverRequestNode(
+                            last.Origin.Token, null);
+                    resultReq.AddPart(new RequestPartNode("return",
+                                new List<Node>(),
+                                new List<Node>()));
                     body.Add(resultReq);
                 }
                 var cleanupBody = new List<Node>();
