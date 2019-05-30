@@ -2062,6 +2062,8 @@ namespace Grace.Parsing
                 ParseNode p
                 )
         {
+            if (Interpreter.JSIL)
+                return "[pretty-printer does not work on JSIL due to lack of reflection]";
             if (prettyPrinter == null)
                 prettyPrinter = getPrettyPrinter(ctx);
             var req = MethodRequest.Single("formatParseNode",
@@ -2092,6 +2094,8 @@ namespace Grace.Parsing
                 bool useSemicolons
                 )
         {
+            if (Interpreter.JSIL)
+                return "[pretty-printer does not work on JSIL due to lack of reflection]";
             if (prettyPrinter == null)
                 prettyPrinter = getPrettyPrinter(ctx);
             MethodRequest req;
