@@ -208,6 +208,24 @@ method _FailedMatch(obj) {
     }
 }
 
+trait basePattern {
+    method |(o) {
+        _OrPattern(self, o)
+    }
+    method &(o) {
+        _AndPattern(self, o)
+    }
+    method |>(o) {
+        _ChainPattern(self, o)
+    }
+    method succeed(o) {
+        _SuccessfulMatch(o)
+    }
+    method fail(o) {
+        _FailedMatch(o)
+    }
+}
+
 method _MatchResultFromBoolean(bool, obj) {
     if (bool) then {
         _SuccessfulMatch(obj)
