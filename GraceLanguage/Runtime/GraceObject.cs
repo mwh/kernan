@@ -163,6 +163,7 @@ namespace Grace.Runtime
                 AddMethod("asString", null);
                 AddMethod("==(_)", null);
                 AddMethod("!=(_)", null);
+                AddMethod("hash", null);
             }
         }
 
@@ -216,6 +217,15 @@ namespace Grace.Runtime
                 GraceObject other)
         {
             return GraceBoolean.Create(!object.ReferenceEquals(self, other));
+        }
+
+        /// <summary>Native method supporting Grace hash</summary>
+        /// <param name="ctx">Current interpreter</param>
+        /// <param name="self">Receiver</param>
+        private static GraceObject mHash(EvaluationContext ctx,
+                GraceObject self)
+        {
+            return GraceNumber.Create(RuntimeHelpers.GetHashCode(self));
         }
 
         /// <summary>Remove a method from this object</summary>
@@ -288,6 +298,9 @@ namespace Grace.Runtime
                     return m;
                 case "!=(_)":
                     m = new DelegateMethodReceiver1Ctx(mNotEquals);
+                    return m;
+                case "hash":
+                    m = new DelegateMethodReceiver0Ctx(mHash);
                     return m;
             }
             return null;
@@ -383,6 +396,23 @@ namespace Grace.Runtime
         /// <summary>The singleton uninherited parent object</summary>
         public static readonly GraceObject UninheritedParent =
             new GraceObject("ParentNotInheritedYet", true);
+
+        public int GetHashCode(EvaluationContext ctx)
+            // TODO: Proper error if result is not a Number!
+            => this.Request(ctx, MethodRequest.Nullary("hash")).FindNativeParent<GraceNumber>().GetInt();
+        
+	public bool Equals(EvaluationContext ctx, GraceObject other)
+            // TODO: Proper error if result is not a boolean!
+            => this.Request(ctx, MethodRequest.Single("==", other)).FindNativeParent<GraceBoolean>().Boolean;
+
+        public class EqualityComparer : IEqualityComparer<GraceObject>
+        {
+            EvaluationContext ctx;
+            public EqualityComparer(EvaluationContext ctx) { this.ctx = ctx; }
+            public bool Equals(GraceObject self, GraceObject other) => self.Equals(ctx, other);
+            public int GetHashCode(GraceObject self) => self.GetHashCode(ctx);
+        }
+
     }
 
 }

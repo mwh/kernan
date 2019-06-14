@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -54,9 +54,9 @@
     <Compile Include="Parsing\Parser.cs" />
     <Compile Include="Parsing\Tokens.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Runtime\GraceSequence.cs" />
     <Compile Include="Runtime\UserObject.cs" />
     <Compile Include="Runtime\LocalScope.cs" />
-    <Compile Include="Runtime\Iterables.cs" />
     <Compile Include="Runtime\Exceptions.cs" />
     <Compile Include="Runtime\GraceType.cs" />
     <Compile Include="Runtime\MethodRequest.cs" />
@@ -80,6 +80,7 @@
     <Compile Include="Utility\Args.cs" />
     <Compile Include="Utility\WebSocketEndpoint.cs" />
     <Compile Include="Utility\UnicodeLookup.cs" />
+    <Compile Include="Runtime\Callback.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="prelude.grace">

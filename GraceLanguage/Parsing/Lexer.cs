@@ -619,6 +619,8 @@ namespace Grace.Parsing
                         b.Append('\t');
                     else if (c == 'l')
                         b.Append('\u2028');
+                    else if (c == 'e')
+                        b.Append('\x1b');
                     else if (c == '{')
                         b.Append('{');
                     else if (c == '}')

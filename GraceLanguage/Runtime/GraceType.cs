@@ -15,8 +15,10 @@ namespace Grace.Runtime
         public GraceType(string name)
         {
             this.name = name;
-            AddMethod("match(_)", new DelegateMethod1Ctx(
-                        new NativeMethod1Ctx(this.Match)));
+            AddMethod("match(_)", Callback.Unary<GraceType, GraceObject>((ctx, self, target) =>
+                self.DoesMatch(ctx, target) ? Matching.SuccessfulMatch(ctx, target) : Matching.FailedMatch(ctx, target)));
+            AddMethod("matches(_)", Callback.Unary<GraceType, GraceObject>((ctx, self, target) =>
+                GraceBoolean.Create(self.DoesMatch(ctx, target))));
             AddMethod("|(_)", Matching.OrMethod);
             AddMethod("&(_)", Matching.AndMethod);
         }
@@ -28,11 +30,10 @@ namespace Grace.Runtime
             methods.Add(n);
         }
 
-        /// <summary>Native method implementing the .match Grace method
-        /// for types</summary>
+        /// <summary>method used for both the .matches and .match grace methods</summary>
         /// <remarks>At present, this matching uses only the method
         /// names in both the object and the type.</remarks>
-        public GraceObject Match(EvaluationContext ctx, GraceObject target)
+        public bool DoesMatch(EvaluationContext ctx, GraceObject target)
         {
             if (requests == null)
             {
@@ -52,9 +53,16 @@ namespace Grace.Runtime
             foreach (var req in requests)
             {
                 if (!target.RespondsTo(req))
-                    return Matching.FailedMatch(ctx, target);
+                    return false;
             }
-            return Matching.SuccessfulMatch(ctx, target);
+            return true;
+        }
+
+        /// <summary>Native method implementing the .match Grace method
+        /// for types</summary>
+        public GraceObject Matches(EvaluationContext ctx, GraceObject target)
+        {
+            return DoesMatch(ctx, target) ? Matching.SuccessfulMatch(ctx, target) : Matching.FailedMatch(ctx, target);
         }
 
         /// <inheritdoc />

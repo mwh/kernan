@@ -50,8 +50,10 @@ namespace Grace.Runtime
             AddMethod("orElse(_)",
                     new DelegateMethod1Ctx(
                         new NativeMethod1Ctx(this.OrElse)));
-            AddMethod("match(_)", new DelegateMethod1Ctx(
-                        new NativeMethod1Ctx(this.Match)));
+            AddMethod("match(_)", Callback.Unary<GraceBoolean, GraceObject>((ctx, self, target) =>
+                self.DoesMatch(ctx, target) ? Matching.SuccessfulMatch(ctx, target) : Matching.FailedMatch(ctx, target)));
+            AddMethod("matches(_)", Callback.Unary<GraceBoolean, GraceObject>((ctx, self, target) =>
+                GraceBoolean.Create(self.DoesMatch(ctx, target))));
             AddMethod("asString",
                     new DelegateMethod0(new NativeMethod0(this.AsString)));
         }
@@ -69,15 +71,15 @@ namespace Grace.Runtime
             return GraceNumber.Create(Boolean.GetHashCode());
         }
 
-        /// <summary>Native method for Grace match</summary>
+        /// <summary>Native method used for both Grace match and matches</summary>
         /// <param name="ctx">Current interpreter</param>
         /// <param name="target">Target of the match</param>
-        public GraceObject Match(EvaluationContext ctx, GraceObject target)
+        public bool DoesMatch(EvaluationContext ctx, GraceObject target)
         {
             var b = target as GraceBoolean;
             if (b != null && b.Boolean == Boolean)
-                return Matching.SuccessfulMatch(ctx, target);
-            return Matching.FailedMatch(ctx, target);
+                return true;
+            return false;
         }
 
         /// <summary>Native method for Grace asString</summary>
@@ -93,8 +95,10 @@ namespace Grace.Runtime
         /// <param name="other">Argument to the method</param>
         public GraceObject AndAnd(EvaluationContext ctx, GraceObject other)
         {
+           if (other is GraceBlock) { return AndAlso(ctx, other); }
             GraceBoolean oth = other as GraceBoolean;
-            if (oth != null)
+
+               if (oth != null)
                 return GraceBoolean.Create(this.Boolean && oth.Boolean);
             GraceObjectProxy op = other as GraceObjectProxy;
             if (op != null)
@@ -116,7 +120,8 @@ namespace Grace.Runtime
         /// <param name="other">Argument to the method</param>
         public GraceObject OrOr(EvaluationContext ctx, GraceObject other)
         {
-            GraceBoolean oth = other as GraceBoolean;
+           if (other is GraceBlock) { return OrElse(ctx, other); }
+           GraceBoolean oth = other as GraceBoolean;
             if (oth != null)
                 return GraceBoolean.Create(this.Boolean || oth.Boolean);
             GraceObjectProxy op = other as GraceObjectProxy;
