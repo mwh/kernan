@@ -116,6 +116,7 @@
   </ItemGroup>
   <ItemGroup>
     <NativeModule Include="modules/platform\memory.cs" />
+    <NativeModule Include="modules/platform\KernanParser.cs" />
     <NativeModule Include="modules/websocket\dom.cs" />
     <NativeModule Include="modules/websocket\serve.cs" />
   </ItemGroup>

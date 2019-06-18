@@ -614,7 +614,7 @@ namespace Grace.Parsing
                 {
                     char c = code[index];
                     if (c == 'n')
-                        b.Append('\u2028');
+                        b.Append('\n');
                     else if (c == 't')
                         b.Append('\t');
                     else if (c == 'l')

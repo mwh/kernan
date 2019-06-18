@@ -29,7 +29,7 @@ namespace Grace.Runtime
 
         // Utility method to check the arity before calling "m"
         private static Method CustomArity<T0>(Func<EvaluationContext, T0, MethodRequest, GraceObject> m, params int[] arities) where T0 : GraceObject
-            => Nary<T0>(delegate (EvaluationContext ctx, T0 self, MethodRequest req) {
+            => Nary<T0>((ctx, self, req) => {
                 MethodHelper.CheckArity(ctx, req, arities);
                 return m(ctx, self, req);});
 
