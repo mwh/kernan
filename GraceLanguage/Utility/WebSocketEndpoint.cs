@@ -296,12 +296,13 @@ namespace Grace.Utility
             WSOutputSink runningSink = null;
             while (true)
             {
-                wss.JsonReceived += (o, e) => {
+                wss.JsonReceived += (o, e) =>
+                {
                     var je = (JsonWSEvent)e;
                     var root = je.Root;
                     var md = root.XPathSelectElement("//mode");
                     var mode = md.Value;
-                    if (mode == "stop")
+                    if (mode == "stop" || mode == "terminate")
                     {
                         if (runningThread != null)
                         {
@@ -309,6 +310,10 @@ namespace Grace.Utility
                             runningThread.Abort();
                             runningThread = null;
                             runningSink = null;
+                        }
+                        if (mode == "terminate")
+                        {
+                            System.Environment.Exit(0);
                         }
                         return;
                     }
