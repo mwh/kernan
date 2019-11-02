@@ -13,7 +13,7 @@
   }
 , "devDependencies":
   { "browserify": "9.x"
-  , "eslint": "0.15.x"
+  , "eslint": "6.6.x"
   }
 , "main": "scripts/boot.js"
 , "scripts":
