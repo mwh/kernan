@@ -203,6 +203,7 @@ method _OrPattern(l, r) {
             }
             _FailedMatch(o)
         }
+        method matches(o) { l.matches(o) || {r.matches(o)} }
         method |(o) {
             _OrPattern(self, o)
         }
@@ -222,6 +223,7 @@ method _AndPattern(l, r) {
             }
             return mr
         }
+        method matches(o) { l.matches(o) && {r.matches(o)} }
         method |(o) {
             _OrPattern(self, o)
         }

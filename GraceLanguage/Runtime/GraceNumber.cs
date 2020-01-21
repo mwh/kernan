@@ -74,7 +74,9 @@ namespace Grace.Runtime
                     new DelegateMethodTyped0<GraceNumber>(mAsString) },
                 { "prefix-", new DelegateMethodTyped0<GraceNumber>(mNegate) },
                 { "..(_)", new DelegateMethodTyped1Ctx<GraceNumber>(mDotDot) },
-                { "match(_)", new DelegateMethodTyped1Ctx<GraceNumber>(mMatch) },
+                { "match(_)", Callback.Unary<GraceNumber, GraceObject>((ctx, self, target) =>
+                    mEqualsEquals(self, target) == GraceBoolean.True ? Matching.SuccessfulMatch(ctx, target) : Matching.FailedMatch(ctx, target)) },
+                { "matches(_)", Callback.Unary<GraceNumber, GraceObject>((ctx, self, target) => mEqualsEquals(self, target))},
                 { "hash", new DelegateMethodTyped0<GraceNumber>(mHash) },
                 // These methods are extensions, and should not be used.
                 { "numerator",
@@ -83,6 +85,7 @@ namespace Grace.Runtime
                     new DelegateMethodTyped0<GraceNumber>(mDenominator) },
                 { "integral",
                     new DelegateMethodTyped0<GraceNumber>(mIntegral) },
+                {"truncated", Callback.Nullary<GraceNumber>((ctx, self) => Create(self.GetInt())) },
             };
             return sharedMethods;
         }
@@ -292,23 +295,6 @@ namespace Grace.Runtime
         private static GraceObject mHash(GraceNumber self)
         {
             return GraceNumber.Create(self.Value.GetHashCode());
-        }
-
-        /// <summary>Native method for Grace match</summary>
-        /// <param name="ctx">Current interpreter</param>
-        /// <param name="self">Receiver of the method</param>
-        /// <param name="target">Target of the match</param>
-        private static GraceObject mMatch(
-                EvaluationContext ctx,
-                GraceNumber self,
-                GraceObject target
-                )
-        {
-            if (mEqualsEquals(self, target) == GraceBoolean.True)
-            {
-                return Matching.SuccessfulMatch(ctx, target);
-            }
-            return Matching.FailedMatch(ctx, target);
         }
 
         /// <summary>Native method for Grace numerator</summary>

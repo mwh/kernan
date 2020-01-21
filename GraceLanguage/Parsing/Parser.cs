@@ -399,20 +399,8 @@ namespace Grace.Parsing
                     "May not have ${token} inside ${context}.");
                 return null;
             }
-            takeSemicolon();
-            if (!(lexer.current is NewLineToken
-                        || lexer.current is CommentToken
-                        || lexer.current is EndToken
-                        || lexer.current is RBraceToken))
-            {
-                if (start.line == lexer.current.line
-                        || lexer.current.line == lexer.previous.line)
-                    reportError("P1004", lexer.current,
-                            "Unexpected token after statement.");
-                else
-                    reportError("P1030", lexer.current,
-                            "Unexpected continuation token after statement.");
-            }
+            if (lexer.current is SemicolonToken)
+                lexer.NextToken(); // use semicolon to end statement
             while (lexer.current is NewLineToken)
                 lexer.NextToken();
             attachComments(ret, comments);
@@ -871,10 +859,6 @@ namespace Grace.Parsing
                 attachComments(sig, comments);
                 restoreComments(origComments);
                 consumeBlankLines();
-                if (sig.Token.line == lexer.current.line
-                        && lexer.current.line != start.line)
-                    reportError("P1004", lexer.current,
-                            "Unexpected token after statement.");
                 lastSig = sig;
             }
             lexer.NextToken();
@@ -1220,6 +1204,12 @@ namespace Grace.Parsing
         private ParseNode parseExpression()
         {
             var start = lexer.current;
+            if (start is NewLineToken)
+            {
+                nextToken();
+                return parseExpression();
+            }
+
             ParseNode lhs = parseExpressionNoBind();
             if (lexer.current is BindToken)
             {
@@ -1300,6 +1290,7 @@ namespace Grace.Parsing
                 ret = new IdentifierParseNode((SelfKeywordToken)lexer.current);
                 nextToken();
             }
+
             if (ret == null)
             {
                 reportError("P1018", lexer.current, "Expected term.");
@@ -1443,23 +1434,6 @@ namespace Grace.Parsing
             bool allArith = true;
             while (tok != null)
             {
-                if ((!tok.SpaceBefore || !tok.SpaceAfter))
-                {
-                    if (tok.Name.StartsWith(":="))
-                        reportError("P1038",
-                                new Dictionary<string, string>
-                                {
-                                    { "rest", tok.Name.Substring(2) }
-                                },
-                                ":= needs space before prefix operator"
-                        );
-                    reportError("P1020",
-                            new Dictionary<string, string>()
-                            {
-                                { "operator", tok.Name }
-                            },
-                            "Infix operators must be surrounded by spaces.");
-                }
                 nextToken();
                 if (lexer.current is CommentToken)
                 {
@@ -1559,17 +1533,6 @@ namespace Grace.Parsing
             Token lastToken = lexerCurrent();
             while (awaiting<RBraceToken>(start))
             {
-                if (lexer.current.column != indentColumn)
-                {
-                    reportError("P1016", new Dictionary<string, string>() 
-                            {
-                                { "required indentation", "" + (indentColumn - 1) },
-                                { "given indentation", "" + (lexer.current.column - 1) }
-                            },
-                            "Indentation mismatch; is "
-                            + (lexer.current.column - 1) + ", should be "
-                            + (indentColumn - 1) + ".");
-                }
                 body.Add(parseStatement(level));
                 if (lexer.current == lastToken)
                 {
@@ -1601,11 +1564,6 @@ namespace Grace.Parsing
             if (lexer.current is SemicolonToken)
             {
                 lexer.NextToken();
-                if (!(lexer.current is NewLineToken
-                            || lexer.current is CommentToken
-                            || lexer.current is EndToken
-                            || lexer.current is RBraceToken))
-                    reportError("P1003", "Other code cannot follow a semicolon on the same line.");
             }
         }
 
@@ -1704,17 +1662,6 @@ namespace Grace.Parsing
             indentColumn = firstBodyToken.column;
             while (awaiting<RBraceToken>(start))
             {
-                if (lexer.current.column != indentColumn)
-                {
-                    reportError("P1016", new Dictionary<string, string>
-                            {
-                                { "required indentation", "" + (indentColumn - 1) },
-                                { "given indentation", "" + (lexer.current.column - 1) }
-                            },
-                            "Indentation mismatch; is "
-                            + (lexer.current.column - 1) + ", should be "
-                            + (indentColumn - 1) + ".");
-                }
                 ret.Body.Add(parseStatement(StatementLevel.MethodLevel));
                 if (lexer.current == lastToken)
                 {

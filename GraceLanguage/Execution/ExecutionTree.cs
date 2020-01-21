@@ -392,17 +392,13 @@ namespace Grace.Execution
                 {
                     parameters.Add(p.Visit(this));
                 }
-                else if (p is ParenthesisedParseNode)
+                else
                 {
                     var tok = p.Token;
                     var it = new IdentifierToken(tok.module, tok.line,
                             tok.column, "_");
                     id = new IdentifierParseNode(it);
                     parameters.Add(new ParameterNode(tok, id, p.Visit(this)));
-                }
-                else
-                {
-                    throw new Exception("unimplemented - unusual parameters");
                 }
             }
             var ret = new BlockNode(d.Token, d,

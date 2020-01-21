@@ -38,6 +38,7 @@ namespace Grace.Runtime
             if (parameters.Count == 1)
             {
                 AddMethod("match(_)", null);
+                AddMethod("matches(_)", null);
                 AddMethod("|(_)", Matching.OrMethod);
                 AddMethod("&(_)", Matching.AndMethod);
                 var par = parameters[0];
@@ -77,6 +78,7 @@ namespace Grace.Runtime
                 return new DelegateMethodReq(Apply);
             switch(name) {
                 case "match(_)": return new DelegateMethodReq(Match);
+                case "matches(_)": return new DelegateMethodReq(Matches);
                 case "spawn": return new DelegateMethod0Ctx(mSpawn);
                 case "asString": return new DelegateMethod0Ctx(mAsString);
             }
@@ -92,9 +94,8 @@ namespace Grace.Runtime
             if (Pattern != null)
                 return;
             explicitPattern = true;
-            AddMethod("match(_)",
-                new DelegateMethodReq(
-                    new NativeMethodReq(this.Match)));
+            AddMethod("match(_)", new DelegateMethodReq(new NativeMethodReq(this.Match)));
+            AddMethod("matches(_)", new DelegateMethodReq(new NativeMethodReq(this.Matches)));
             AddMethod("|(_)", Matching.OrMethod);
             AddMethod("&(_)", Matching.AndMethod);
             Pattern = pattern;
@@ -174,7 +175,7 @@ namespace Grace.Runtime
                 {
                     // Populate variadic parameter with all remaining
                     // arguments.
-                    var gvl = new GraceVariadicList();
+                    var gvl = new GraceSequence();
                     for (var i = parameters.Count - 1;
                             i < req[0].Arguments.Count;
                             i++)
@@ -194,7 +195,7 @@ namespace Grace.Runtime
                 var idNode = param as ParameterNode;
                 if (idNode != null && idNode.Variadic)
                 {
-                    var gvl = new GraceVariadicList();
+                    var gvl = new GraceSequence();
                     myScope.AddLocalDef(idNode.Name, gvl);
                 }
             }
@@ -207,6 +208,12 @@ namespace Grace.Runtime
             ctx.Forget(lexicalScope);
             return ret;
         }
+
+        /// <summary>Native method representing the matches method</summary>
+        /// <param name="ctx">Current interpreter</param>
+        /// <param name="req">Request that obtained this method</param>
+        public GraceObject Matches(EvaluationContext ctx, MethodRequest req)
+            => Match(ctx, req).Request(ctx, MethodRequest.Nullary("succeeded"));
 
         /// <summary>Native method representing the match method</summary>
         /// <param name="ctx">Current interpreter</param>

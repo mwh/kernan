@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Globalization;
 using System.Text;
 using System.Collections.Generic;
@@ -105,8 +106,8 @@ namespace Grace.Runtime
             {
                 { "==(_)", new DelegateMethodTyped1<GraceString>(mEqualsEquals) },
                 { "!=(_)", new DelegateMethodTyped1<GraceString>(mNotEquals) },
-                { "++(_)",
-                    new DelegateMethodTyped1Ctx<GraceString>(mConcatenate) },
+                { "++(_)", new DelegateMethodTyped1Ctx<GraceString>(mConcatenate) },
+                { "*(_)", Callback.Unary<GraceString, GraceNumber>((ctx, self, arg) => Create(String.Concat(Enumerable.Repeat(self.Value, arg.GetInt())))) },
                 { ">(_)", new DelegateMethodTyped1<GraceString>(mGreaterThan) },
                 { ">=(_)",
                     new DelegateMethodTyped1<GraceString>(mGreaterThanEqual) },
@@ -121,7 +122,14 @@ namespace Grace.Runtime
                     new DelegateMethodTyped<GraceString>(substringFromTo) },
                 { "codepoints",
                     new DelegateMethodTyped0<GraceString>(mCodepoints) },
-                { "match(_)", new DelegateMethodTyped1Ctx<GraceString>(mMatch) },
+                { "replace(_) with(_)",
+                    Callback.UnaryUnary<GraceString, GraceString, GraceString>((ctx, self, arg1, arg2) => Create(self.Value.Replace(arg1.Value, arg2.Value)))},
+                { "split(_)",
+                    Callback.Unary<GraceString, GraceString>((ctx, self, arg) => // TODO: Is the behaviour of .Net's split method the same as minigraces?
+                        GraceSequence.Of(self.Value.Split(new[]{arg.Value}, StringSplitOptions.None).Select(Create))) },
+                { "match(_)", Callback.Unary<GraceString, GraceObject>((ctx, self, target) =>
+                    mEqualsEquals(self, target) == GraceBoolean.True ? Matching.SuccessfulMatch(ctx, target) : Matching.FailedMatch(ctx, target)) },
+                { "matches(_)", Callback.Unary<GraceString, GraceObject>((ctx, self, target) => mEqualsEquals(self, target))},
                 { "hash", new DelegateMethodTyped0<GraceString>(mHash) },
                 { "|(_)", Matching.OrMethod },
                 { "&(_)", Matching.AndMethod },
@@ -140,7 +148,7 @@ namespace Grace.Runtime
             if (sharedMethods == null)
                 createSharedMethods();
             foreach (var m in meths)
-                sharedMethods[m.Key] = m.Value; 
+                sharedMethods[m.Key] = m.Value;
         }
 
         private static GraceObject mConcatenate(EvaluationContext ctx,
@@ -366,16 +374,6 @@ namespace Grace.Runtime
         private static GraceObject mSize(GraceString self)
         {
             return GraceNumber.Create(self.graphemeIndices.Length);
-        }
-
-        private static GraceObject mMatch(
-                EvaluationContext ctx,
-                GraceString self,
-                GraceObject target)
-        {
-            return (mEqualsEquals(self, target) == GraceBoolean.True)
-                ? Matching.SuccessfulMatch(ctx, target)
-                : Matching.FailedMatch(ctx, target);
         }
 
         private static GraceObject mAsString(GraceString self)

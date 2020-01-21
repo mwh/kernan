@@ -122,10 +122,10 @@ namespace Grace.Execution
             var message = GraceString.AsNativeString(ctx, req[0].Arguments[1]);
             var dict = new Dictionary<string, string>();
             var pairs = req[1].Arguments[0];
-            Iterables.ForEach(ctx, pairs,
+            GraceSequence.ForEach(ctx, pairs,
                    GraceBlock.Create((GraceObject o) => {
                         string k = null, v = null;
-                        Iterables.ForEach(ctx, o,
+                      GraceSequence.ForEach(ctx, o,
                                 GraceBlock.Create((GraceObject kv) => {
                                     if (k == null)
                                         k = GraceString.AsNativeString(ctx, kv);
@@ -865,7 +865,7 @@ namespace Grace.Execution
 
         private static GraceObject mParts(RequestNode self)
         {
-            return GraceVariadicList.Of(self.parts);
+            return GraceSequence.Of(self.parts);
         }
 
         /// <inheritdoc/>
@@ -1174,12 +1174,12 @@ end:
 
         private static GraceObject mArguments(RequestPartNode self)
         {
-            return GraceVariadicList.Of(self.Arguments);
+            return GraceSequence.Of(self.Arguments);
         }
 
         private static GraceObject mTypeArguments(RequestPartNode self)
         {
-            return GraceVariadicList.Of(self.GenericArguments);
+            return GraceSequence.Of(self.GenericArguments);
         }
 
         private static GraceObject mAccept(EvaluationContext ctx,
@@ -1495,7 +1495,7 @@ end:
 
         private static GraceObject mBody(ObjectConstructorNode self)
         {
-            return GraceVariadicList.Of(self.Body);
+            return GraceSequence.Of(self.Body);
         }
 
         /// <inheritdoc/>
@@ -1640,7 +1640,7 @@ end:
                     if (idNode.Variadic)
                     {
                         hadVariadic = true;
-                        var gvl = new GraceVariadicList();
+                        var gvl = new GraceSequence();
                         for (var i = sigPart.Parameters.Count - 1;
                                 i < pp.req.Arguments.Count;
                                 i++)
@@ -1672,7 +1672,7 @@ end:
                     string name = idNode.Name;
                     if (idNode.Variadic)
                     {
-                        var gvl = new GraceVariadicList();
+                        var gvl = new GraceSequence();
                         myScope.AddLocalDef(name, gvl);
                     }
                 }
@@ -1816,7 +1816,7 @@ end:
 
         private static GraceObject mBody(MethodNode self)
         {
-            return GraceVariadicList.Of(self.body);
+            return GraceSequence.Of(self.body);
         }
 
         private static GraceObject mAnnotations(MethodNode self)
@@ -1928,12 +1928,12 @@ end:
 
         private static GraceObject mParameters(BlockNode self)
         {
-            return GraceVariadicList.Of(self.Parameters);
+            return GraceSequence.Of(self.Parameters);
         }
 
         private static GraceObject mBody(BlockNode self)
         {
-            return GraceVariadicList.Of(self.Body);
+            return GraceSequence.Of(self.Body);
         }
 
         /// <inheritdoc/>
@@ -2651,7 +2651,7 @@ end:
 
         private static GraceObject mSignatures(InterfaceNode self)
         {
-            return GraceVariadicList.Of(self.body);
+            return GraceSequence.Of(self.body);
         }
 
         /// <inheritdoc/>
@@ -2928,7 +2928,7 @@ end:
             foreach (var e in self.Excludes)
                 myexcludes.Add(GraceString.Create(e));
 
-            return GraceVariadicList.Of(myexcludes);
+            return GraceSequence.Of(myexcludes);
         }
 
         private static GraceObject mAliases(InheritsNode self)
@@ -2942,10 +2942,10 @@ end:
                 IList<Node> myannotations = new List<Node>();
 		foreach (var a in kv.Value.Annotations)
 		    myannotations.Add(a);
-		oneAlias.Add(GraceVariadicList.Of(myannotations));
-		myaliases.Add(GraceVariadicList.Of(oneAlias));
+		oneAlias.Add(GraceSequence.Of(myannotations));
+		myaliases.Add(GraceSequence.Of(oneAlias));
             }
-            return GraceVariadicList.Of(myaliases);
+            return GraceSequence.Of(myaliases);
         }
 
         /// <inheritdoc/>
@@ -3181,7 +3181,7 @@ end:
 
         private static GraceObject mParts(SignatureNode self)
         {
-            return GraceVariadicList.Of(self.Parts);
+            return GraceSequence.Of(self.Parts);
         }
 
         private static GraceObject mReturnType(SignatureNode self)
@@ -3309,12 +3309,12 @@ end:
         private static GraceObject mTypeParameters(
                 OrdinarySignaturePartNode self)
         {
-            return GraceVariadicList.Of(self.GenericParameters);
+            return GraceSequence.Of(self.GenericParameters);
         }
 
         private static GraceObject mParameters(OrdinarySignaturePartNode self)
         {
-            return GraceVariadicList.Of(self.Parameters);
+            return GraceSequence.Of(self.Parameters);
         }
 
         /// <inheritdoc/>

@@ -103,7 +103,7 @@ namespace Grace.Runtime
                 GraceObject self, GraceObject other)
         {
             var patReq = new MethodRequest();
-            patReq.AddPart(new RequestPart("_OrPattern",
+            patReq.AddPart(new RequestPart("_AndPattern",
                         RequestPart.EmptyList,
                         new List<GraceObject> { self, other }));
             GraceObject patRec = ctx.FindReceiver(patReq);
