@@ -413,6 +413,7 @@ namespace Grace.Parsing
                     reportError("P1030", lexer.current,
                             "Unexpected continuation token after statement.");
             }
+            takeLineComments();
             while (lexer.current is NewLineToken)
                 lexer.NextToken();
             attachComments(ret, comments);
