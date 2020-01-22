@@ -20,7 +20,7 @@ namespace KernanCompiler
             return new ExposedCompiler();
         }
 
-        public ExposedCompiler() : base("mwh.nz/kernan/compiler")
+        public ExposedCompiler() : base("platform/kernancompiler")
         {
             AddMethod("parse(_)", new DelegateMethod1(
                         new NativeMethod1(mParse)));
