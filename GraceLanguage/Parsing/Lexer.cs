@@ -9,7 +9,7 @@ using Grace.Utility;
 namespace Grace.Parsing
 {
     /// <summary>Tokeniser for Grace code</summary>
-    class Lexer
+    public class Lexer
     {
         private string code;
         private int index = 0;
@@ -444,7 +444,7 @@ namespace Grace.Parsing
             return new CommentToken(moduleName, line, column, body);
         }
 
-        private static bool isOperatorCharacter(char c, UnicodeCategory cat)
+        public static bool isOperatorCharacter(char c, UnicodeCategory cat)
         {
             return c != '"' && c != ',' && c != ';'
                 &&

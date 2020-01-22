@@ -8,7 +8,7 @@ using System.Globalization;
 
 namespace Grace.Utility
 {
-    static class UnicodeLookup
+    public static class UnicodeLookup
     {
         /// <summary>Get the UnicodeData.txt elements for a
         /// particular codepoint</summary>

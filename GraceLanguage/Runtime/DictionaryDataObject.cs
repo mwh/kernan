@@ -5,7 +5,7 @@ using Grace.Parsing;
 
 namespace Grace.Runtime
 {
-    class DictionaryDataObject : GraceObject,
+    public class DictionaryDataObject : GraceObject,
         IEnumerable<KeyValuePair<string, GraceObject>>
     {
         private Dictionary<string, GraceObject> data;
