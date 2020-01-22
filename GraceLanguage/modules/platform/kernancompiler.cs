@@ -12,7 +12,7 @@ namespace KernanCompiler
     [ModuleEntryPoint]
     public class ExposedCompiler : GraceObject
     {
-        private DictionaryDataObject parseNodes;
+        private ParseNodePatternDictObject parseNodes;
 
         public static GraceObject Instantiate(
             EvaluationContext ctx)
@@ -82,64 +82,7 @@ namespace KernanCompiler
         private GraceObject mParseNodes()
         {
             if (parseNodes == null)
-            {
-                parseNodes = new DictionaryDataObject {
-                    { "Object", new NativeTypePattern<ObjectParseNode>() },
-                    { "MethodDeclaration",
-                        new NativeTypePattern<MethodDeclarationParseNode>() },
-                    { "ClassDeclaration",
-                        new NativeTypePattern<ClassDeclarationParseNode>() },
-                    { "TypeStatement",
-                        new NativeTypePattern<TypeStatementParseNode>() },
-                    { "Interface", new NativeTypePattern<InterfaceParseNode>() },
-                    { "Signature",
-                        new NativeTypePattern<SignatureParseNode>() },
-                    { "SignaturePart",
-                        new NativeTypePattern<SignaturePartParseNode>() },
-                    { "Block", new NativeTypePattern<BlockParseNode>() },
-                    { "VarArgsParameter",
-                        new NativeTypePattern<VarArgsParameterParseNode>() },
-                    { "TypedParameter",
-                        new NativeTypePattern<TypedParameterParseNode>() },
-                    { "VarDeclaration",
-                        new NativeTypePattern<VarDeclarationParseNode>() },
-                    { "DefDeclaration",
-                        new NativeTypePattern<DefDeclarationParseNode>() },
-                    { "Annotations",
-                        new NativeTypePattern<AnnotationsParseNode>() },
-                    { "Operator", new NativeTypePattern<OperatorParseNode>() },
-                    { "PrefixOperator",
-                        new NativeTypePattern<PrefixOperatorParseNode>() },
-                    { "Bind", new NativeTypePattern<BindParseNode>() },
-                    { "Number", new NativeTypePattern<NumberParseNode>() },
-                    { "Identifier",
-                        new NativeTypePattern<IdentifierParseNode>() },
-                    { "StringLiteral",
-                        new NativeTypePattern<StringLiteralParseNode>() },
-                    { "InterpolatedString",
-                        new NativeTypePattern<InterpolatedStringParseNode>() },
-                    { "ImplicitBracketRequest",
-                        new NativeTypePattern
-                            <ImplicitBracketRequestParseNode>() },
-                    { "ExplicitBracketRequest",
-                        new NativeTypePattern
-                            <ExplicitBracketRequestParseNode>() },
-                    { "ImplicitReceiverRequest",
-                        new NativeTypePattern
-                            <ImplicitReceiverRequestParseNode>() },
-                    { "ExplicitReceiverRequest",
-                        new NativeTypePattern
-                            <ExplicitReceiverRequestParseNode>() },
-                    { "Inherits", new NativeTypePattern<InheritsParseNode>() },
-                    { "Import", new NativeTypePattern<ImportParseNode>() },
-                    { "Dialect", new NativeTypePattern<DialectParseNode>() },
-                    { "Return", new NativeTypePattern<ReturnParseNode>() },
-                    { "Parenthesised",
-                        new NativeTypePattern<ParenthesisedParseNode>() },
-                    { "Comment", new NativeTypePattern<CommentParseNode>() },
-
-                };
-            }
+                parseNodes = new ParseNodePatternDictObject();
             return parseNodes;
         }
     }
@@ -167,16 +110,11 @@ namespace KernanCompiler
         }
     }
 
-    class DictionaryDataObject : GraceObject,
+    class ParseNodePatternDictObject : GraceObject,
         IEnumerable<KeyValuePair<string, GraceObject>>
     {
         private Dictionary<string, GraceObject> data =
-            new Dictionary<string, GraceObject>();
-
-        public void Add(string key, GraceObject val)
-        {
-            data.Add(key, val);
-        }
+            ParseNodeMeta.GetPatternDict();
 
         public override GraceObject Request(EvaluationContext ctx,
                 MethodRequest req)
