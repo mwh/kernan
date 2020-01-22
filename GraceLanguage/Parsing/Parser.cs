@@ -873,7 +873,7 @@ namespace Grace.Parsing
                 restoreComments(origComments);
                 consumeBlankLines();
                 if (sig.Token.line == lexer.current.line
-                        && lexer.current.line != start.line)
+                        && lexer.current.line != start.line && !(lexer.current is RBraceToken))
                     reportError("P1004", lexer.current,
                             "Unexpected token after statement.");
                 lastSig = sig;
