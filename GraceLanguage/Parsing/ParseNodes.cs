@@ -1953,15 +1953,15 @@ namespace Grace.Parsing
     /// </summary>
     public static class ParseNodeMeta
     {
-        private static Dictionary<string, GraceObject> parseNodes;
+        private static DictionaryDataObject parseNodes;
 
         /// <summary>
         /// Get dictionary of parse node names to patterns.
         /// </summary>
-        public static Dictionary<string, GraceObject> GetPatternDict()
+        public static GraceObject GetPatternDict()
         {
             if (parseNodes == null)
-                parseNodes = new Dictionary<string, GraceObject> {
+                parseNodes = new DictionaryDataObject(new Dictionary<string, GraceObject> {
                     { "Object", new NativeTypePattern<ObjectParseNode>() },
                     { "MethodDeclaration",
                         new NativeTypePattern<MethodDeclarationParseNode>() },
@@ -2021,7 +2021,7 @@ namespace Grace.Parsing
                         new NativeTypePattern<ParenthesisedParseNode>() },
                     { "Comment", new NativeTypePattern<CommentParseNode>() },
 
-                };
+                });
             return parseNodes;
         }
 
@@ -2033,8 +2033,7 @@ namespace Grace.Parsing
             string path = Path.Combine(dir, "pretty_printer.grace");
             GraceObject ret;
             LocalScope surrounding = new LocalScope();
-            surrounding.AddLocalDef("parseNodes",
-                    new DictionaryDataObject(GetPatternDict()));
+            surrounding.AddLocalDef("parseNodes", GetPatternDict());
             ctx.Extend(surrounding);
             using (StreamReader reader = File.OpenText(path))
             {

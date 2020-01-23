@@ -366,9 +366,11 @@ namespace Grace.Execution
                         continue;
                     }
                     filePath = Path.Combine(p, path + ".grace");
-                    mod = tryLoadModuleFile(filePath, path);
-                    if (mod != null)
+
+                    String mod_contents = TryReadModuleFile(filePath, path);
+                    if (mod_contents != null)
                     {
+                        mod = LoadModuleString(filePath, mod_contents);
                         modules[path] = mod;
                         return mod;
                     }
@@ -402,12 +404,14 @@ namespace Grace.Execution
             return null;
         }
 
-        /// <summary>Load a module file if it exists</summary>
-        private GraceObject tryLoadModuleFile(string filePath,
+        /// <summary>Read a module file if it exists</summary>
+        /// <param name="filePath">Filesystem path to the module</param>
+        /// <param name="importPath"> Module name to treat this code as belonging to. </param>
+        public String TryReadModuleFile(string filePath,
                 string importPath)
         {
             return (File.Exists(filePath))
-                ? loadModuleFile(filePath, importPath)
+                ? readModuleFile(filePath, importPath)
                 : null;
         }
 
@@ -429,13 +433,13 @@ namespace Grace.Execution
                 : null;
         }
 
-        /// <summary>Load a module file</summary>
-        private GraceObject loadModuleFile(string filePath, string importPath)
+        /// <summary>Read a module file</summary>
+        private String readModuleFile(string filePath, string importPath)
         {
             Interpreter.Debug("========== LOAD " + filePath + " ==========");
             using (StreamReader reader = File.OpenText(filePath))
             {
-                return LoadModuleString(importPath, reader.ReadToEnd());
+                return reader.ReadToEnd();
             }
         }
 
