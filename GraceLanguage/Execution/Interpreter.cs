@@ -257,6 +257,34 @@ namespace Grace.Execution
                 ext.Request(this, req);
                 GraceString.ExtendWith(req.InheritedMethods);
             }
+            req = MethodRequest.Nullary("BooleanExtension");
+            req.IsInherits = true;
+            if (ext.RespondsTo(req))
+            {
+                var uo = new UserObject();
+                req.InheritingObject = uo;
+                ext.Request(this, req);
+                GraceBoolean.ExtendWith(req.InheritedMethods);
+            }
+            req = MethodRequest.Nullary("SequenceExtension");
+            req.IsInherits = true;
+            if (ext.RespondsTo(req))
+            {
+                var uo = new UserObject();
+                req.InheritingObject = uo;
+                ext.Request(this, req);
+                Iterables.ExtendWith(req.InheritedMethods);
+            }
+            req = MethodRequest.Nullary("TypeExtension");
+            req.IsInherits = true;
+            if (ext.RespondsTo(req))
+            {
+                var uo = new UserObject();
+                req.InheritingObject = uo;
+                ext.Request(this, req);
+                GraceType.ExtendWith(req.InheritedMethods);
+            }
+
         }
 
         /// <summary>
