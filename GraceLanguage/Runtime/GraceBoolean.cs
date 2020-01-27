@@ -11,6 +11,8 @@ namespace Grace.Runtime
     /// <summary>A Grace boolean object</summary>
     public class GraceBoolean : GraceObject
     {
+        private static Dictionary<string, Method> sharedMethods;
+
         /// <summary>The true singleton</summary>
         public static GraceBoolean True = new GraceBoolean(true);
 
@@ -24,81 +26,92 @@ namespace Grace.Runtime
             set;
         }
         private GraceBoolean(bool val)
+            : base(createSharedMethods())
         {
             Boolean = val;
-            AddMethod("prefix!",
-                    new DelegateMethod0(new NativeMethod0(this.Negate)));
-            AddMethod("not",
-                    new DelegateMethod0(new NativeMethod0(this.Negate)));
-            AddMethod("hash", new DelegateMethod0(mHash));
-            AddMethod("&&(_)",
-                    new DelegateMethod1Ctx(this.AndAnd));
-            AddMethod("||(_)",
-                    new DelegateMethod1Ctx(this.OrOr));
-            AddMethod("ifTrue(_)",
-                    new DelegateMethod1Ctx(
-                        new NativeMethod1Ctx(this.IfTrue)));
-            AddMethod("ifFalse(_)",
-                    new DelegateMethod1Ctx(
-                        new NativeMethod1Ctx(this.IfFalse)));
-            AddMethod("ifTrue(_) ifFalse(_)",
-                    new DelegateMethodReq(
-                        new NativeMethodReq(this.IfTrueIfFalse)));
-            AddMethod("andAlso(_)",
-                    new DelegateMethod1Ctx(
-                        new NativeMethod1Ctx(this.AndAlso)));
-            AddMethod("orElse(_)",
-                    new DelegateMethod1Ctx(
-                        new NativeMethod1Ctx(this.OrElse)));
-            AddMethod("match(_)", new DelegateMethod1Ctx(
-                        new NativeMethod1Ctx(this.Match)));
-            AddMethod("asString",
-                    new DelegateMethod0(new NativeMethod0(this.AsString)));
+        }
+
+        private static Dictionary<string, Method> createSharedMethods()
+        {
+            if (sharedMethods != null)
+                return sharedMethods;
+            sharedMethods = new Dictionary<string, Method>
+            {
+                { "prefix!", new DelegateMethodTyped0<GraceBoolean>(Negate) },
+                { "not", new DelegateMethodTyped0<GraceBoolean>(Negate) },
+                { "hash", new DelegateMethodTyped0<GraceBoolean>(mHash) },
+                { "&&(_)", new DelegateMethodTyped1Ctx<GraceBoolean>(AndAnd) },
+                { "||(_)", new DelegateMethodTyped1Ctx<GraceBoolean>(OrOr) },
+                { "ifTrue(_)", new DelegateMethodTyped1Ctx<GraceBoolean>(IfTrue) },
+                { "ifFalse(_)", new DelegateMethodTyped1Ctx<GraceBoolean>(IfFalse) },
+                { "ifTrue(_) ifFalse(_)", new DelegateMethodTyped<GraceBoolean>(IfTrueIfFalse) },
+                { "andAlso(_)", new DelegateMethodTyped1Ctx<GraceBoolean>(AndAlso) },
+                { "orElse(_)", new DelegateMethodTyped1Ctx<GraceBoolean>(OrElse) },
+                { "match(_)", new DelegateMethodTyped1Ctx<GraceBoolean>(Match) },
+                { "asString", new DelegateMethodTyped0<GraceBoolean>(AsString) },
+            };
+            return sharedMethods;
+        }
+
+        /// <summary>
+        /// Apply an extension trait to all future instances of this type.
+        /// </summary>
+        /// <param name="meths">
+        /// Dictionary of methods to add.
+        /// </param>
+        public static void ExtendWith(IDictionary<string, Method> meths)
+        {
+            if (sharedMethods == null)
+                createSharedMethods();
+            foreach (var m in meths)
+                sharedMethods[m.Key] = m.Value;
         }
 
         /// <summary>Native method for Grace !</summary>
-        public GraceObject Negate()
+        public static GraceObject Negate(GraceBoolean self)
         {
-            if (Boolean)
+            if (self.Boolean)
                 return GraceBoolean.False;
             return GraceBoolean.True;
         }
 
-        private GraceObject mHash()
+        private static GraceObject mHash(GraceBoolean self)
         {
-            return GraceNumber.Create(Boolean.GetHashCode());
+            return GraceNumber.Create(self.Boolean.GetHashCode());
         }
 
         /// <summary>Native method for Grace match</summary>
         /// <param name="ctx">Current interpreter</param>
+        /// <param name="self">Receiver of the method</param>
         /// <param name="target">Target of the match</param>
-        public GraceObject Match(EvaluationContext ctx, GraceObject target)
+        public static GraceObject Match(EvaluationContext ctx, GraceBoolean self, GraceObject target)
         {
             var b = target as GraceBoolean;
-            if (b != null && b.Boolean == Boolean)
+            if (b != null && b.Boolean == self.Boolean)
                 return Matching.SuccessfulMatch(ctx, target);
             return Matching.FailedMatch(ctx, target);
         }
 
         /// <summary>Native method for Grace asString</summary>
-        public GraceObject AsString()
+        public static GraceObject AsString(GraceBoolean self)
         {
-            if (Boolean)
+            if (self.Boolean)
                 return GraceString.Create("true");
             return GraceString.Create("false");
         }
 
         /// <summary>Native method for Grace &amp;&amp;</summary>
         /// <param name="ctx">Current interpreter</param>
+        /// <param name="self">Receiver of the method</param>
         /// <param name="other">Argument to the method</param>
-        public GraceObject AndAnd(EvaluationContext ctx, GraceObject other)
+        public static GraceObject AndAnd(EvaluationContext ctx, GraceBoolean self, GraceObject other)
         {
             GraceBoolean oth = other as GraceBoolean;
             if (oth != null)
-                return GraceBoolean.Create(this.Boolean && oth.Boolean);
+                return GraceBoolean.Create(self.Boolean && oth.Boolean);
             GraceObjectProxy op = other as GraceObjectProxy;
             if (op != null)
-                return GraceBoolean.Create(this.Boolean && (dynamic)op.Object);
+                return GraceBoolean.Create(self.Boolean && (dynamic)op.Object);
             ErrorReporting.RaiseError(ctx, "R2001",
                     new Dictionary<string, string>() {
                         { "method", "&&" },
@@ -113,15 +126,16 @@ namespace Grace.Runtime
 
         /// <summary>Native method for Grace ||</summary>
         /// <param name="ctx">Current interpreter</param>
+        /// <param name="self">Receiver of the method</param>
         /// <param name="other">Argument to the method</param>
-        public GraceObject OrOr(EvaluationContext ctx, GraceObject other)
+        public static GraceObject OrOr(EvaluationContext ctx, GraceBoolean self, GraceObject other)
         {
             GraceBoolean oth = other as GraceBoolean;
             if (oth != null)
-                return GraceBoolean.Create(this.Boolean || oth.Boolean);
+                return GraceBoolean.Create(self.Boolean || oth.Boolean);
             GraceObjectProxy op = other as GraceObjectProxy;
             if (op != null)
-                return GraceBoolean.Create(this.Boolean || (dynamic)op.Object);
+                return GraceBoolean.Create(self.Boolean || (dynamic)op.Object);
             ErrorReporting.RaiseError(ctx, "R2001",
                     new Dictionary<string, string>() {
                         { "method", "||" },
@@ -136,8 +150,9 @@ namespace Grace.Runtime
 
         /// <summary>Native method for Grace ifTrue</summary>
         /// <param name="ctx">Current interpreter</param>
+        /// <param name="self">Receiver of the method</param>
         /// <param name="other">Block to apply if true</param>
-        public GraceObject IfTrue(EvaluationContext ctx, GraceObject other)
+        public static GraceObject IfTrue(EvaluationContext ctx, GraceBoolean self, GraceObject other)
         {
             var oth = other as GraceBlock;
             if (oth == null)
@@ -150,7 +165,7 @@ namespace Grace.Runtime
                         },
                         "ArgumentTypeError: ifTrue requires a block argument"
                 );
-            if (Boolean)
+            if (self.Boolean)
             {
                 var req = MethodRequest.Nullary("apply");
                 other.Request(ctx, req);
@@ -160,8 +175,9 @@ namespace Grace.Runtime
 
         /// <summary>Native method for Grace ifFalse</summary>
         /// <param name="ctx">Current interpreter</param>
+        /// <param name="self">Receiver of the method</param>
         /// <param name="other">Block to apply if false</param>
-        public GraceObject IfFalse(EvaluationContext ctx, GraceObject other)
+        public static GraceObject IfFalse(EvaluationContext ctx, GraceBoolean self, GraceObject other)
         {
             var oth = other as GraceBlock;
             if (oth == null)
@@ -174,7 +190,7 @@ namespace Grace.Runtime
                         },
                         "ArgumentTypeError: ifFalse requires a block argument"
                 );
-            if (!Boolean)
+            if (!self.Boolean)
             {
                 var req = MethodRequest.Nullary("apply");
                 other.Request(ctx, req);
@@ -184,10 +200,11 @@ namespace Grace.Runtime
 
         /// <summary>Native method for Grace ifTrue ifFalse</summary>
         /// <param name="ctx">Current interpreter</param>
+        /// <param name="self">Receiver of the method</param>
         /// <param name="req">Method request that gave rise to this method
         /// execution</param>
-        public GraceObject IfTrueIfFalse(EvaluationContext ctx,
-                MethodRequest req)
+        public static GraceObject IfTrueIfFalse(EvaluationContext ctx,
+                MethodRequest req, GraceBoolean self)
         {
             MethodHelper.CheckArity(ctx, req, 1, 1);
             var trueBlock = req[0].Arguments[0];
@@ -213,7 +230,7 @@ namespace Grace.Runtime
                         "ArgumentTypeError: ifTrue ifFalse requires two block arguments"
                 );
             var apply = MethodRequest.Nullary("apply");
-            if (Boolean)
+            if (self.Boolean)
             {
                 return trueBlock.Request(ctx, apply);
             }
@@ -222,8 +239,9 @@ namespace Grace.Runtime
 
         /// <summary>Native method for Grace andAlso</summary>
         /// <param name="ctx">Current interpreter</param>
+        /// <param name="self">Receiver of the method</param>
         /// <param name="other">Block to apply if true</param>
-        public GraceObject AndAlso(EvaluationContext ctx, GraceObject other)
+        public static GraceObject AndAlso(EvaluationContext ctx, GraceBoolean self, GraceObject other)
         {
             var oth = other as GraceBlock;
             if (oth == null)
@@ -236,7 +254,7 @@ namespace Grace.Runtime
                         },
                         "ArgumentTypeError: andAlso requires a block argument"
                 );
-            if (Boolean)
+            if (self.Boolean)
             {
                 var req = MethodRequest.Nullary("apply");
                 return other.Request(ctx, req);
@@ -246,8 +264,9 @@ namespace Grace.Runtime
 
         /// <summary>Native method for Grace orElse</summary>
         /// <param name="ctx">Current interpreter</param>
+        /// <param name="self">Receiver of the method</param>
         /// <param name="other">Block to apply if false</param>
-        public GraceObject OrElse(EvaluationContext ctx, GraceObject other)
+        public static GraceObject OrElse(EvaluationContext ctx, GraceBoolean self, GraceObject other)
         {
             var oth = other as GraceBlock;
             if (oth == null)
@@ -260,7 +279,7 @@ namespace Grace.Runtime
                         },
                         "ArgumentTypeError: orElse requires a block argument"
                 );
-            if (!Boolean)
+            if (!self.Boolean)
             {
                 var req = MethodRequest.Nullary("apply");
                 return other.Request(ctx, req);

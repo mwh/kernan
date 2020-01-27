@@ -11,6 +11,22 @@ namespace Grace.Runtime
     /// <summary>Encapsulates behaviour relating to iterables</summary>
     public static class Iterables
     {
+        internal static Dictionary<string, Method> sharedMethods;
+
+        /// <summary>
+        /// Apply an extension trait to all future instances of this type.
+        /// </summary>
+        /// <param name="meths">
+        /// Dictionary of methods to add.
+        /// </param>
+        public static void ExtendWith(IDictionary<string, Method> meths)
+        {
+            if (sharedMethods == null)
+                sharedMethods = new Dictionary<string, Method> { };
+            foreach (var m in meths)
+                sharedMethods[m.Key] = m.Value;
+        }
+
         /// <summary>
         /// Execute a block of native code for each element
         /// of an iterable.
@@ -56,6 +72,7 @@ namespace Grace.Runtime
                     new DelegateMethod1Ctx(
                         new NativeMethod1Ctx(this.Do)));
                 AddMethod("++(_)", Iterables.ConcatMethod);
+                AddMethods(sharedMethods);
                 TagName = "ConcatenatedIterables";
             }
 
@@ -112,6 +129,7 @@ namespace Grace.Runtime
             AddMethod("with(_) do(_)",
                 new DelegateMethodReq(
                     new NativeMethodReq(this.WithDo)));
+            AddMethods(Iterables.sharedMethods);
             TagName = "Lineup";
         }
 
