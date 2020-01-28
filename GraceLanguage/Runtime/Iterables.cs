@@ -11,7 +11,7 @@ namespace Grace.Runtime
     /// <summary>Encapsulates behaviour relating to iterables</summary>
     public static class Iterables
     {
-        internal static Dictionary<string, Method> sharedMethods;
+        internal static Dictionary<string, Method> sharedMethods = new Dictionary<string, Method> { };
 
         /// <summary>
         /// Apply an extension trait to all future instances of this type.
@@ -21,8 +21,6 @@ namespace Grace.Runtime
         /// </param>
         public static void ExtendWith(IDictionary<string, Method> meths)
         {
-            if (sharedMethods == null)
-                sharedMethods = new Dictionary<string, Method> { };
             foreach (var m in meths)
                 sharedMethods[m.Key] = m.Value;
         }
