@@ -127,6 +127,7 @@ namespace Grace.Runtime
             AddMethod("match(_)", new DelegateMethod1Ctx(mMatch));
             AddMethod("|(_)", Matching.OrMethod);
             AddMethod("&(_)", Matching.AndMethod);
+            AddMethods(GraceType.sharedMethods);
         }
 
         /// <summary>Native method for Grace match</summary>

@@ -24,7 +24,7 @@ namespace KernanCompiler
         public ExposedCompiler() : base("platform/kernancompiler")
         {
             AddMethod("parse(_)", new DelegateMethod1(code => mParse(GraceString.Create("source code"), code)));
-            AddMethod("parse(_, _)",
+            AddMethod("parse(_,_)",
                 new DelegateMethodReq((ctx, req) => {
                 MethodHelper.CheckArity(ctx, req, 2);
                 return mParse(req[0].Arguments[0], req[0].Arguments[1]); }));
