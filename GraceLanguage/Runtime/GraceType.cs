@@ -6,7 +6,7 @@ namespace Grace.Runtime
     /// <summary>A Grace type literal</summary>
     public class GraceType : GraceObject
     {
-        private static Dictionary<string, Method> sharedMethods;
+        internal static Dictionary<string, Method> sharedMethods = new Dictionary<string, Method> { };
 
         private readonly string name;
         private List<SignatureNode> methods = new List<SignatureNode>();
@@ -15,22 +15,13 @@ namespace Grace.Runtime
         /// <param name="name">Name of this type for debugging
         /// and reporting purposes</param>
         public GraceType(string name)
-            : base(createSharedMethods())
         {
             this.name = name;
-        }
-
-        private static Dictionary<string, Method> createSharedMethods()
-        {
-            if (sharedMethods != null)
-                return sharedMethods;
-            sharedMethods = new Dictionary<string, Method>
-            {
-                { "match(_)", new DelegateMethodTyped1Ctx<GraceType>(Match) },
-                { "|(_)", Matching.OrMethod },
-                { "&(_)", Matching.AndMethod },
-            };
-            return sharedMethods;
+            AddMethod("match(_)", new DelegateMethod1Ctx(
+                        new NativeMethod1Ctx(this.Match)));
+            AddMethod("|(_)", Matching.OrMethod);
+            AddMethod("&(_)", Matching.AndMethod);
+            AddMethods(GraceType.sharedMethods);
         }
 
         /// <summary>
@@ -41,8 +32,6 @@ namespace Grace.Runtime
         /// </param>
         public static void ExtendWith(IDictionary<string, Method> meths)
         {
-            if (sharedMethods == null)
-                createSharedMethods();
             foreach (var m in meths)
                 sharedMethods[m.Key] = m.Value;
         }
@@ -58,12 +47,12 @@ namespace Grace.Runtime
         /// for types</summary>
         /// <remarks>At present, this matching uses only the method
         /// names in both the object and the type.</remarks>
-        public static GraceObject Match(EvaluationContext ctx, GraceType self, GraceObject target)
+        public GraceObject Match(EvaluationContext ctx, GraceObject target)
         {
-            if (self.requests == null)
+            if (requests == null)
             {
                 var l = new List<MethodRequest>();
-                foreach (var m in self.methods)
+                foreach (var m in methods)
                 {
                     var req = new MethodRequest();
                     foreach (var p in m)
@@ -73,9 +62,9 @@ namespace Grace.Runtime
                     }
                     l.Add(req);
                 }
-                self.requests = l;
+                requests = l;
             }
-            foreach (var req in self.requests)
+            foreach (var req in requests)
             {
                 if (!target.RespondsTo(req))
                     return Matching.FailedMatch(ctx, target);
