@@ -23,11 +23,10 @@ namespace KernanCompiler
 
         public ExposedCompiler() : base("platform/kernancompiler")
         {
-            AddMethod("parse(_)", new DelegateMethod1(code => mParse(GraceString.Create("source code"), code)));
-            AddMethod("parse(_,_)",
-                new DelegateMethodReq((ctx, req) => {
+            AddMethod("parse(_)", new DelegateMethod1Ctx((ctx, code) => mParse(ctx, GraceString.Create("source code"), code)));
+            AddMethod("parse(_,_)", new DelegateMethodReq((ctx, req) => {
                 MethodHelper.CheckArity(ctx, req, 2);
-                return mParse(req[0].Arguments[0], req[0].Arguments[1]); }));
+                return mParse(ctx, req[0].Arguments[0], req[0].Arguments[1]); }));
             AddMethod("parseFile(_)", new DelegateMethod1(mParseFile));
             AddMethod("readGraceModule(_)", new DelegateMethod1Ctx(mReadGraceModule));
             AddMethod("translateFile(_)", new DelegateMethod1(mTranslateFile));
@@ -36,11 +35,20 @@ namespace KernanCompiler
                 () => GraceVariadicList.Of(UnusedArguments.UnusedArgs.Select(GraceString.Create))));
         }
 
-        private GraceObject mParse(GraceObject gmodulename, GraceObject gcode)
+        private GraceObject mParse(EvaluationContext ctx, GraceObject gmodulename, GraceObject gcode)
         {
             String modulename = gmodulename.FindNativeParent<GraceString>().Value;
             String code = gcode.FindNativeParent<GraceString>().Value;
-            return new GraceObjectProxy(new Parser(modulename, code));
+            try {
+                bool sup = ErrorReporting.SuppressAllErrors;
+                ErrorReporting.SuppressAllErrors = true; // Don't print error messages, as we will forward them to grace
+                var res = new GraceObjectProxy(new Parser(modulename, code).Parse());
+                ErrorReporting.SuppressAllErrors = sup; // Restore old value
+                return res;
+            } catch (StaticErrorException exc) {
+                GraceExceptionPacket.Throw("StaticError", $"{exc.Code}: {exc.Message}; at line {exc.Line}", ctx.GetStackTrace());
+                throw null; // unreachable!
+            }
         }
 
         private GraceObject mParseFile(GraceObject gpath)
