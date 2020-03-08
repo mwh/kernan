@@ -702,7 +702,7 @@ namespace Grace.Execution
         /// <inheritdoc />
         public int NestRequest(string module, int line, string name)
         {
-            if (callStackMethod.Count > 511) {
+            if (callStackMethod.Count > 1023) {
                 ErrorReporting.RaiseError(this, "R2024",
                         new Dictionary<string, string>(),
                         "RecursionError: maximum call stack size exceeded."
