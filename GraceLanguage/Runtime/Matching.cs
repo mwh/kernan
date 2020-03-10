@@ -103,7 +103,7 @@ namespace Grace.Runtime
                 GraceObject self, GraceObject other)
         {
             var patReq = new MethodRequest();
-            patReq.AddPart(new RequestPart("_OrPattern",
+            patReq.AddPart(new RequestPart("_AndPattern",
                         RequestPart.EmptyList,
                         new List<GraceObject> { self, other }));
             GraceObject patRec = ctx.FindReceiver(patReq);
@@ -127,6 +127,7 @@ namespace Grace.Runtime
             AddMethod("match(_)", new DelegateMethod1Ctx(mMatch));
             AddMethod("|(_)", Matching.OrMethod);
             AddMethod("&(_)", Matching.AndMethod);
+            AddMethods(GraceType.sharedMethods);
         }
 
         /// <summary>Native method for Grace match</summary>

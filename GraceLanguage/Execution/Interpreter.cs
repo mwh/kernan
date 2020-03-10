@@ -257,6 +257,34 @@ namespace Grace.Execution
                 ext.Request(this, req);
                 GraceString.ExtendWith(req.InheritedMethods);
             }
+            req = MethodRequest.Nullary("BooleanExtension");
+            req.IsInherits = true;
+            if (ext.RespondsTo(req))
+            {
+                var uo = new UserObject();
+                req.InheritingObject = uo;
+                ext.Request(this, req);
+                GraceBoolean.ExtendWith(req.InheritedMethods);
+            }
+            req = MethodRequest.Nullary("SequenceExtension");
+            req.IsInherits = true;
+            if (ext.RespondsTo(req))
+            {
+                var uo = new UserObject();
+                req.InheritingObject = uo;
+                ext.Request(this, req);
+                Iterables.ExtendWith(req.InheritedMethods);
+            }
+            req = MethodRequest.Nullary("TypeExtension");
+            req.IsInherits = true;
+            if (ext.RespondsTo(req))
+            {
+                var uo = new UserObject();
+                req.InheritingObject = uo;
+                ext.Request(this, req);
+                GraceType.ExtendWith(req.InheritedMethods);
+            }
+
         }
 
         /// <summary>
@@ -366,9 +394,11 @@ namespace Grace.Execution
                         continue;
                     }
                     filePath = Path.Combine(p, path + ".grace");
-                    mod = tryLoadModuleFile(filePath, path);
-                    if (mod != null)
+
+                    String mod_contents = TryReadModuleFile(filePath, path);
+                    if (mod_contents != null)
                     {
+                        mod = LoadModuleString(filePath, mod_contents);
                         modules[path] = mod;
                         return mod;
                     }
@@ -402,12 +432,14 @@ namespace Grace.Execution
             return null;
         }
 
-        /// <summary>Load a module file if it exists</summary>
-        private GraceObject tryLoadModuleFile(string filePath,
+        /// <summary>Read a module file if it exists</summary>
+        /// <param name="filePath">Filesystem path to the module</param>
+        /// <param name="importPath"> Module name to treat this code as belonging to. </param>
+        public String TryReadModuleFile(string filePath,
                 string importPath)
         {
             return (File.Exists(filePath))
-                ? loadModuleFile(filePath, importPath)
+                ? readModuleFile(filePath, importPath)
                 : null;
         }
 
@@ -429,13 +461,13 @@ namespace Grace.Execution
                 : null;
         }
 
-        /// <summary>Load a module file</summary>
-        private GraceObject loadModuleFile(string filePath, string importPath)
+        /// <summary>Read a module file</summary>
+        private String readModuleFile(string filePath, string importPath)
         {
             Interpreter.Debug("========== LOAD " + filePath + " ==========");
             using (StreamReader reader = File.OpenText(filePath))
             {
-                return LoadModuleString(importPath, reader.ReadToEnd());
+                return reader.ReadToEnd();
             }
         }
 
@@ -670,7 +702,7 @@ namespace Grace.Execution
         /// <inheritdoc />
         public int NestRequest(string module, int line, string name)
         {
-            if (callStackMethod.Count > 511) {
+            if (callStackMethod.Count > 1023) {
                 ErrorReporting.RaiseError(this, "R2024",
                         new Dictionary<string, string>(),
                         "RecursionError: maximum call stack size exceeded."

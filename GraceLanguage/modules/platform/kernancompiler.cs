@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.IO;
 using Grace.Parsing;
 using Grace.Execution;
@@ -12,7 +14,6 @@ namespace KernanCompiler
     [ModuleEntryPoint]
     public class ExposedCompiler : GraceObject
     {
-        private ParseNodePatternDictObject parseNodes;
 
         public static GraceObject Instantiate(
             EvaluationContext ctx)
@@ -22,41 +23,80 @@ namespace KernanCompiler
 
         public ExposedCompiler() : base("platform/kernancompiler")
         {
-            AddMethod("parse(_)", new DelegateMethod1(
-                        new NativeMethod1(mParse)));
-            AddMethod("parseFile(_)", new DelegateMethod1(
-                        new NativeMethod1(mParseFile)));
-            AddMethod("translateFile(_)", new DelegateMethod1(
-                        new NativeMethod1(mTranslateFile)));
-            AddMethod("parseNodes", new DelegateMethod0(
-                        new NativeMethod0(mParseNodes)));
+            AddMethod("parse(_)", new DelegateMethod1Ctx((ctx, code) => mParse(ctx, GraceString.Create("source code"), code)));
+            AddMethod("parse(_,_)", new DelegateMethodReq((ctx, req) => {
+                MethodHelper.CheckArity(ctx, req, 2);
+                return mParse(ctx, req[0].Arguments[0], req[0].Arguments[1]); }));
+            AddMethod("parseFile(_)", new DelegateMethod1(mParseFile));
+            AddMethod("readGraceModule(_)", new DelegateMethod1Ctx(mReadGraceModule));
+            AddMethod("translateFile(_)", new DelegateMethod1(mTranslateFile));
+            AddMethod("parseNodes", new DelegateMethod0(() => ParseNodeMeta.GetPatternDict()));
             AddMethod("args", new DelegateMethod0(
-                        new NativeMethod0(mArguments)));
+                () => GraceVariadicList.Of(UnusedArguments.UnusedArgs.Select(GraceString.Create))));
         }
 
-        private GraceObject mParse(GraceObject code)
+        private GraceObject mParse(EvaluationContext ctx, GraceObject gmodulename, GraceObject gcode)
         {
-            GraceString gs = code.FindNativeParent<GraceString>();
-            string s = gs.Value;
-            var p = new Parser(s);
-            return new GraceObjectProxy(p.Parse());
-        }
-
-        private GraceObject mParseFile(GraceObject code)
-        {
-            GraceString gs = code.FindNativeParent<GraceString>();
-            string path = gs.Value;
-            using (StreamReader reader = File.OpenText(path))
-            {
-                var p= new Parser(reader.ReadToEnd());
-                return new GraceObjectProxy(p.Parse());
+            String modulename = gmodulename.FindNativeParent<GraceString>().Value;
+            String code = gcode.FindNativeParent<GraceString>().Value;
+            try {
+                bool sup = ErrorReporting.SuppressAllErrors;
+                ErrorReporting.SuppressAllErrors = true; // Don't print error messages, as we will forward them to grace
+                var res = new GraceObjectProxy(new Parser(modulename, code).Parse());
+                ErrorReporting.SuppressAllErrors = sup; // Restore old value
+                return res;
+            } catch (StaticErrorException exc) {
+                GraceExceptionPacket.Throw("StaticError", $"{exc.Code}: {exc.Message}; at line {exc.Line}", ctx.GetStackTrace());
+                throw null; // unreachable!
             }
         }
 
-        private GraceObject mTranslateFile(GraceObject code)
+        private GraceObject mParseFile(GraceObject gpath)
         {
-            GraceString gs = code.FindNativeParent<GraceString>();
-            string path = gs.Value;
+            String path = gpath.FindNativeParent<GraceString>().Value;
+            using (StreamReader reader = File.OpenText(path))
+            {
+                return new GraceObjectProxy(new Parser(path, reader.ReadToEnd()).Parse());
+            }
+        }
+
+        private GraceObject mReadGraceModule(EvaluationContext ctx, GraceObject gpath)
+        {
+            var itp = (Interpreter)ctx;
+            String path = gpath.FindNativeParent<GraceString>().Value;
+
+            var name = Path.GetFileName(path);
+            var bases = itp.GetModulePaths();
+            foreach (var p in bases)
+            {
+                string filePath;
+
+                filePath = Path.Combine(p, path + ".grace");
+
+                String mod_contents = itp.TryReadModuleFile(filePath, path);
+                if (mod_contents != null)
+                {
+                    return GraceString.Create(mod_contents.Replace(Environment.NewLine, "\u2028"));
+                }
+            }
+            if (itp.FailedImportHook != null)
+            {
+                // Optionally, the host program can try to satisfy a module
+                // and indicate that we should retry the import.
+                if (itp.FailedImportHook(path, itp))
+                {
+                    return mReadGraceModule(itp, gpath);
+                }
+            }
+            ErrorReporting.RaiseError(itp, "R2005",
+                new Dictionary<string, string> { { "path", path } },
+                "LookupError: Could not find module ${path}");
+            return null;
+        }
+
+        private GraceObject mTranslateFile(GraceObject gpath)
+        {
+            String path = gpath.FindNativeParent<GraceString>().Value;
             using (StreamReader reader = File.OpenText(path))
             {
                 var p = new Parser(reader.ReadToEnd());
@@ -65,74 +105,6 @@ namespace KernanCompiler
                 Node eModule = ett.Translate(module as ObjectParseNode);
                 return eModule;
             }
-        }
-
-        private GraceObject mArguments()
-        {
-            IList<string> unusedArguments = UnusedArguments.UnusedArgs;
-            IList<GraceString> graceUnusedArguments = new List<GraceString>();
-
-            foreach (var a in unusedArguments)
-                graceUnusedArguments.Add(GraceString.Create(a));
-
-            return GraceVariadicList.Of(graceUnusedArguments);
-        }
-
-
-        private GraceObject mParseNodes()
-        {
-            if (parseNodes == null)
-                parseNodes = new ParseNodePatternDictObject();
-            return parseNodes;
-        }
-    }
-
-    class NativeTypePattern<T> : GraceObject {
-        public NativeTypePattern()
-        {
-            AddMethod("match(_)", new DelegateMethod1Ctx(
-                        new NativeMethod1Ctx(mMatch)));
-            AddMethod("|", Matching.OrMethod);
-            AddMethod("&", Matching.AndMethod);
-        }
-
-        /// <summary>Native method for Grace match</summary>
-        /// <param name="ctx">Current interpreter</param>
-        /// <param name="target">Target of the match</param>
-        private GraceObject mMatch(EvaluationContext ctx, GraceObject target)
-        {
-            var gop = target as GraceObjectProxy;
-            if (gop == null)
-                return Matching.FailedMatch(ctx, target);
-            if (gop.Object is T)
-                return Matching.SuccessfulMatch(ctx, target);
-            return Matching.FailedMatch(ctx, target);
-        }
-    }
-
-    class ParseNodePatternDictObject : GraceObject,
-        IEnumerable<KeyValuePair<string, GraceObject>>
-    {
-        private Dictionary<string, GraceObject> data =
-            ParseNodeMeta.GetPatternDict();
-
-        public override GraceObject Request(EvaluationContext ctx,
-                MethodRequest req)
-        {
-            if (data.ContainsKey(req.Name))
-                return data[req.Name];
-            return base.Request(ctx, req);
-        }
-
-        public IEnumerator<KeyValuePair<string, GraceObject>> GetEnumerator()
-        {
-            return data.GetEnumerator();
-        }
-
-        System.Collections.IEnumerator
-            System.Collections.IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
         }
     }
 }

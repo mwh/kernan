@@ -163,6 +163,7 @@ namespace Grace.Runtime
                 AddMethod("asString", null);
                 AddMethod("==(_)", null);
                 AddMethod("!=(_)", null);
+                AddMethod("hash", null);
             }
         }
 
@@ -216,6 +217,15 @@ namespace Grace.Runtime
                 GraceObject other)
         {
             return GraceBoolean.Create(!object.ReferenceEquals(self, other));
+        }
+
+        /// <summary>Native method supporting Grace hash</summary>
+        /// <param name="ctx">Current interpreter</param>
+        /// <param name="self">Receiver</param>
+        private static GraceObject mHash(EvaluationContext ctx,
+                GraceObject self)
+        {
+            return GraceNumber.Create(RuntimeHelpers.GetHashCode(self));
         }
 
         /// <summary>Remove a method from this object</summary>
@@ -288,6 +298,9 @@ namespace Grace.Runtime
                     return m;
                 case "!=(_)":
                     m = new DelegateMethodReceiver1Ctx(mNotEquals);
+                    return m;
+                case "hash":
+                    m = new DelegateMethodReceiver0Ctx(mHash);
                     return m;
             }
             return null;

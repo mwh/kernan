@@ -114,7 +114,12 @@ namespace Grace.Runtime
                         },
                         "LookupError: Native proxy failed to find method «${method}»"
                 );
-            return GraceObjectProxy.Create(meth.Invoke(obj, args));
+            try {
+                return GraceObjectProxy.Create(meth.Invoke(obj, args));
+            } catch (TargetInvocationException ex) {
+                System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(ex.InnerException).Throw();
+                throw null; // Unreachable
+            }
         }
 
         private static object viewAsNative(Object obj)

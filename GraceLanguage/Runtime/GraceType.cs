@@ -6,6 +6,8 @@ namespace Grace.Runtime
     /// <summary>A Grace type literal</summary>
     public class GraceType : GraceObject
     {
+        internal static Dictionary<string, Method> sharedMethods = new Dictionary<string, Method> { };
+
         private readonly string name;
         private List<SignatureNode> methods = new List<SignatureNode>();
         private List<MethodRequest> requests;
@@ -19,6 +21,19 @@ namespace Grace.Runtime
                         new NativeMethod1Ctx(this.Match)));
             AddMethod("|(_)", Matching.OrMethod);
             AddMethod("&(_)", Matching.AndMethod);
+            AddMethods(GraceType.sharedMethods);
+        }
+
+        /// <summary>
+        /// Apply an extension trait to all future instances of this type.
+        /// </summary>
+        /// <param name="meths">
+        /// Dictionary of methods to add.
+        /// </param>
+        public static void ExtendWith(IDictionary<string, Method> meths)
+        {
+            foreach (var m in meths)
+                sharedMethods[m.Key] = m.Value;
         }
 
         /// <summary>Add a method type entry to this type</summary>
