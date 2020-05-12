@@ -15,7 +15,8 @@ namespace Grace.Runtime
         Isolate,
         FreeIsolate,
         Immutable,
-        Unknown
+        Unknown,
+        Returning
     }
 
     /// <summary>A Grace object</summary>
@@ -44,7 +45,7 @@ namespace Grace.Runtime
         /// Confirm and prepare this object for assignment in a specific capability context.
         /// </summary>
         /// <param name="ctx">Interpreter in use</param>
-        /// <param name="cap">The host context</param>
+        /// <param name="cap">The host context. If Returning, this object's FreeIsolate status is preserved.</param>
         /// <returns></returns>
         public GraceObject CheckAssign(EvaluationContext ctx, ThreadCapability cap)
         {
@@ -52,11 +53,7 @@ namespace Grace.Runtime
             {
                 ErrorReporting.RaiseError(ctx, "T3001", new Dictionary<string, string>(), "IsolateAliasError: Isolate object cannot be aliased");
             }
-            else if (this.Capability == ThreadCapability.FreeIsolate)
-            {
-                this.Capability = ThreadCapability.Isolate;
-            }
-            if (cap == ThreadCapability.Isolate)
+            if (cap == ThreadCapability.Isolate || cap == ThreadCapability.FreeIsolate)
             {
                 if (this.Capability != ThreadCapability.FreeIsolate && this.Capability != ThreadCapability.Immutable)
                 {
@@ -74,6 +71,10 @@ namespace Grace.Runtime
             else if (cap == ThreadCapability.Immutable && this.Capability != ThreadCapability.Immutable)
             {
                 ErrorReporting.RaiseError(ctx, "T3002", new Dictionary<string, string>(), "StructureError: Structure violation");
+            }
+            if (this.Capability == ThreadCapability.FreeIsolate && cap != ThreadCapability.Returning)
+            {
+                this.Capability = ThreadCapability.Isolate;
             }
             return this;
         }

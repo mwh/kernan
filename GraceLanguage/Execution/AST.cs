@@ -1752,7 +1752,7 @@ end:
             myScope.Complete();
             ctx.Unextend(myScope);
             ctx.RestoreExactly(memo);
-            return ret.CheckAssign(ctx, ThreadCapability.Unrestricted);
+            return ret.CheckAssign(ctx, ThreadCapability.Returning);
         }
 
         /// <summary>
@@ -2387,7 +2387,6 @@ end:
         /// <inheritdoc/>
         public override GraceObject Evaluate(EvaluationContext ctx)
         {
-            Console.WriteLine("HERE!~!!!!!");
             var meth = ctx.AddDef(Name, Value.Evaluate(ctx).CheckAssign(ctx, ThreadCapability.Unrestricted));
             if (Public)
                 meth.Confidential = false;
@@ -2515,7 +2514,7 @@ end:
                         "IllegalReturnError: top-level return"
                     );
             if (Value != null)
-                ms.Return(ctx, Value.Evaluate(ctx).CheckAssign(ctx, ThreadCapability.Unrestricted), this);
+                ms.Return(ctx, Value.Evaluate(ctx).CheckAssign(ctx, ThreadCapability.Returning), this);
             else
                 ms.Return(ctx, GraceObject.Done, this);
             return GraceObject.Done;
