@@ -35,10 +35,7 @@ namespace Grace.Runtime
         public static GraceObject SuccessfulMatch(EvaluationContext ctx,
                 GraceObject obj)
         {
-            var successfulMatchReq = MethodRequest.Single("_SuccessfulMatch",
-                    obj);
-            GraceObject smRec = ctx.FindReceiver(successfulMatchReq);
-            return smRec.Request(ctx, successfulMatchReq);
+            return new MatchResult(true, obj);
         }
 
         /// <summary>
@@ -97,10 +94,7 @@ namespace Grace.Runtime
         public static GraceObject FailedMatch(EvaluationContext ctx,
                 GraceObject obj)
         {
-            var successfulMatchReq = MethodRequest.Single("_FailedMatch",
-                    obj);
-            GraceObject smRec = ctx.FindReceiver(successfulMatchReq);
-            return smRec.Request(ctx, successfulMatchReq);
+            return new MatchResult(false, obj);
         }
 
         /// <summary>Get the result of a MatchResult</summary>
@@ -137,12 +131,7 @@ namespace Grace.Runtime
         public static GraceObject OrCombinator(EvaluationContext ctx,
                 GraceObject self, GraceObject other)
         {
-            var patReq = new MethodRequest();
-            patReq.AddPart(new RequestPart("_OrPattern",
-                        RequestPart.EmptyList,
-                        new List<GraceObject> { self, other }));
-            GraceObject patRec = ctx.FindReceiver(patReq);
-            return patRec.Request(ctx, patReq);
+            return new OrPattern(self, other);
         }
 
         /// <summary>Native method for the &amp; combinator</summary>
@@ -152,12 +141,7 @@ namespace Grace.Runtime
         public static GraceObject AndCombinator(EvaluationContext ctx,
                 GraceObject self, GraceObject other)
         {
-            var patReq = new MethodRequest();
-            patReq.AddPart(new RequestPart("_OrPattern",
-                        RequestPart.EmptyList,
-                        new List<GraceObject> { self, other }));
-            GraceObject patRec = ctx.FindReceiver(patReq);
-            return patRec.Request(ctx, patReq);
+            return new AndPattern(self, other);
         }
 
         /// <summary>Reusable method for the &amp; combinator</summary>
@@ -169,6 +153,142 @@ namespace Grace.Runtime
         public static readonly Method OrMethod = new DelegateMethodReceiver1Ctx(
                     new NativeMethodReceiver1Ctx(Matching.OrCombinator)
                 );
+    }
+
+    /// <summary>
+    /// Either a Successful or Failed MatchResult.
+    /// </summary>
+    public class MatchResult : GraceObject
+    {
+        /// <summary>
+        /// True if this is a SuccessfulMatch.
+        /// </summary>
+        public bool Success { get; set; }
+        /// <summary>
+        /// The result (output) object of the match.
+        /// </summary>
+        public GraceObject Result { get; set; }
+
+        /// <summary>
+        /// Create a new MatchResult with given success state and result.
+        /// </summary>
+        /// <param name="success">True for successful, false for failed.</param>
+        /// <param name="result">Match result</param>
+        public MatchResult(bool success, GraceObject result)
+        {
+            Success = success;
+            Result = result;
+            if (result == null)
+                throw new Exception();
+            AddMethod("succeeded", new DelegateMethod0(mSucceeded));
+            AddMethod("result", new DelegateMethod0(mResult));
+            AddMethod("ifTrue(_)", new DelegateMethod1Ctx(mIfTrue));
+            AddMethod("ifFalse(_)", new DelegateMethod1Ctx(mIfFalse));
+            AddMethod("ifTrue(_) ifFalse(_)", new DelegateMethodReq(mIfTrueIfFalse));
+            AddMethod("asString", new DelegateMethod0Ctx(mAsString));
+        }
+
+        private GraceObject mSucceeded()
+        {
+            return GraceBoolean.Create(Success);
+        }
+
+        private GraceObject mResult()
+        {
+            return Result;
+        }
+
+        private GraceObject mAsString(EvaluationContext ctx)
+        {
+            return GraceString.Create((Success ? "Successful" : "Failed") +"Match["
+                + GraceString.AsNativeString(ctx, Result) + "]");
+        }
+
+        private GraceObject mIfTrue(EvaluationContext ctx, GraceObject b)
+        {
+            if (Success)
+                return b.Request(ctx, MethodRequest.Nullary("apply"));
+            return GraceObject.Done;
+        }
+
+        private GraceObject mIfFalse(EvaluationContext ctx, GraceObject b)
+        {
+            if (!Success)
+                return b.Request(ctx, MethodRequest.Nullary("apply"));
+            return GraceObject.Done;
+        }
+
+        private GraceObject mIfTrueIfFalse(EvaluationContext ctx, MethodRequest req)
+        {
+            if (Success)
+                return req[0].Arguments[0].Request(ctx, MethodRequest.Nullary("apply"));
+            return req[1].Arguments[0].Request(ctx, MethodRequest.Nullary("apply"));
+        }
+
+    }
+
+    /// <summary>
+    /// A pattern that matches when two other patterns do.
+    /// </summary>
+    class AndPattern : GraceObject
+    {
+        private GraceObject lhs;
+        private GraceObject rhs;
+
+        public AndPattern(GraceObject l, GraceObject r)
+        {
+            lhs = l;
+            rhs = r;
+            AddMethod("match(_)", new DelegateMethod1Ctx(mMatch));
+            AddMethod("|(_)", Matching.OrMethod);
+            AddMethod("&(_)", Matching.AndMethod);
+            AddMethod("asString", new DelegateMethod0Ctx(mAsString));
+        }
+
+        private GraceObject mMatch(EvaluationContext ctx, GraceObject target)
+        {
+            if (Matching.TryMatch(ctx, lhs, target, out _))
+                return new MatchResult(Matching.TryMatch(ctx, rhs, target, out _), target);
+            return new MatchResult(false, target);
+        }
+
+        private GraceObject mAsString(EvaluationContext ctx)
+        {
+            return GraceString.Create(GraceString.AsNativeString(ctx, lhs) +
+                " & " + GraceString.AsNativeString(ctx, rhs));
+        }
+    }
+
+    /// <summary>
+    /// A pattern that matches when either of two other patterns does.
+    /// </summary>
+    class OrPattern : GraceObject
+    {
+        private GraceObject lhs;
+        private GraceObject rhs;
+
+        public OrPattern(GraceObject l, GraceObject r)
+        {
+            lhs = l;
+            rhs = r;
+            AddMethod("match(_)", new DelegateMethod1Ctx(mMatch));
+            AddMethod("|(_)", Matching.OrMethod);
+            AddMethod("&(_)", Matching.AndMethod);
+            AddMethod("asString", new DelegateMethod0Ctx(mAsString));
+        }
+
+        private GraceObject mMatch(EvaluationContext ctx, GraceObject target)
+        {
+            if (Matching.TryMatch(ctx, lhs, target, out _))
+                return new MatchResult(true, target);
+            return new MatchResult(Matching.TryMatch(ctx, rhs, target, out _), target);
+        }
+
+        private GraceObject mAsString(EvaluationContext ctx)
+        {
+            return GraceString.Create(GraceString.AsNativeString(ctx, lhs) +
+                " | " + GraceString.AsNativeString(ctx, rhs));
+        }
     }
 
     class NativeTypePattern<T> : GraceObject {
@@ -190,6 +310,55 @@ namespace Grace.Runtime
             if (gop.Object is T)
                 return Matching.SuccessfulMatch(ctx, target);
             return Matching.FailedMatch(ctx, target);
+        }
+    }
+
+    /// <summary>
+    /// A pattern that matches when a CLI predicate is true.
+    /// </summary>
+    public class PredicatePattern : GraceObject
+    {
+        private Func<GraceObject, bool> predicate;
+
+        private string desc = "PredicatePattern";
+
+	/// <summary>Create a new PredicatePattern based on pred</summary>
+	/// <param name="pred">Predicate function returning true for success</param>
+        public PredicatePattern(Func<GraceObject, bool> pred)
+        {
+            predicate = pred;
+            AddMethod("match(_)", new DelegateMethod1Ctx(mMatch));
+            AddMethod("|(_)", Matching.OrMethod);
+            AddMethod("&(_)", Matching.AndMethod);
+            AddMethod("asString", new DelegateMethod0(mAsString));
+        }
+
+	/// <summary>Create a new PredicatePattern based on pred</summary>
+	/// <param name="pred">Predicate function returning true for success</param>
+	/// <param name="d">Description of the pattern object to use in asString</param>
+        public PredicatePattern(Func<GraceObject, bool> pred, string d)
+        {
+            predicate = pred;
+            desc = d;
+            AddMethod("match(_)", new DelegateMethod1Ctx(mMatch));
+            AddMethod("|(_)", Matching.OrMethod);
+            AddMethod("&(_)", Matching.AndMethod);
+            AddMethod("asString", new DelegateMethod0(mAsString));
+        }
+
+        /// <summary>Native method for Grace match</summary>
+        /// <param name="ctx">Current interpreter</param>
+        /// <param name="target">Target of the match</param>
+        private GraceObject mMatch(EvaluationContext ctx, GraceObject target)
+        {
+            if (predicate(target))
+                return Matching.SuccessfulMatch(ctx, target);
+            return Matching.FailedMatch(ctx, target);
+        }
+
+        private GraceObject mAsString()
+        {
+            return GraceString.Create(desc);
         }
     }
 }
