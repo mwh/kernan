@@ -216,6 +216,11 @@ namespace Grace.Execution
             {
                 ret = new ForDoRequestNode(irrpn.Token, irrpn);
             }
+            else if (irrpn.Name == "consume")
+            {
+                return Visit(new BindParseNode(irrpn.Token, irrpn.Arguments[0][0],
+                    new IdentifierParseNode(irrpn.Token, "null")));
+            }
             else
             {
                 ret = new ImplicitReceiverRequestNode(irrpn.Token, irrpn);

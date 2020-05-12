@@ -2925,6 +2925,13 @@ class local {
     self._becomeLocal
 }
 
+def null = object {
+    use immutable
+    def asString is public = "<null>"
+}
+
+method consume(x) { x }
+
 def testIso = object {
     use isolate
     var x is public
