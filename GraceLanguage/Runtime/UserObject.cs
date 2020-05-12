@@ -130,7 +130,7 @@ namespace Grace.Runtime
         /// <param name="cell">
         /// Cell storing the value of this var
         /// </param>
-        public virtual void CreateVar(
+        public virtual ReaderWriterPair CreateVar(
                 string name,
                 Dictionary<string, Method> methods,
                 bool readable, bool writable,
@@ -146,6 +146,8 @@ namespace Grace.Runtime
                 r.Confidential = true;
             if (!writable)
                 w.Confidential = true;
+            cell.Writer = w;
+            return new ReaderWriterPair { Read = r, Write = w };
         }
 
 
@@ -163,6 +165,8 @@ namespace Grace.Runtime
         private ObjectConstructorNode constructor;
 
         private Interpreter.ScopeMemo scope;
+
+        private Dictionary<string, Method> writerMap = new Dictionary<string, Method>();
 
         /// <param name="ocn">
         /// Object constructor node with the initialisation code
@@ -259,8 +263,25 @@ namespace Grace.Runtime
                 )
         {
             checkAccessibility(ctx, req);
-            cell.Value = req[1].Arguments[0];
-            return GraceObject.Done;
+            var arg = req[1].Arguments[0];
+            if (Type != null)
+            {
+                if (Matching.TryMatch(ctx, Type, arg, out GraceObject result))
+                {
+                    arg = result;
+                }
+                else
+                {
+                    ErrorReporting.RaiseError(ctx, "R2025",
+                        new Dictionary<string, string> { { "field", req[0].Name },
+                            { "required", GraceString.AsNativeString(ctx, Type) } },
+                        "TypeError: ${field} can only hold ${required}.");
+                }
+            }
+           
+            var tmp = cell.Value;
+            cell.Value = arg;
+            return tmp;
         }
 
     }
@@ -274,6 +295,11 @@ namespace Grace.Runtime
         /// Object held by this cell.
         /// </summary>
         public GraceObject Value { get; set; }
+
+        /// <summary>
+        /// Writer method for this cell, if any.
+        /// </summary>
+        public Method Writer { get; set; }
 
         /// <param name="v">Initial value of this cell</param>
         public Cell(GraceObject v)

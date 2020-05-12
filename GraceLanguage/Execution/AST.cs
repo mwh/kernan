@@ -1451,10 +1451,17 @@ end:
                         var cell = map[n];
                         if (d != null)
                         {
-                            cell.Value = d.Value.Evaluate(ctx);
+                            var t = d.Type?.Evaluate(ctx);
+                            var val = Matching.TypeMatch(ctx, t, d.Value.Evaluate(ctx), d.Name);
+                            cell.Value = val;
                         }
                         else if (v.Value != null)
-                            cell.Value = v.Value.Evaluate(ctx);
+                        {
+                            var t = v.Type?.Evaluate(ctx);
+                            cell.Writer.Type = t;
+                            var val = Matching.TypeMatch(ctx, t, v.Value.Evaluate(ctx), v.Name);
+                            cell.Value = val;
+                        }
                     }
                 }
                 else
@@ -1651,7 +1658,10 @@ end:
                     }
                     else
                     {
-                        myScope.AddLocalDef(name, arg.val);
+                        var t = idNode.Type?.Evaluate(ctx);
+                        var result = Matching.TypeMatch(ctx, t, arg.val, name);
+                        var p = myScope.AddLocalVar(name, result);
+                        p.Write.Type = t;
                     }
                 }
                 if (!hadVariadic && sigPart.Parameters.Count > 0)
@@ -2217,11 +2227,13 @@ end:
         /// <inheritdoc/>
         public override GraceObject Evaluate(EvaluationContext ctx)
         {
+            var t = Type?.Evaluate(ctx);
+            var val = Value?.Evaluate(ctx);
+            if (val == null) val = GraceObject.Uninitialised;
+            Matching.TypeMatch(ctx, t, val, Name);
             ReaderWriterPair pair;
-            if (Value != null)
-                pair = ctx.AddVar(Name, Value.Evaluate(ctx));
-            else
-                pair = ctx.AddVar(Name, GraceObject.Uninitialised);
+            pair = ctx.AddVar(Name, val);
+            pair.Write.Type = t;
             if (Readable)
                 pair.Read.Confidential = false;
             if (Writable)

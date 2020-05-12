@@ -113,6 +113,8 @@ namespace Grace.Runtime
         /// </summary>
         public bool Conflict { get; set; }
 
+        public GraceObject Type { get; set; } = null;
+
         /// <summary>
         /// Create an ordinary method node.
         /// </summary>

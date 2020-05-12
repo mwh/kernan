@@ -41,6 +41,56 @@ namespace Grace.Runtime
             return smRec.Request(ctx, successfulMatchReq);
         }
 
+        /// <summary>
+        /// Attempt to match a pattern against an object, and output the result as well when it succeeds.
+        /// </summary>
+        /// <param name="ctx">Current interpreter</param>
+        /// <param name="pattern">Pattern to test against</param>
+        /// <param name="target">Object to examine</param>
+        /// <param name="result">pattern.match(target).result, or null if match failed</param>
+        /// <returns>True if match succeeded</returns>
+        public static bool TryMatch(EvaluationContext ctx, GraceObject pattern, GraceObject target,
+            out GraceObject result)
+        {
+            if (pattern == null)
+            {
+                result = target;
+                return true;
+            }
+            var m = Match(ctx, pattern, target);
+            if (Succeeded(ctx, m))
+            {
+                result = GetResult(ctx, m);
+                return true;
+            }
+            result = null;
+            return false;
+        }
+
+        /// <summary>
+        /// Attempt to match a pattern, raising R2025 TypeError on failure.
+        /// </summary>
+        /// <param name="ctx">Current interpreter</param>
+        /// <param name="pattern">Pattern to match against</param>
+        /// <param name="target">Object to examine</param>
+        /// <param name="name">Name to report in error (e.g. field or parameter name)</param>
+        /// <returns></returns>
+        public static GraceObject TypeMatch(EvaluationContext ctx, GraceObject pattern, GraceObject target, string name)
+        {
+            if (Matching.TryMatch(ctx, pattern, target, out var result))
+            {
+                return result;
+            }
+            else
+            {
+                ErrorReporting.RaiseError(ctx, "R2025",
+                    new Dictionary<string, string> { { "field", name },
+                                    { "required", GraceString.AsNativeString(ctx, pattern) } },
+                    "TypeError: argument type mismatch");
+                return null;
+            }
+        }
+
         /// <summary>Create a failed match</summary>
         /// <param name="ctx">Current interpreter</param>
         /// <param name="obj">Result value</param>

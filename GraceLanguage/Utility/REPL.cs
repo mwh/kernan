@@ -156,20 +156,27 @@ namespace Grace.Utility
                         var meths = new Dictionary<string, Method>();
                         if (v != null)
                         {
-                            obj.CreateVar(v.Name, meths,
-                                    v.Readable, v.Writable, out cell);
+                            var p = obj.CreateVar(v.Name, meths,
+                                v.Readable, v.Writable, out cell);
                             obj.AddMethods(meths);
+                            var t = v.Type?.Evaluate(interp);
+                            p.Write.Type = t;
                             if (v.Value != null)
-                                cell.Value = v.Value.Evaluate(interp);
+                            {
+                                var val = Matching.TypeMatch(interp, t, v.Value.Evaluate(interp), v.Name);
+                                cell.Value = val;
+                            }
                             result = GraceObject.Done;
                             continue;
                         }
                         if (d != null)
                         {
+                            var t = d.Type?.Evaluate(interp);
                             obj.CreateDef(d.Name, meths,
                                     d.Public, out cell);
                             obj.AddMethods(meths);
-                            cell.Value = d.Value.Evaluate(interp);
+                            var val = Matching.TypeMatch(interp, t, d.Value.Evaluate(interp), d.Name);
+                            cell.Value = val;
                             result = GraceObject.Done;
                             continue;
                         }

@@ -184,7 +184,10 @@ namespace Grace.Runtime
                     myScope.AddLocalDef(id.Name, gvl);
                 } else {
                     string name = ((IdentifierNode)arg.name).Name;
-                    myScope.AddLocalDef(name, arg.val);
+                    var t = id?.Type?.Evaluate(ctx);
+                    var result = Matching.TypeMatch(ctx, t, arg.val, name);
+                    var p = myScope.AddLocalVar(name, result);
+                    p.Write.Type = t;
                 }
             }
             if (Variadic && parameters.Count > req[0].Arguments.Count)
