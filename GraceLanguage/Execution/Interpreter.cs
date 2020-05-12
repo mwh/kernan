@@ -843,7 +843,7 @@ namespace Grace.Execution
             var m = majorScope as LocalScope;
             if (m == null)
                 return new ReaderWriterPair();
-            var pair = m.AddLocalVar(name, val);
+            var pair = m.AddLocalVar(name, val, this);
             return pair;
         }
 
@@ -853,7 +853,7 @@ namespace Grace.Execution
             var m = majorScope as LocalScope;
             if (m == null)
                 return null;
-            return m.AddLocalDef(name, val);
+            return m.AddLocalDef(name, val, this);
         }
 
         /// <inheritdoc />

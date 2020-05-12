@@ -58,14 +58,39 @@ namespace Grace.Runtime
         /// <param name="val">Initial value of this var</param>
         /// <returns>Object encapsulating the added methods</returns>
         public virtual ReaderWriterPair AddLocalVar(string name,
+                GraceObject val, EvaluationContext ctx)
+        {
+            return AddLocalVar(name, val);
+        }
+        
+        /// <summary>
+        /// Add methods to this object representing a var
+        /// declaration
+        /// </summary>
+        /// <param name="name">Name of the var to add</param>
+        /// <param name="val">Initial value of this var</param>
+        /// <returns>Object encapsulating the added methods</returns>
+        public virtual ReaderWriterPair AddLocalVar(string name,
                 GraceObject val)
         {
             var c = new Cell( val == null ? GraceObject.Uninitialised : val);
             var reader = new FieldReaderMethod(c);
-            var writer = new FieldWriterMethod(c);
+            var writer = new FieldWriterMethod(c, this);
             AddMethod(name, reader);
             AddMethod(name + " :=(_)", writer);
             return new ReaderWriterPair { Read = reader, Write = writer };
+        }
+
+        /// <summary>
+        /// Add method to this object representing a def
+        /// declaration
+        /// </summary>
+        /// <param name="name">Name of the def to add</param>
+        /// <param name="val">Value of this def</param>
+        /// <returns>Added method</returns>
+        public virtual Method AddLocalDef(string name, GraceObject val, EvaluationContext ctx)
+        {
+            return AddLocalDef(name, val);
         }
 
         /// <summary>
@@ -140,7 +165,7 @@ namespace Grace.Runtime
             cell = new Cell(GraceObject.Uninitialised);
             var r = new FieldReaderMethod(cell);
             methods[name] = r;
-            var w = new FieldWriterMethod(cell);
+            var w = new FieldWriterMethod(cell, this);
             methods[name + " :=(_)"] = w;
             if (!readable)
                 r.Confidential = true;
@@ -248,11 +273,14 @@ namespace Grace.Runtime
     class FieldWriterMethod : Method
     {
         Cell cell;
+        GraceObject owner;
 
         /// <param name="c">Cell holding the value to access.</param>
-        public FieldWriterMethod(Cell c)
+        /// <param name="o">The object containing this field.</param>
+        public FieldWriterMethod(Cell c, GraceObject o)
         {
             cell = c;
+            owner = o;
         }
 
         /// <inheritdoc/>
@@ -280,7 +308,9 @@ namespace Grace.Runtime
             }
            
             var tmp = cell.Value;
-            cell.Value = arg;
+            cell.Value = arg.CheckAssign(ctx, owner.Capability);
+            if (tmp.Capability == ThreadCapability.Isolate)
+                tmp.Capability = ThreadCapability.FreeIsolate;
             return tmp;
         }
 

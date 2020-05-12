@@ -2914,3 +2914,31 @@ method try(b) catch(e1) catch(e2) catch(e3) catch(e4) catch (e5) {
 method circumfix[ *x ] {
     x
 }
+
+class isolate {
+    self._becomeFreeIsolate
+}
+class immutable {
+    self._becomeImmutable
+}
+class local {
+    self._becomeLocal
+}
+
+def testIso = object {
+    use isolate
+    var x is public
+    def asString is public = "<test iso>"
+}
+
+def testLocal = object {
+    use local
+    var x is public
+    def asString is public = "<test local>"
+}
+
+def testImm = object {
+    use immutable
+    var x is public
+    def asString is public = "<test immutable>"
+}

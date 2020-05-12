@@ -5,6 +5,19 @@ using Grace.Parsing;
 
 namespace Grace.Runtime
 {
+    /// <summary>
+    /// Category of an object determining how it can be used.
+    /// </summary>
+    public enum ThreadCapability
+    {
+        Unrestricted,
+        Local,
+        Isolate,
+        FreeIsolate,
+        Immutable,
+        Unknown
+    }
+
     /// <summary>A Grace object</summary>
     public class GraceObject
     {
@@ -21,6 +34,89 @@ namespace Grace.Runtime
             ObjectConstructor = 4
         }
         private Dictionary<string, Method> objectMethods;
+
+        /// <summary>
+        /// The capability fixed for this object at construction.
+        /// </summary>
+        public ThreadCapability Capability = ThreadCapability.Unrestricted;
+
+        /// <summary>
+        /// Confirm and prepare this object for assignment in a specific capability context.
+        /// </summary>
+        /// <param name="ctx">Interpreter in use</param>
+        /// <param name="cap">The host context</param>
+        /// <returns></returns>
+        public GraceObject CheckAssign(EvaluationContext ctx, ThreadCapability cap)
+        {
+            if (this.Capability == ThreadCapability.Isolate)
+            {
+                ErrorReporting.RaiseError(ctx, "T3001", new Dictionary<string, string>(), "IsolateAliasError: Isolate object cannot be aliased");
+            }
+            else if (this.Capability == ThreadCapability.FreeIsolate)
+            {
+                this.Capability = ThreadCapability.Isolate;
+            }
+            if (cap == ThreadCapability.Isolate)
+            {
+                if (this.Capability != ThreadCapability.FreeIsolate && this.Capability != ThreadCapability.Immutable)
+                {
+                    ErrorReporting.RaiseError(ctx, "T3002", new Dictionary<string, string>(), "StructureError: Structure violation");
+                }
+            }
+            else if (cap == ThreadCapability.Local)
+            {
+                if (this.Capability != ThreadCapability.FreeIsolate && this.Capability != ThreadCapability.Immutable
+                    && this.Capability != ThreadCapability.Local)
+                {
+                    ErrorReporting.RaiseError(ctx, "T3002", new Dictionary<string, string>(), "StructureError: Structure violation");
+                }
+            }
+            else if (cap == ThreadCapability.Immutable && this.Capability != ThreadCapability.Immutable)
+            {
+                ErrorReporting.RaiseError(ctx, "T3002", new Dictionary<string, string>(), "StructureError: Structure violation");
+            }
+            return this;
+        }
+
+        /// <summary>Hidden method used to implement immutable trait.</summary>
+        public virtual GraceObject mBecomeImmutable(EvaluationContext ctx,
+                GraceObject self)
+        {
+            self.Capability = ThreadCapability.Immutable;
+            return GraceObject.Done;
+        }
+
+        /// <summary>Hidden method used to implement isolate trait.</summary>
+        public virtual GraceObject mBecomeIsolate(EvaluationContext ctx,
+                GraceObject self)
+        {
+            self.Capability = ThreadCapability.Isolate;
+            return GraceObject.Done;
+        }
+
+        /// <summary>Hidden method used to implement isolate trait.</summary>
+        public virtual GraceObject mBecomeFreeIsolate(EvaluationContext ctx,
+                GraceObject self)
+        {
+            self.Capability = ThreadCapability.FreeIsolate;
+            return GraceObject.Done;
+        }
+
+        /// <summary>Hidden method used to implement local trait.</summary>
+        public virtual GraceObject mBecomeLocal(EvaluationContext ctx,
+                GraceObject self)
+        {
+            self.Capability = ThreadCapability.Local;
+            return GraceObject.Done;
+        }
+
+        /// <summary>Hidden method used to debug capabilities.</summary>
+        public virtual GraceObject mCap(EvaluationContext ctx,
+                GraceObject self)
+        {
+            return GraceString.Create(self.Capability.ToString());
+        }
+
 
         /// <summary>
         /// Gives the names of all non-operator methods on
@@ -164,6 +260,11 @@ namespace Grace.Runtime
                 AddMethod("==(_)", null);
                 AddMethod("!=(_)", null);
                 AddMethod("hash", null);
+                AddMethod("_becomeIsolate", null);
+                AddMethod("_becomeFreeIsolate", null);
+                AddMethod("_becomeLocal", null);
+                AddMethod("_becomeImmutable", null);
+                AddMethod("_cap", null);
             }
         }
 
@@ -301,6 +402,21 @@ namespace Grace.Runtime
                     return m;
                 case "hash":
                     m = new DelegateMethodReceiver0Ctx(mHash);
+                    return m;
+                case "_becomeIsolate":
+                    m = new DelegateMethodReceiver0Ctx(mBecomeIsolate);
+                    return m;
+                case "_becomeFreeIsolate":
+                    m = new DelegateMethodReceiver0Ctx(mBecomeFreeIsolate);
+                    return m;
+                case "_becomeLocal":
+                    m = new DelegateMethodReceiver0Ctx(mBecomeLocal);
+                    return m;
+                case "_becomeImmutable":
+                    m = new DelegateMethodReceiver0Ctx(mBecomeImmutable);
+                    return m;
+                case "_cap":
+                    m = new DelegateMethodReceiver0Ctx(mCap);
                     return m;
             }
             return null;

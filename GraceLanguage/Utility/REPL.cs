@@ -163,7 +163,9 @@ namespace Grace.Utility
                             p.Write.Type = t;
                             if (v.Value != null)
                             {
-                                var val = Matching.TypeMatch(interp, t, v.Value.Evaluate(interp), v.Name);
+                                var val = Matching.TypeMatch(interp, t,
+                                            v.Value.Evaluate(interp).CheckAssign(interp, ThreadCapability.Unrestricted),
+                                            v.Name);
                                 cell.Value = val;
                             }
                             result = GraceObject.Done;
@@ -175,7 +177,9 @@ namespace Grace.Utility
                             obj.CreateDef(d.Name, meths,
                                     d.Public, out cell);
                             obj.AddMethods(meths);
-                            var val = Matching.TypeMatch(interp, t, d.Value.Evaluate(interp), d.Name);
+                            var val = Matching.TypeMatch(interp, t,
+                                            d.Value.Evaluate(interp).CheckAssign(interp, ThreadCapability.Unrestricted),
+                                            d.Name);
                             cell.Value = val;
                             result = GraceObject.Done;
                             continue;

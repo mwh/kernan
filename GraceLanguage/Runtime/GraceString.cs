@@ -95,6 +95,7 @@ namespace Grace.Runtime
             : base(createSharedMethods())
         {
             Value = val;
+            Capability = ThreadCapability.Immutable;
         }
 
         private static Dictionary<string, Method> createSharedMethods()

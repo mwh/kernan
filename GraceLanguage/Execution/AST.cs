@@ -1453,14 +1453,14 @@ end:
                         {
                             var t = d.Type?.Evaluate(ctx);
                             var val = Matching.TypeMatch(ctx, t, d.Value.Evaluate(ctx), d.Name);
-                            cell.Value = val;
+                            cell.Value = val.CheckAssign(ctx, ret.Capability);
                         }
                         else if (v.Value != null)
                         {
                             var t = v.Type?.Evaluate(ctx);
                             cell.Writer.Type = t;
                             var val = Matching.TypeMatch(ctx, t, v.Value.Evaluate(ctx), v.Name);
-                            cell.Value = val;
+                            cell.Value = val.CheckAssign(ctx, ret.Capability);
                         }
                     }
                 }
@@ -1660,7 +1660,7 @@ end:
                     {
                         var t = idNode.Type?.Evaluate(ctx);
                         var result = Matching.TypeMatch(ctx, t, arg.val, name);
-                        var p = myScope.AddLocalVar(name, result);
+                        var p = myScope.AddLocalVar(name, result.CheckAssign(ctx, ThreadCapability.Unrestricted));
                         p.Write.Type = t;
                     }
                 }
@@ -1752,7 +1752,7 @@ end:
             myScope.Complete();
             ctx.Unextend(myScope);
             ctx.RestoreExactly(memo);
-            return ret;
+            return ret.CheckAssign(ctx, ThreadCapability.Unrestricted);
         }
 
         /// <summary>
@@ -2232,7 +2232,7 @@ end:
             if (val == null) val = GraceObject.Uninitialised;
             Matching.TypeMatch(ctx, t, val, Name);
             ReaderWriterPair pair;
-            pair = ctx.AddVar(Name, val);
+            pair = ctx.AddVar(Name, val.CheckAssign(ctx, ThreadCapability.Unrestricted));
             pair.Write.Type = t;
             if (Readable)
                 pair.Read.Confidential = false;
@@ -2387,7 +2387,8 @@ end:
         /// <inheritdoc/>
         public override GraceObject Evaluate(EvaluationContext ctx)
         {
-            var meth = ctx.AddDef(Name, Value.Evaluate(ctx));
+            Console.WriteLine("HERE!~!!!!!");
+            var meth = ctx.AddDef(Name, Value.Evaluate(ctx).CheckAssign(ctx, ThreadCapability.Unrestricted));
             if (Public)
                 meth.Confidential = false;
             return GraceObject.Done;
@@ -2514,7 +2515,7 @@ end:
                         "IllegalReturnError: top-level return"
                     );
             if (Value != null)
-                ms.Return(ctx, Value.Evaluate(ctx), this);
+                ms.Return(ctx, Value.Evaluate(ctx).CheckAssign(ctx, ThreadCapability.Unrestricted), this);
             else
                 ms.Return(ctx, GraceObject.Done, this);
             return GraceObject.Done;

@@ -75,7 +75,7 @@ namespace Grace.Runtime
         /// <param name="name">Name of def to create</param>
         /// <param name="val">Value to set def to</param>
         /// <returns>Method that was added</returns>
-        public override Method AddLocalDef(string name, GraceObject val)
+        public override Method AddLocalDef(string name, GraceObject val, EvaluationContext ctx)
         {
             locals[name] = val;
             AddMethod(name, Reader);
@@ -94,7 +94,7 @@ namespace Grace.Runtime
         /// <param name="val">Value to set var to</param>
         /// <returns>Pair of methods that were added</returns>
         public override ReaderWriterPair AddLocalVar(string name,
-                GraceObject val)
+                GraceObject val, EvaluationContext ctx)
         {
             locals[name] = val;
             AddMethod(name, Reader);
@@ -180,9 +180,13 @@ namespace Grace.Runtime
         {
             checkAccessibility(ctx, req);
             LocalScope s = self as LocalScope;
+            var arg = req[1].Arguments[0].CheckAssign(ctx, ThreadCapability.Local);
             string name = req[0].Name;
-            s[name] = req[1].Arguments[0];
-            return GraceObject.Done;
+            var old = s[name];
+            s[name] = arg;
+            if (old.Capability == ThreadCapability.Isolate)
+                old.Capability = ThreadCapability.FreeIsolate;
+            return old;
         }
     }
 

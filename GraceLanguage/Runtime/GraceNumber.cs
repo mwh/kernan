@@ -38,18 +38,21 @@ namespace Grace.Runtime
             : base(createSharedMethods())
         {
             Value = val;
+            Capability = ThreadCapability.Immutable;
         }
 
         private GraceNumber(int val)
             : base(createSharedMethods())
         {
             Value = Rational.Create(val);
+            Capability = ThreadCapability.Immutable;
         }
 
         private GraceNumber(double val)
             : base(createSharedMethods())
         {
             Value = Rational.Create(val);
+            Capability = ThreadCapability.Immutable;
         }
 
         private static Dictionary<string, Method> createSharedMethods()
