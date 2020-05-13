@@ -153,6 +153,9 @@ namespace Grace.Execution
             s.AddMethod("Exception",
                     new ConstantMethod(
                         new GraceExceptionKind("Exception")));
+            s.AddMethod("_capabilityPattern(_)", new DelegateMethod1Ctx(_baseCapabilityPattern));
+            s.AddMethod("_queue", new DelegateMethod0(_baseQueue));
+            s.AddMethod("_list", new DelegateMethod0(_baseList));
         }
 
         private bool loadedPrelude;
@@ -585,6 +588,44 @@ namespace Grace.Execution
                         (start, module) => start + module));
         }
 
+        private GraceObject _baseCapabilityPattern(EvaluationContext ctx, GraceObject arg)
+        {
+            var s = GraceString.AsNativeString(ctx, arg);
+            if (s == "any")
+                return new PredicatePattern(x => true, "any");
+            else if (s == "iso")
+            {
+                return new PredicatePattern(x =>
+                {
+                    return x.Capability == ThreadCapability.FreeIsolate || x.Capability == ThreadCapability.Isolate;
+                }, "Isolate");
+            }
+            else if (s == "local")
+            {
+                return new PredicatePattern(x => x.Capability == ThreadCapability.Local, "Local");
+            }
+            else if (s == "nonlocal")
+            {
+                return new PredicatePattern(x => x.Capability != ThreadCapability.Local, "Non-Local");
+            }
+            else if (s == "imm")
+            {
+                return new PredicatePattern(x => x.Capability == ThreadCapability.Immutable, "Immutable");
+            }
+            return new PredicatePattern(x => true, "any");
+        }
+
+        private GraceObject _baseQueue()
+        {
+            var q = new System.Collections.Concurrent.ConcurrentQueue<GraceObject>();
+            var bq = new System.Collections.Concurrent.BlockingCollection<GraceObject>(q, 10);
+            return new GraceObjectProxy(bq);
+        }
+        private GraceObject _baseList()
+        {
+            var l = new List<GraceObject>();
+            return new GraceObjectProxy(l);
+        }
         /// <summary>The built-in Grace "print" method</summary>
         public GraceObject Print(EvaluationContext ctx, GraceObject arg)
         {
