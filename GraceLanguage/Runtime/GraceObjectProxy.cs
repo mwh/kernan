@@ -85,6 +85,12 @@ namespace Grace.Runtime
                     return GraceString.Create(obj.ToString());
                 case "prefix!":
                     return GraceObjectProxy.Create(!(dynamic)obj);
+                case "do(_)":
+                    foreach (var v in (dynamic)obj)
+                    {
+                        req[0].Arguments[0].Request(ctx, MethodRequest.Single("apply", v));
+                    }
+                    return GraceObject.Done;
                 case "at(_)":
                     if (Interpreter.JSIL)
                         // Calling get_Item directly is iffy, but
@@ -105,17 +111,30 @@ namespace Grace.Runtime
             Type[] types = new Type[args.Length];
             for (int i = 0; i < types.Length; i++)
                 types[i] = args[i].GetType();
-            MethodInfo meth = type.GetMethod(name, types);
+            var trimmedName = name.Replace("(_)", "");
+            MethodInfo meth = type.GetMethod(trimmedName, types);
             if (meth == null)
-                ErrorReporting.RaiseError(ctx, "R2000",
+            {
+                // Try again, without nativising the types
+                for (int i = 0; i < req[0].Arguments.Count; i++)
+                    args[i] = req[0].Arguments[i];
+                for (int i = 0; i < types.Length; i++)
+                    types[i] = args[i].GetType();
+                meth = type.GetMethod(trimmedName, types);
+                if (meth == null)
+                    ErrorReporting.RaiseError(ctx, "R2000",
                         new Dictionary<string, string>() {
                             { "method", req.Name },
                             { "receiver", "Native Proxy" }
                         },
                         "LookupError: Native proxy failed to find method «${method}»"
                 );
+            }
             try {
-                return GraceObjectProxy.Create(meth.Invoke(obj, args));
+                var r = meth.Invoke(obj, args);
+                if (r is GraceObject g)
+                    return g;
+                return GraceObjectProxy.Create(r);
             } catch (TargetInvocationException ex) {
                 System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(ex.InnerException).Throw();
                 throw null; // Unreachable
