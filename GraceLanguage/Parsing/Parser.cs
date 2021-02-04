@@ -1616,6 +1616,10 @@ namespace Grace.Parsing
             BlockParseNode ret = new BlockParseNode(lexer.current);
             Token start = lexer.current;
             lexer.NextToken();
+            if (lexer.current is CommentToken)
+            {
+                comments.Add(parseComment());
+            }
             consumeBlankLines();
             Token firstBodyToken = lexer.current;
             indentColumn = firstBodyToken.column;
