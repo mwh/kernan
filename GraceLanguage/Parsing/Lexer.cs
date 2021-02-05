@@ -412,14 +412,6 @@ namespace Grace.Parsing
                         || code[index] == '\r' || code[index] == '\n'
                         || code[index] == '\u2028'))
                 spaceAfter = true;
-            if (op.StartsWith(">") && !spaceBefore)
-            {
-                // This is a closing generic followed by some other
-                // operator, rather than a single operator, so we
-                // need to "un-lex" some codepoints.
-                index -= (op.Length - 1);
-                return new RGenericToken(moduleName, line, column);
-            }
             OperatorToken ret = new OperatorToken(moduleName, line, column,
                     op.Normalize());
             ret.SetSpacing(spaceBefore, spaceAfter);
