@@ -619,6 +619,8 @@ namespace Grace.Parsing
                         b.Append('\\');
                     else if (c == '"')
                         b.Append('"');
+                    else if (c == 'r')
+                        b.Append('\r');
                     else if (c == 'u')
                     {
                         // Four-character BMP escape
