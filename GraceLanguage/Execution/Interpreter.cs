@@ -132,9 +132,11 @@ namespace Grace.Execution
             var s = new LocalScope();
             scope.scope = s;
             majorScope = s;
-            s.AddMethod("print(_)",
-                    new DelegateMethod1Ctx(Print));
-            s.AddLocalDef("true", GraceBoolean.True);
+			s.AddMethod("print(_)",
+					new DelegateMethod1Ctx(Print));
+			s.AddMethod("getFileContents(_)",
+            		new DelegateMethod1Ctx(GetFileContents));
+			s.AddLocalDef("true", GraceBoolean.True);
             s.AddLocalDef("false", GraceBoolean.False);
             s.AddMethod("_base_while_do(_,_)",
                     new DelegateMethodReq(BaseWhileDo));
@@ -583,11 +585,42 @@ namespace Grace.Execution
             return GraceObject.Done;
         }
 
-        /// <summary>Native version of the built-in Grace "while-do" method
-        /// </summary>
-        /// <remarks>This while-do is more efficient than is possible to
-        /// implement in bare Grace without it.</remarks>
-        public static GraceObject BaseWhileDo(EvaluationContext ctx,
+		/// <summary>An undocumented built-in Grace method to open and read a file</summary>
+		public GraceObject GetFileContents(EvaluationContext ctx, GraceObject arg)
+		{
+			Object obj = arg;
+			var gop = arg as GraceObjectProxy;
+			if (gop != null)
+			{
+				obj = gop.Object;
+			}
+			var go = obj as GraceObject;
+			if (go != null)
+			{
+				var req = new MethodRequest();
+				var part = RequestPart.Nullary("asString");
+				req.AddPart(part);
+				if (go.RespondsTo(req))
+				{
+					obj = go.Request(ctx, req);
+				}
+			}
+			GraceString gs = null;
+			go = obj as GraceObject;
+			if (go != null)
+				gs = go.FindNativeParent<GraceString>();
+            var filePath = gs.Value;
+			using (StreamReader reader = File.OpenText(filePath))
+			{
+                return GraceString.Create(reader.ReadToEnd().Replace("\n", "\u2028"));
+			}
+		}
+
+		/// <summary>Native version of the built-in Grace "while-do" method
+		/// </summary>
+		/// <remarks>This while-do is more efficient than is possible to
+		/// implement in bare Grace without it.</remarks>
+		public static GraceObject BaseWhileDo(EvaluationContext ctx,
                 MethodRequest req)
         {
             GraceObject cond = req[0].Arguments[0];
