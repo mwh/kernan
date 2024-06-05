@@ -125,7 +125,11 @@ namespace Grace.Runtime
                 { "hash", new DelegateMethodTyped0<GraceString>(mHash) },
                 { "|(_)", Matching.OrMethod },
                 { "&(_)", Matching.AndMethod },
-            };
+				{ "firstCodepoint",
+					new DelegateMethodTyped0<GraceString>(mFirstCodepoint) },
+                { "replace(_) with(_)",
+                    new DelegateMethodTyped<GraceString>(mReplaceWith) },
+			};
             return sharedMethods;
         }
 
@@ -368,7 +372,28 @@ namespace Grace.Runtime
             return GraceNumber.Create(self.graphemeIndices.Length);
         }
 
-        private static GraceObject mMatch(
+		private static GraceObject mFirstCodepoint(GraceString self)
+		{
+			return GraceNumber.Create(Char.ConvertToUtf32(self.Value, 0));
+		}
+
+		private static GraceObject mReplaceWith(EvaluationContext ctx,
+				MethodRequest req,
+				GraceString self
+				)
+		{
+			MethodHelper.CheckArity(ctx, req, 1, 1);
+			var needle = req[0].Arguments[0];
+			var replacement = req[1].Arguments[0];
+
+			var sHaystack = AsNativeString(ctx, self);
+			var sNeedle = AsNativeString(ctx, needle);
+			var sReplacement = AsNativeString(ctx, replacement);
+
+			return Create(sHaystack.Replace(sNeedle, sReplacement));
+		}
+
+		private static GraceObject mMatch(
                 EvaluationContext ctx,
                 GraceString self,
                 GraceObject target)
